@@ -225,26 +225,6 @@ export function Device() {
 
       {/* Firmware + Sensor health */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-        {/* Firmware */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm" style={{ border: '1px solid #E8F0FE' }}>
-          <div className="flex items-center gap-2 mb-3">
-            <div className="rounded-xl p-2.5" style={{ background: '#FFF7ED' }}>
-              <Zap size={15} style={{ color: '#EA580C' }} />
-            </div>
-            <span className="font-semibold text-slate-600" style={{ fontSize: '0.8rem' }}>Firmware</span>
-          </div>
-          <div className="flex items-center gap-3 mb-3">
-            <span className="font-bold text-slate-800" style={{ fontSize: '1.5rem' }}>v2.3.1</span>
-            <span className="rounded-full px-2.5 py-1 font-medium" style={{ background: '#DCFCE7', color: '#16A34A', fontSize: '0.7rem' }}>Up to date</span>
-          </div>
-          <InfoRow label="Hardware rev" value="REV-C" />
-          <InfoRow label="Bootloader" value="v1.2.0" />
-          <InfoRow label="MCU" value="ESP32-S3 @ 240 MHz" />
-          <div className="flex items-center justify-between pt-2.5" style={{ fontSize: '0.78rem' }}>
-            <span className="text-slate-400">Last update</span>
-            <span className="text-slate-700 font-medium">Jun 28, 2026</span>
-          </div>
-        </div>
 
         {/* Sensor health */}
         <div className="bg-white rounded-2xl p-5 shadow-sm" style={{ border: '1px solid #E8F0FE' }}>

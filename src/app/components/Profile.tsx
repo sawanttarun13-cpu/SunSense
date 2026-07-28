@@ -186,36 +186,6 @@ export function Profile() {
 
       </div>
 
-      {/* Achievements */}
-      <div className="bg-white rounded-2xl p-5 shadow-sm" style={{ border: '1px solid #E8F0FE' }}>
-        <div className="flex items-center gap-2 mb-4">
-          <div className="rounded-xl p-2.5" style={{ background: '#FEFCE8' }}>
-            <Award size={15} style={{ color: '#CA8A04' }} />
-          </div>
-          <span className="font-semibold text-slate-700" style={{ fontSize: '0.85rem' }}>UV Protection Milestones</span>
-          <span className="ml-auto text-slate-400" style={{ fontSize: '0.72rem' }}>
-            {ACHIEVEMENTS.filter(a => a.earned).length} / {ACHIEVEMENTS.length} earned
-          </span>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {ACHIEVEMENTS.map(({ icon, label, desc, earned }) => (
-            <div
-              key={label}
-              className="rounded-2xl p-3.5 text-center transition-all"
-              style={{
-                background: earned ? 'linear-gradient(135deg, #EFF6FF, #FAF5FF)' : '#F8FAFF',
-                border: `1.5px solid ${earned ? '#BFDBFE' : '#E2E8F0'}`,
-                opacity: earned ? 1 : 0.5,
-              }}
-            >
-              <div style={{ fontSize: '1.8rem', marginBottom: 6 }}>{icon}</div>
-              <div className="font-semibold text-slate-700" style={{ fontSize: '0.75rem' }}>{label}</div>
-              <div className="text-slate-400 mt-0.5" style={{ fontSize: '0.65rem' }}>{desc}</div>
-              {!earned && <div className="text-slate-300 mt-1" style={{ fontSize: '0.6rem' }}>🔒 Locked</div>}
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }

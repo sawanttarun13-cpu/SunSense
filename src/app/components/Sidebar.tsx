@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   LayoutDashboard, TrendingUp, Clock, Bell, Cpu, Settings, User,
-  ChevronLeft, ChevronRight, Sun, Wifi, Battery, Menu, X,
+  ChevronLeft, ChevronRight, Sun, Wifi, Battery, Menu, X, LogOut,
 } from 'lucide-react';
 import type { Page } from '../App';
 
@@ -10,6 +10,7 @@ interface SidebarProps {
   setActivePage: (p: Page) => void;
   collapsed: boolean;
   setCollapsed: (v: boolean) => void;
+  onLogout?: () => void;
 }
 
 const navItems: { id: Page; label: string; icon: React.ElementType; badge?: string }[] = [
@@ -23,7 +24,7 @@ const navItems: { id: Page; label: string; icon: React.ElementType; badge?: stri
 ];
 
 function SidebarContent({
-  activePage, setActivePage, collapsed, setCollapsed, onNavClick,
+  activePage, setActivePage, collapsed, setCollapsed, onNavClick, onLogout,
 }: SidebarProps & { onNavClick?: () => void }) {
   return (
     <div
@@ -171,6 +172,16 @@ function SidebarContent({
       {/* Footer */}
       {!collapsed && (
         <div className="px-4 py-3.5 border-t" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
+          <button
+            onClick={onLogout}
+            className="w-full flex items-center gap-2.5 rounded-xl px-3 py-2 mb-2.5 transition-all"
+            style={{ background: 'rgba(239,68,68,0.10)', color: '#FCA5A5' }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(239,68,68,0.20)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'rgba(239,68,68,0.10)')}
+          >
+            <LogOut size={15} />
+            <span style={{ fontSize: '0.8rem', fontWeight: 500 }}>Log out</span>
+          </button>
           <div className="flex items-center justify-between">
             <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.65rem' }}>v3.1.0 · Firmware 2.3.1</span>
             <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.65rem' }}>Sync 2m ago</span>

@@ -176,9 +176,15 @@ function StatCard({
 }
 
 // ─── Mini metric ─────────────────────────────────────────────────────────────
-function MiniMetric({ label, value, bar, barColor }: { label: string; value: string; bar: number; barColor: string }) {
+function MiniMetric({ label, value, bar, barColor, onClick }: { label: string; value: string; bar: number; barColor: string; onClick?: () => void }) {
   return (
-    <div className="bg-white rounded-2xl p-4 shadow-sm" style={{ border: '1px solid #E8F0FE' }}>
+    <div
+      className="bg-white rounded-2xl p-4 shadow-sm transition-all duration-150"
+      style={{ border: '1px solid #E8F0FE', cursor: onClick ? 'pointer' : 'default' }}
+      onClick={onClick}
+      onMouseEnter={e => { if (onClick) (e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 16px rgba(37,99,235,0.10)'; }}
+      onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = ''; }}
+    >
       <div className="text-slate-400 mb-1" style={{ fontSize: '0.7rem', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</div>
       <div className="text-slate-800 font-bold mb-2.5" style={{ fontSize: '1.5rem' }}>{value}</div>
       <div className="h-1.5 rounded-full bg-slate-100">
@@ -189,7 +195,7 @@ function MiniMetric({ label, value, bar, barColor }: { label: string; value: str
 }
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
-export function Dashboard() {
+export function Dashboard({ onNavigate }: { onNavigate?: (page: string) => void } = {}) {
   const [uvValue, setUvValue] = useState(7.2);
   const [hourlyData, setHourlyData] = useState(generateHourly);
   const [tick, setTick] = useState(0);
@@ -246,10 +252,13 @@ export function Dashboard() {
         {/* Gauge card */}
         <div
           className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm flex flex-col relative overflow-hidden transition-all duration-500"
-          style={{ 
+          style={{
             border: '1px solid #E2E8F0',
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)'
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
+            cursor: onNavigate ? 'pointer' : 'default',
           }}
+          onClick={() => onNavigate?.('history')}
+          title="View history"
         >
           {/* Subtle background glow based on UV intensity */}
           <div 
@@ -333,7 +342,7 @@ export function Dashboard() {
             <MiniMetric label="Peak UV Today" value="9.3" bar={(9.3/12)*100} barColor="#EF4444" />
             <MiniMetric label="UV Dose (SED)" value="18.4" bar={70} barColor="#F97316" />
             <MiniMetric label="Burn Time Left" value="24 min" bar={35} barColor="#9333EA" />
-            <MiniMetric label="Active Alerts" value="3" bar={60} barColor="#EF4444" />
+            <MiniMetric label="Active Alerts" value="3" bar={60} barColor="#EF4444" onClick={() => onNavigate?.('alerts')} />
           </div>
         </div>
       </div>

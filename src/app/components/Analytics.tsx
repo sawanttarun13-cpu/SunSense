@@ -227,7 +227,19 @@ export function Analytics() {
           <div className="flex items-center gap-1.5">
             <span className="text-slate-400" style={{ fontSize: '0.65rem' }}>Less</span>
             {['#F1F5F9', '#86EFAC', '#FDE047', '#FDBA74', '#FCA5A5', '#C4B5FD'].map(c => (
-              <div key={c} className="w-3.5 h-3.5 rounded-sm" style={{ background: c }} />
+              <div key={c} className="relative group w-3.5 h-3.5 rounded-sm cursor-default" style={{ background: c }}>
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-20 pointer-events-none">
+                  <div className="rounded-lg px-2.5 py-1.5 text-white whitespace-nowrap shadow-lg text-center" style={{ background: '#1E293B', fontSize: '0.65rem', lineHeight: 1.5 }}>
+                    <div className="font-semibold">
+                      {({'#86EFAC':'Low','#FDE047':'Moderate','#FDBA74':'High','#FCA5A5':'Very High','#C4B5FD':'Extreme'} as Record<string,string>)[c] ?? 'No data'}
+                    </div>
+                    <div style={{ color: '#94A3B8' }}>
+                      {({'#86EFAC':'≤ 2','#FDE047':'≤ 5','#FDBA74':'≤ 7','#FCA5A5':'≤ 10','#C4B5FD':'12+'} as Record<string,string>)[c] ?? '—'}
+                    </div>
+                  </div>
+                  <div className="w-2 h-2 mx-auto -mt-1 rotate-45 rounded-sm" style={{ background: '#1E293B' }} />
+                </div>
+              </div>
             ))}
             <span className="text-slate-400" style={{ fontSize: '0.65rem' }}>More</span>
           </div>
