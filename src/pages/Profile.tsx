@@ -1,35 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { User, MapPin, Calendar, Sun, Edit3, Check, Award, Clock, TrendingUp, Shield, Flame } from 'lucide-react';
-import { UV_ZONES } from './Dashboard';
-
-// ─── Fitzpatrick scale ────────────────────────────────────────────────────────
-const SKIN_TYPES = [
-  { id: 1, label: 'Type I', desc: 'Always burns, never tans', tone: '#FDDCB5', burn: 10 },
-  { id: 2, label: 'Type II', desc: 'Burns easily, tans poorly', tone: '#F5C898', burn: 15 },
-  { id: 3, label: 'Type III', desc: 'Burns moderately, tans slowly', tone: '#E8A87C', burn: 25 },
-  { id: 4, label: 'Type IV', desc: 'Burns minimally, tans well', tone: '#C8845A', burn: 35 },
-  { id: 5, label: 'Type V', desc: 'Rarely burns, tans darkly', tone: '#A06040', burn: 50 },
-  { id: 6, label: 'Type VI', desc: 'Never burns, deeply pigmented', tone: '#6B3A20', burn: 60 },
-];
-
-const SENSITIVITY_LEVELS = [
-  { label: 'Very Low', rec: 10, color: '#22C55E' },
-  { label: 'Low', rec: 8, color: '#84CC16' },
-  { label: 'Moderate', rec: 7, color: '#EAB308' },
-  { label: 'High', rec: 6, color: '#F97316' },
-  { label: 'Very High', rec: 5, color: '#EF4444' },
-];
-
-const ACHIEVEMENTS = [
-  { icon: '🔥', label: '7-Day Streak', desc: 'SPF applied daily', earned: true },
-  { icon: '🛡️', label: 'Safe Skin', desc: '30 days under threshold', earned: true },
-  { icon: '🌅', label: 'Early Bird', desc: 'Tracked before 7 AM', earned: true },
-  { icon: '⚡', label: 'UV Warrior', desc: '90-day tracking streak', earned: false },
-  { icon: '🌞', label: 'Sun Chaser', desc: '100 outdoor readings', earned: true },
-  { icon: '💪', label: 'Protector', desc: 'Zero burns this month', earned: false },
-  { icon: '📊', label: 'Analyst', desc: 'Reviewed 30 reports', earned: true },
-  { icon: '🌍', label: 'Explorer', desc: 'Tracked in 5 locations', earned: false },
-];
+import { UV_ZONES } from '../constants/uv';
+import { profileService } from '../services/profile.service';
+import type { SkinType, SensitivityLevel, Achievement } from '../types/profile';
+import { LoadingState } from '../components/common/LoadingState';
+import { ErrorState } from '../components/common/ErrorState';
 
 function StatCard({ icon: Icon, label, value, color, bg }: { icon: React.ElementType; label: string; value: string; color: string; bg: string }) {
   return (
@@ -46,16 +21,49 @@ function StatCard({ icon: Icon, label, value, color, bg }: { icon: React.Element
 }
 
 export function Profile() {
+  const [skinTypes, setSkinTypes] = useState<SkinType[]>([]);
+  const [sensitivityLevels, setSensitivityLevels] = useState<SensitivityLevel[]>([]);
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
+  
   const [skinType, setSkinType] = useState(2);
   const [sensitivity, setSensitivity] = useState(2);
   const [editing, setEditing] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [name, setName] = useState('Alex Johnson');
-  const [location, setLocation] = useState('San Francisco, CA');
-  const [age, setAge] = useState('34');
+  const [name, setName] = useState('');
+  const [initials, setInitials] = useState('');
+  const [location, setLocation] = useState('');
+  const [age, setAge] = useState('');
 
-  const selectedSkin = SKIN_TYPES.find(s => s.id === skinType)!;
-  const selectedSens = SENSITIVITY_LEVELS[sensitivity];
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    Promise.all([
+      profileService.getProfile(),
+      profileService.getSkinTypes(),
+      profileService.getSensitivityLevels(),
+      profileService.getAchievements()
+    ])
+      .then(([prof, skins, sens, achs]) => {
+        setName(prof.name);
+        setInitials(prof.initials);
+        setLocation(prof.location);
+        setAge(prof.age);
+        setSkinType(prof.skinType);
+        setSensitivity(prof.sensitivity);
+        setSkinTypes(skins);
+        setSensitivityLevels(sens);
+        setAchievements(achs);
+        setLoading(false);
+      })
+      .catch(() => setError(true));
+  }, []);
+
+  if (loading) return <LoadingState />;
+  if (error) return <ErrorState onRetry={() => window.location.reload()} />;
+
+  const selectedSkin = skinTypes.find(s => s.id === skinType)!;
+  const selectedSens = sensitivityLevels[sensitivity];
 
   const handleSave = () => {
     setEditing(false);
@@ -84,7 +92,7 @@ export function Profile() {
             className="w-20 h-20 rounded-2xl flex items-center justify-center font-bold flex-shrink-0"
             style={{ background: 'rgba(255,255,255,0.15)', fontSize: '1.8rem', letterSpacing: '-1px' }}
           >
-            AJ
+            {initials}
           </div>
 
           <div className="flex-1">
@@ -154,8 +162,8 @@ export function Profile() {
             <span className="font-semibold text-slate-700" style={{ fontSize: '0.85rem' }}>Fitzpatrick Skin Type</span>
           </div>
 
-          <div className="grid grid-cols-3 gap-2 mb-4">
-            {SKIN_TYPES.map(s => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+            {skinTypes.map(s => (
               <button
                 key={s.id}
                 onClick={() => setSkinType(s.id)}

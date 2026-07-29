@@ -1,31 +1,43 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
-  LayoutDashboard, TrendingUp, Clock, Bell, Cpu, Settings, User,
   ChevronLeft, ChevronRight, Sun, Wifi, Battery, Menu, X, LogOut,
 } from 'lucide-react';
-import type { Page } from '../App';
+import { useLocation, useNavigate } from 'react-router';
+import { navItems } from '../../constants/navigation';
+import { deviceService } from '../../services/device.service';
+import { settingsService } from '../../services/settings.service';
+import { useUVData } from '../../hooks/useUVData';
 
 interface SidebarProps {
-  activePage: Page;
-  setActivePage: (p: Page) => void;
   collapsed: boolean;
   setCollapsed: (v: boolean) => void;
-  onLogout?: () => void;
 }
 
-const navItems: { id: Page; label: string; icon: React.ElementType; badge?: string }[] = [
-  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'analytics', label: 'Analytics', icon: TrendingUp },
-  { id: 'history', label: 'History', icon: Clock },
-  { id: 'alerts', label: 'Alerts', icon: Bell, badge: '3' },
-  { id: 'device', label: 'Device', icon: Cpu },
-  { id: 'settings', label: 'Settings', icon: Settings },
-  { id: 'profile', label: 'Profile', icon: User },
-];
+// navItems imported from constants/navigation
 
 function SidebarContent({
-  activePage, setActivePage, collapsed, setCollapsed, onNavClick, onLogout,
+  collapsed, setCollapsed, onNavClick,
 }: SidebarProps & { onNavClick?: () => void }) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  const [deviceData, setDeviceData] = useState<any>(null);
+  const [aboutData, setAboutData] = useState<any>(null);
+  const { uvValue, zone } = useUVData();
+
+  useEffect(() => {
+    Promise.all([
+      deviceService.getDeviceData(),
+      settingsService.getAbout()
+    ]).then(([d, a]) => {
+      setDeviceData(d);
+      setAboutData(a);
+    });
+  }, []);
+
+  const handleLogout = () => {
+    navigate('/login');
+  };
   return (
     <div
       className="flex flex-col h-full select-none"
@@ -71,7 +83,7 @@ function SidebarContent({
       </div>
 
       {/* Live status pill */}
-      {!collapsed && (
+      {!collapsed && deviceData && (
         <div className="mx-3 mt-3 rounded-2xl p-3.5" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
           <div className="flex items-center justify-between mb-2.5">
             <div className="flex items-center gap-2">
@@ -89,16 +101,16 @@ function SidebarContent({
           <div className="flex items-center justify-between">
             <div>
               <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.65rem' }}>Current UV</div>
-              <div style={{ color: '#FDA974', fontWeight: 700, fontSize: '0.9rem' }}>7.2 — High</div>
+              <div style={{ color: '#FDA974', fontWeight: 700, fontSize: '0.9rem' }}>{uvValue.toFixed(1)} — {zone.label}</div>
             </div>
             <div className="text-right">
               <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.65rem' }}>Battery</div>
-              <div style={{ color: '#7EB3FF', fontWeight: 600, fontSize: '0.85rem' }}>82%</div>
+              <div style={{ color: '#7EB3FF', fontWeight: 600, fontSize: '0.85rem' }}>{deviceData.battery.level}%</div>
             </div>
           </div>
           {/* Battery bar */}
           <div className="mt-2.5 h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.1)' }}>
-            <div className="h-1 rounded-full" style={{ width: '82%', background: 'linear-gradient(90deg, #3B82F6, #22C55E)' }} />
+            <div className="h-1 rounded-full" style={{ width: `${deviceData.battery.level}%`, background: 'linear-gradient(90deg, #3B82F6, #22C55E)' }} />
           </div>
         </div>
       )}
@@ -106,11 +118,11 @@ function SidebarContent({
       {/* Nav */}
       <nav className={`flex-1 py-3 space-y-0.5 ${collapsed ? 'px-2' : 'px-3'}`}>
         {navItems.map(({ id, label, icon: Icon, badge }) => {
-          const isActive = activePage === id;
+          const isActive = location.pathname.includes(id) || (id === 'dashboard' && location.pathname === '/');
           return (
             <button
               key={id}
-              onClick={() => { setActivePage(id); onNavClick?.(); }}
+              onClick={() => { navigate(`/${id}`); onNavClick?.(); }}
               title={collapsed ? label : undefined}
               className="w-full flex items-center rounded-xl transition-all duration-150 relative"
               style={{
@@ -173,7 +185,7 @@ function SidebarContent({
       {!collapsed && (
         <div className="px-4 py-3.5 border-t" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
           <button
-            onClick={onLogout}
+            onClick={handleLogout}
             className="w-full flex items-center gap-2.5 rounded-xl px-3 py-2 mb-2.5 transition-all"
             style={{ background: 'rgba(239,68,68,0.10)', color: '#FCA5A5' }}
             onMouseEnter={e => (e.currentTarget.style.background = 'rgba(239,68,68,0.20)')}
@@ -182,10 +194,12 @@ function SidebarContent({
             <LogOut size={15} />
             <span style={{ fontSize: '0.8rem', fontWeight: 500 }}>Log out</span>
           </button>
-          <div className="flex items-center justify-between">
-            <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.65rem' }}>v3.1.0 · Firmware 2.3.1</span>
-            <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.65rem' }}>Sync 2m ago</span>
-          </div>
+          {deviceData && aboutData && (
+            <div className="flex items-center justify-between">
+              <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.65rem' }}>{aboutData.appVersion} · Firmware {aboutData.firmware}</span>
+              <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.65rem' }}>Sync {deviceData.system.lastUpdate}</span>
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -1,8 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Battery, Wifi, Cpu, Clock, Zap, Activity, RefreshCw,
-  CheckCircle, AlertCircle, Shield, Thermometer, Radio,
+  CheckCircle, AlertCircle, Smartphone, AlertTriangle, CheckCircle2,
 } from 'lucide-react';
+import { deviceService } from '../services/device.service';
+import type { DeviceInfo, BatteryInfo, WifiInfo, SystemInfo, SensorHealth } from '../types/device';
+import { LoadingState } from '../components/common/LoadingState';
+import { ErrorState } from '../components/common/ErrorState';
 
 // ─── Battery visual ───────────────────────────────────────────────────────────
 function BatteryVisual({ pct }: { pct: number }) {
@@ -95,12 +99,29 @@ function ResourceBar({ label, pct, color }: { label: string; pct: number; color:
 
 // ─── Device page ──────────────────────────────────────────────────────────────
 export function Device() {
+  const [deviceData, setDeviceData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [syncing, setSyncing] = useState(false);
 
-  const handleSync = () => {
+  useEffect(() => {
+    deviceService.getDeviceData()
+      .then(data => {
+        setDeviceData(data);
+        setLoading(false);
+      })
+      .catch(() => setError(true));
+  }, []);
+
+  const handleSync = async () => {
     setSyncing(true);
-    setTimeout(() => setSyncing(false), 2200);
+    await deviceService.syncDevice();
+    setSyncing(false);
   };
+
+  if (loading) return <LoadingState />;
+  if (error) return <ErrorState onRetry={() => window.location.reload()} />;
+  if (!deviceData) return null;
 
   return (
     <div className="p-5 md:p-6 max-w-5xl mx-auto">
@@ -138,8 +159,8 @@ export function Device() {
                 <Cpu size={22} />
               </div>
               <div>
-                <div className="font-bold" style={{ fontSize: '1.05rem' }}>UV Shield Pro</div>
-                <div style={{ color: '#93C5FD', fontSize: '0.75rem' }}>Model UVK-2001 · S/N: UV24-8842-XK</div>
+                <div className="font-bold" style={{ fontSize: '1.05rem' }}>{deviceData.info.model.split(' (')[0]}</div>
+                <div style={{ color: '#93C5FD', fontSize: '0.75rem' }}>Model {deviceData.info.model.match(/\(([^)]+)\)/)?.[1]} · S/N: {deviceData.info.serialNumber}</div>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -152,10 +173,10 @@ export function Device() {
           </div>
           <div className="grid grid-cols-2 gap-x-8 gap-y-2">
             {[
-              { label: 'Uptime', value: '14h 22m' },
-              { label: 'Readings Today', value: '1,440' },
-              { label: 'Accuracy', value: '±0.2 UV' },
-              { label: 'Range', value: '0–20 UV' },
+              { label: 'Uptime', value: deviceData.info.uptime },
+              { label: 'Readings Today', value: deviceData.info.readingsToday },
+              { label: 'Accuracy', value: deviceData.info.accuracy },
+              { label: 'Range', value: deviceData.info.range },
             ].map(({ label, value }) => (
               <div key={label}>
                 <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.68rem' }}>{label}</div>
@@ -176,13 +197,13 @@ export function Device() {
             </div>
             <span className="font-semibold text-slate-600" style={{ fontSize: '0.8rem' }}>Battery Level</span>
           </div>
-          <BatteryVisual pct={82} />
+          <BatteryVisual pct={deviceData.battery.level} />
           <div className="mt-3 pt-3" style={{ borderTop: '1px solid #F1F5F9' }}>
-            <InfoRow label="Type" value="Li-Po 380 mAh" />
-            <InfoRow label="Charging" value="Not connected" />
+            <InfoRow label="Type" value={deviceData.battery.type} />
+            <InfoRow label="Charging" value={deviceData.battery.charging} />
             <div className="flex items-center justify-between pt-2.5" style={{ fontSize: '0.78rem' }}>
               <span className="text-slate-400">Cycles used</span>
-              <span className="text-slate-700 font-medium">142 / 500</span>
+              <span className="text-slate-700 font-medium">{deviceData.battery.cycles}</span>
             </div>
           </div>
         </div>
@@ -195,11 +216,11 @@ export function Device() {
             </div>
             <span className="font-semibold text-slate-600" style={{ fontSize: '0.8rem' }}>Wi-Fi Signal</span>
           </div>
-          <WifiStrength bars={3} />
+          <WifiStrength bars={deviceData.wifi.bars} />
           <div className="mt-3 pt-3" style={{ borderTop: '1px solid #F1F5F9' }}>
-            <InfoRow label="SSID" value="HomeNetwork_5G" />
-            <InfoRow label="Protocol" value="802.11ac (Wi-Fi 5)" />
-            <InfoRow label="IP Address" value="192.168.1.47" />
+            <InfoRow label="SSID" value={deviceData.wifi.ssid} />
+            <InfoRow label="IP Address" value={deviceData.wifi.ip} />
+            <InfoRow label="MAC Address" value={deviceData.wifi.mac} />
           </div>
         </div>
 
@@ -235,13 +256,12 @@ export function Device() {
             <span className="font-semibold text-slate-600" style={{ fontSize: '0.8rem' }}>Sensor Health</span>
             <span className="ml-auto rounded-full px-2.5 py-1 font-semibold" style={{ background: '#DCFCE7', color: '#16A34A', fontSize: '0.68rem' }}>Excellent</span>
           </div>
-          <SensorRow name="UV-A Sensor (VEML6070)" ok={true} value="Calibrated" />
-          <SensorRow name="UV-B Sensor (ML8511)" ok={true} value="Nominal" />
-          <SensorRow name="Temperature Probe" ok={true} value="34.2°C" />
-          <SensorRow name="Ambient Light Sensor" ok={true} value="Active" />
-          <div className="flex items-center justify-between pt-2.5" style={{ fontSize: '0.78rem' }}>
-            <span className="text-slate-400">Last calibration</span>
-            <span className="text-slate-700 font-medium">Jul 1, 2026</span>
+          <SensorRow name="UV Sensor (ML8511)" ok={deviceData.sensors.ml8511.ok} value={deviceData.sensors.ml8511.val} />
+          <SensorRow name="Temperature Probe" ok={deviceData.sensors.thermometer.ok} value={deviceData.sensors.thermometer.val} />
+          <SensorRow name="CPU Health" ok={deviceData.sensors.cpu.ok} value={deviceData.sensors.cpu.val} />
+          <div className="flex items-center justify-between pt-2.5 mt-2" style={{ borderTop: '1px solid #F1F5F9', fontSize: '0.78rem' }}>
+            <span className="text-slate-400">Firmware</span>
+            <span className="text-slate-700 font-medium">{deviceData.system.firmware}</span>
           </div>
         </div>
       </div>

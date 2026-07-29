@@ -1,62 +1,15 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   LineChart, Line, Cell, Legend, AreaChart, Area, ComposedChart,
 } from 'recharts';
 import { TrendingUp, TrendingDown, Sun, Clock, Calendar } from 'lucide-react';
-import { getUVZone } from './Dashboard';
+import { getUVZone } from '../constants/uv';
+import { heatFillColor } from '../mockData/analytics';
+import { analyticsService } from '../services/analytics.service';
+import { LoadingState } from '../components/common/LoadingState';
+import { ErrorState } from '../components/common/ErrorState';
 
-// ─── Mock data ────────────────────────────────────────────────────────────────
-const weeklyData = [
-  { day: 'Mon', avg: 4.2, max: 7.8, exposure: 95 },
-  { day: 'Tue', avg: 6.1, max: 9.3, exposure: 148 },
-  { day: 'Wed', avg: 5.8, max: 8.7, exposure: 132 },
-  { day: 'Thu', avg: 3.4, max: 6.1, exposure: 72 },
-  { day: 'Fri', avg: 7.2, max: 10.1, exposure: 175 },
-  { day: 'Sat', avg: 8.5, max: 11.4, exposure: 210 },
-  { day: 'Sun', avg: 6.9, max: 9.8, exposure: 165 },
-];
-
-const monthlyData = [
-  { week: 'W1 Jun', avg: 5.1, max: 8.9, days: 7 },
-  { week: 'W2 Jun', avg: 6.3, max: 10.2, days: 7 },
-  { week: 'W3 Jun', avg: 4.8, max: 7.6, days: 7 },
-  { week: 'W4 Jun', avg: 7.1, max: 11.4, days: 7 },
-  { week: 'W1 Jul', avg: 5.9, max: 9.1, days: 7 },
-  { week: 'W2 Jul', avg: 6.7, max: 10.8, days: 6 },
-];
-
-const peakHoursData = Array.from({ length: 24 }, (_, h) => {
-  let uv = 0;
-  if (h >= 6 && h <= 19) {
-    const t = (h - 6) / 13;
-    uv = Math.max(0, parseFloat((9.5 * Math.sin(Math.PI * t) * (0.88 + Math.random() * 0.24)).toFixed(1)));
-  }
-  return { hour: `${h}h`, uv };
-});
-
-// Heatmap: 91 days
-function makeHeatmap() {
-  const today = new Date();
-  return Array.from({ length: 91 }, (_, i) => {
-    const d = new Date(today);
-    d.setDate(d.getDate() - (90 - i));
-    const month = d.getMonth();
-    const uv = Math.max(0, parseFloat((5.5 + 3 * Math.sin(month / 6 * Math.PI) + (Math.random() - 0.5) * 4).toFixed(1)));
-    return { date: d, uv, label: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) };
-  });
-}
-const heatmapData = makeHeatmap();
-
-function heatColor(uv: number) {
-  if (uv <= 0) return '#F1F5F9';
-  const z = getUVZone(uv);
-  return z.color + '55'; // 33% opacity hex
-}
-function heatFillColor(uv: number) {
-  if (uv <= 0) return '#F1F5F9';
-  return getUVZone(uv).color;
-}
 
 // ─── Custom tooltip ───────────────────────────────────────────────────────────
 function BarTip({ active, payload, label }: any) {
@@ -96,9 +49,37 @@ function StatBox({ label, value, sub, color, trend }: { label: string; value: st
 
 // ─── Analytics page ───────────────────────────────────────────────────────────
 export function Analytics() {
-  const [tab, setTab] = useState<'weekly' | 'monthly'>('weekly');
-  const chartData = tab === 'weekly' ? weeklyData : monthlyData;
-  const xKey = tab === 'weekly' ? 'day' : 'week';
+  const [range, setRange] = useState<'week' | 'month'>('week');
+  
+  const [weekly, setWeekly] = useState<any[]>([]);
+  const [monthly, setMonthly] = useState<any[]>([]);
+  const [peakHours, setPeakHours] = useState<any[]>([]);
+  const [heatmap, setHeatmap] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    Promise.all([
+      analyticsService.getWeeklyData(),
+      analyticsService.getMonthlyData(),
+      analyticsService.getPeakHoursData(),
+      analyticsService.getHeatmapData()
+    ])
+      .then(([w, m, p, h]) => {
+        setWeekly(w);
+        setMonthly(m);
+        setPeakHours(p);
+        setHeatmap(h);
+        setLoading(false);
+      })
+      .catch(() => setError(true));
+  }, []);
+
+  if (loading) return <LoadingState />;
+  if (error) return <ErrorState onRetry={() => window.location.reload()} />;
+
+  const chartData = range === 'week' ? weekly : monthly;
+  const xKey = range === 'week' ? 'day' : 'week';
 
   return (
     <div className="p-5 md:p-6 max-w-7xl mx-auto">
@@ -124,15 +105,15 @@ export function Analytics() {
             <p className="text-slate-400 mt-0.5" style={{ fontSize: '0.7rem' }}>Average and maximum UV index per period</p>
           </div>
           <div className="flex rounded-xl overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
-            {(['weekly', 'monthly'] as const).map(t => (
+            {(['week', 'month'] as const).map(t => (
               <button
                 key={t}
-                onClick={() => setTab(t)}
+                onClick={() => setRange(t)}
                 className="px-4 py-1.5 transition-colors"
                 style={{
                   fontSize: '0.75rem', fontWeight: 500,
-                  background: tab === t ? '#2563EB' : '#fff',
-                  color: tab === t ? '#fff' : '#64748B',
+                  background: range === t ? '#2563EB' : '#fff',
+                  color: range === t ? '#fff' : '#64748B',
                 }}
               >
                 {t.charAt(0).toUpperCase() + t.slice(1)}
@@ -162,13 +143,12 @@ export function Analytics() {
             <p className="text-slate-400 mt-0.5" style={{ fontSize: '0.7rem' }}>Average UV by hour of day (7-day)</p>
           </div>
           <ResponsiveContainer width="100%" height={180}>
-            <BarChart data={peakHoursData} margin={{ top: 5, right: 5, left: -28, bottom: 0 }}>
+            <BarChart data={peakHours} margin={{ top: 5, right: 5, left: -28, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
               <XAxis dataKey="hour" tickLine={false} axisLine={false} tick={{ fill: '#94A3B8', fontSize: 9 }} interval={3} />
               <YAxis domain={[0, 12]} tickLine={false} axisLine={false} tick={{ fill: '#94A3B8', fontSize: 9 }} />
-              <Tooltip content={<BarTip />} />
               <Bar dataKey="uv" name="UV Index" radius={[4, 4, 0, 0]}>
-                {peakHoursData.map((e, i) => (
+                {peakHours.map((e, i) => (
                   <Cell key={`cell-${i}`} fill={getUVZone(e.uv).color} fillOpacity={0.82} />
                 ))}
               </Bar>
@@ -197,7 +177,7 @@ export function Analytics() {
             <p className="text-slate-400 mt-0.5" style={{ fontSize: '0.7rem' }}>Rolling weekly average & maximum</p>
           </div>
           <ResponsiveContainer width="100%" height={180}>
-            <ComposedChart data={monthlyData} margin={{ top: 5, right: 10, left: -28, bottom: 0 }}>
+            <ComposedChart data={monthly} margin={{ top: 5, right: 10, left: -28, bottom: 0 }}>
               <defs>
                 <linearGradient id="avgFill" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#3B82F6" stopOpacity={0.2} />
@@ -244,13 +224,13 @@ export function Analytics() {
             <span className="text-slate-400" style={{ fontSize: '0.65rem' }}>More</span>
           </div>
         </div>
-        <div className="flex flex-wrap gap-1">
-          {heatmapData.map(({ date, uv, label }, i) => (
+        <div className="grid grid-cols-7 sm:grid-cols-13 gap-1.5 overflow-x-auto pb-2">
+          {heatmap.map((d, i) => (
             <div
               key={i}
               className="w-5 h-5 rounded-md cursor-default transition-transform hover:scale-110"
-              style={{ background: heatFillColor(uv), opacity: 0.8 + uv / 60 }}
-              title={`${label} — UV ${uv}`}
+              style={{ background: heatFillColor(d.uv), opacity: 0.8 + d.uv / 60 }}
+              title={`${d.label}: ${d.uv.toFixed(1)} UV`}
             />
           ))}
         </div>

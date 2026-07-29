@@ -1,64 +1,40 @@
-import { useState } from 'react';
-import { AlertTriangle, Zap, Shield, Bell, Info, CheckCircle, Sun, X } from 'lucide-react';
-import { getUVZone } from './Dashboard';
-
-type AlertSeverity = 'extreme' | 'critical' | 'warning' | 'info' | 'resolved';
-
-interface AlertItem {
-  id: number;
-  severity: AlertSeverity;
-  title: string;
-  message: string;
-  time: string;
-  uvValue?: number;
-  icon: React.ElementType;
-  isNew?: boolean;
-}
-
-const ALERT_DATA: AlertItem[] = [
-  { id: 1, severity: 'extreme', title: 'Extreme UV Event', message: 'UV index reached 11.4 — extreme levels detected. Seek shade immediately and apply SPF 50+ sunscreen.', time: 'Today · 12:45 PM', uvValue: 11.4, icon: Zap, isNew: true },
-  { id: 2, severity: 'critical', title: 'Very High UV Warning', message: 'UV index 9.3. Apply broad-spectrum sunscreen, wear protective clothing and limit sun exposure to 15 minutes.', time: 'Today · 11:30 AM', uvValue: 9.3, icon: AlertTriangle, isNew: true },
-  { id: 3, severity: 'warning', title: 'SPF Reapplication Reminder', message: '2 hours have passed since your last sunscreen application. Reapply SPF 30+ now for continued protection.', time: 'Today · 10:00 AM', icon: Shield, isNew: true },
-  { id: 4, severity: 'critical', title: 'Rapid UV Spike Detected', message: 'UV index jumped from 4.2 to 8.1 in under 15 minutes — possible cloud clearing event. Take precautions.', time: 'Yesterday · 1:15 PM', uvValue: 8.1, icon: AlertTriangle },
-  { id: 5, severity: 'warning', title: 'Extended High UV Exposure', message: 'You have been exposed to UV index above 6 for over 45 continuous minutes. Consider moving to shade.', time: 'Yesterday · 12:00 PM', uvValue: 7.8, icon: Sun },
-  { id: 6, severity: 'info', title: 'Daily UV Summary', message: "Yesterday's peak UV was 8.7 at 1:00 PM. Total exposure: 2h 30m. SPF was applied twice. Good protection habits!", time: 'Yesterday · 8:00 PM', icon: Bell },
-  { id: 7, severity: 'resolved', title: 'UV Returned to Safe Range', message: 'UV index dropped to 2.1 — low levels. No additional sunscreen needed for the next few hours.', time: 'Jul 10 · 4:30 PM', uvValue: 2.1, icon: CheckCircle },
-  { id: 8, severity: 'extreme', title: 'Saturday Extreme UV Event', message: 'UV index hit 11.8 — highest recorded this season. Daily UV dose limit exceeded. Stay indoors recommended.', time: 'Jul 8 · 12:00 PM', uvValue: 11.8, icon: Zap },
-  { id: 9, severity: 'info', title: 'Device Reconnected', message: 'UV Shield keychain reconnected after being out of Bluetooth range for 12 minutes. Data sync complete.', time: 'Jul 7 · 3:45 PM', icon: Info },
-  { id: 10, severity: 'resolved', title: 'Alert Threshold Updated', message: 'UV alert threshold changed to 6.0. You will now be notified earlier when UV levels become potentially harmful.', time: 'Jul 5 · 9:00 AM', icon: CheckCircle },
-];
-
-const SEVERITY_STYLES: Record<AlertSeverity, { bg: string; border: string; iconBg: string; iconColor: string; dotColor: string; badgeBg: string; badgeText: string; label: string }> = {
-  extreme: { bg: '#FDF4FF', border: '#D8B4FE', iconBg: '#F3E8FF', iconColor: '#9333EA', dotColor: '#9333EA', badgeBg: '#F3E8FF', badgeText: '#9333EA', label: 'Extreme' },
-  critical: { bg: '#FFF1F2', border: '#FECDD3', iconBg: '#FFE4E6', iconColor: '#E11D48', dotColor: '#E11D48', badgeBg: '#FFE4E6', badgeText: '#E11D48', label: 'Critical' },
-  warning: { bg: '#FFFBEB', border: '#FDE68A', iconBg: '#FEF3C7', iconColor: '#D97706', dotColor: '#D97706', badgeBg: '#FEF3C7', badgeText: '#D97706', label: 'Warning' },
-  info: { bg: '#EFF6FF', border: '#BFDBFE', iconBg: '#DBEAFE', iconColor: '#2563EB', dotColor: '#2563EB', badgeBg: '#DBEAFE', badgeText: '#2563EB', label: 'Info' },
-  resolved: { bg: '#F0FDF4', border: '#BBF7D0', iconBg: '#DCFCE7', iconColor: '#16A34A', dotColor: '#22C55E', badgeBg: '#DCFCE7', badgeText: '#16A34A', label: 'Resolved' },
-};
-
-const FILTER_TABS: { key: AlertSeverity | 'all'; label: string }[] = [
-  { key: 'all', label: 'All' },
-  { key: 'extreme', label: 'Extreme' },
-  { key: 'critical', label: 'Critical' },
-  { key: 'warning', label: 'Warning' },
-  { key: 'info', label: 'Info' },
-  { key: 'resolved', label: 'Resolved' },
-];
+import { useState, useEffect } from 'react';
+import { Bell, X } from 'lucide-react';
+import type { AlertSeverity, AlertItem } from '../types/alert';
+import { SEVERITY_STYLES, FILTER_TABS } from '../mockData/alerts';
+import { alertsService } from '../services/alerts.service';
+import { LoadingState } from '../components/common/LoadingState';
+import { ErrorState } from '../components/common/ErrorState';
 
 export function Alerts() {
   const [activeFilter, setActiveFilter] = useState<AlertSeverity | 'all'>('all');
   const [dismissed, setDismissed] = useState<Set<number>>(new Set());
+  const [alerts, setAlerts] = useState<AlertItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-  const visible = ALERT_DATA.filter(a => !dismissed.has(a.id) && (activeFilter === 'all' || a.severity === activeFilter));
+  useEffect(() => {
+    alertsService.getAlerts()
+      .then(data => {
+        setAlerts(data);
+        setLoading(false);
+      })
+      .catch(() => setError(true));
+  }, []);
+
+  const visible = alerts.filter(a => !dismissed.has(a.id) && (activeFilter === 'all' || a.severity === activeFilter));
 
   const counts: Record<AlertSeverity, number> = {
-    extreme: ALERT_DATA.filter(a => a.severity === 'extreme').length,
-    critical: ALERT_DATA.filter(a => a.severity === 'critical').length,
-    warning: ALERT_DATA.filter(a => a.severity === 'warning').length,
-    info: ALERT_DATA.filter(a => a.severity === 'info').length,
-    resolved: ALERT_DATA.filter(a => a.severity === 'resolved').length,
+    extreme: alerts.filter(a => a.severity === 'extreme').length,
+    critical: alerts.filter(a => a.severity === 'critical').length,
+    warning: alerts.filter(a => a.severity === 'warning').length,
+    info: alerts.filter(a => a.severity === 'info').length,
+    resolved: alerts.filter(a => a.severity === 'resolved').length,
   };
   const activeCount = counts.extreme + counts.critical + counts.warning;
+
+  if (loading) return <LoadingState />;
+  if (error) return <ErrorState onRetry={() => window.location.reload()} />;
 
   return (
     <div className="p-5 md:p-6 max-w-4xl mx-auto">

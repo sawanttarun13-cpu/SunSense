@@ -1,5 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Bell, Sun, Smartphone, Shield, Moon, Bluetooth, ChevronRight, Check, Sliders, Wifi, Volume2 } from 'lucide-react';
+import { SPF_OPTS, THEME_OPTS } from '../constants/settings';
+import { settingsService } from '../services/settings.service';
+import { LoadingState } from '../components/common/LoadingState';
+import { ErrorState } from '../components/common/ErrorState';
 
 // ─── Toggle switch ────────────────────────────────────────────────────────────
 function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) => void }) {
@@ -56,8 +60,7 @@ function NotifRow({
   );
 }
 
-const SPF_OPTS = [15, 30, 50, 100];
-const THEME_OPTS = ['Light', 'Dark', 'System'];
+// SPF_OPTS and THEME_OPTS imported from constants/settings
 
 export function SettingsPage() {
   const [spf, setSpf] = useState(30);
@@ -68,6 +71,25 @@ export function SettingsPage() {
     extreme: true, high: true, spfReminder: true,
     dailySummary: false, batteryLow: true, disconnect: true, sound: true,
   });
+  const [about, setAbout] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    Promise.all([
+      settingsService.getSettings(),
+      settingsService.getAbout()
+    ])
+      .then(([settingsData, aboutData]) => {
+        setSpf(settingsData.spfLevel);
+        setThreshold(settingsData.uvThreshold);
+        setTheme(settingsData.theme);
+        setNotifs(settingsData.notifications);
+        setAbout(aboutData);
+        setLoading(false);
+      })
+      .catch(() => setError(true));
+  }, []);
 
   const toggle = (key: keyof typeof notifs) => setNotifs(n => ({ ...n, [key]: !n[key] }));
 
@@ -81,6 +103,9 @@ export function SettingsPage() {
     : threshold <= 7 ? { color: '#EA580C', bg: '#FFF7ED' }
     : threshold <= 10 ? { color: '#DC2626', bg: '#FEF2F2' }
     : { color: '#9333EA', bg: '#FAF5FF' };
+
+  if (loading) return <LoadingState />;
+  if (error) return <ErrorState onRetry={() => window.location.reload()} />;
 
   return (
     <div className="p-5 md:p-6 max-w-3xl mx-auto">
@@ -246,7 +271,7 @@ export function SettingsPage() {
         style={{ background: '#F8FAFF', border: '1px solid #E8F0FE' }}
       >
         <div className="text-slate-400 space-y-1" style={{ fontSize: '0.72rem' }}>
-          <div>UV Shield App v3.1.0 · Build 2026.07.13 · Firmware v2.3.1</div>
+          <div>UV Shield App {about?.appVersion} · Build {about?.build} · Firmware {about?.firmware}</div>
           <div className="flex justify-center gap-5 mt-2">
             {['Privacy Policy', 'Terms of Use', 'Support', 'Licenses'].map(l => (
               <button key={l} className="text-blue-500 hover:underline">{l}</button>

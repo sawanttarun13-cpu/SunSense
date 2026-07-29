@@ -1,59 +1,36 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Search, Download, SlidersHorizontal, ChevronLeft, ChevronRight, MapPin, ArrowUpDown } from 'lucide-react';
-import { getUVZone } from './Dashboard';
-
-const LOCATIONS = ['City Park', 'Beach Front', 'Office Rooftop', 'Home Garden', 'Downtown', 'Sports Field', 'Lake Shore', 'Mountain Trail', 'Mall Entrance'];
-
-function makeLog(i: number) {
-  const base = new Date('2026-07-13T18:00:00');
-  base.setMinutes(base.getMinutes() - i * 47);
-  const uv = parseFloat((Math.random() * 11.2 + 0.3).toFixed(1));
-  const mins = Math.floor(Math.random() * 95 + 8);
-  return {
-    id: i + 1,
-    date: base,
-    uv,
-    duration: mins,
-    location: LOCATIONS[i % LOCATIONS.length],
-  };
-}
-
-const ALL_LOGS = Array.from({ length: 72 }, (_, i) => makeLog(i)).sort((a, b) => b.date.getTime() - a.date.getTime());
-const PAGE_SIZE = 14;
-const LEVEL_OPTS = ['All', 'Low', 'Moderate', 'High', 'Very High', 'Extreme'];
-
-function fmtDate(d: Date) {
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-}
-function fmtTime(d: Date) {
-  return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-}
-function fmtDuration(m: number) {
-  if (m < 60) return `${m}m`;
-  return `${Math.floor(m / 60)}h ${m % 60}m`;
-}
-
-function exportCSV(rows: typeof ALL_LOGS) {
-  const header = 'Date,Time,UV Index,Level,Duration,Location\n';
-  const body = rows.map(r => {
-    const z = getUVZone(r.uv);
-    return `${fmtDate(r.date)},${fmtTime(r.date)},${r.uv},${z.label},${fmtDuration(r.duration)},${r.location}`;
-  }).join('\n');
-  const blob = new Blob([header + body], { type: 'text/csv' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'uv-history.csv'; a.click();
-  URL.revokeObjectURL(url);
-}
+import {
+  PAGE_SIZE, LEVEL_OPTS,
+  fmtDate, fmtTime, fmtDuration, exportCSV,
+} from '../mockData/history';
+import type { UVLogEntry } from '../types/history';
+import { getUVZone } from '../constants/uv';
+import { historyService } from '../services/history.service';
+import { LoadingState } from '../components/common/LoadingState';
+import { ErrorState } from '../components/common/ErrorState';
 
 export function History() {
+  const [logs, setLogs] = useState<UVLogEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    historyService.getLogs()
+      .then(data => {
+        setLogs(data);
+        setLoading(false);
+      })
+      .catch(() => setError(true));
+  }, []);
+
   const [search, setSearch] = useState('');
   const [level, setLevel] = useState('All');
   const [page, setPage] = useState(1);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
   const filtered = useMemo(() => {
-    let rows = ALL_LOGS.filter(r => {
+    let rows = logs.filter(r => {
       const z = getUVZone(r.uv);
       const matchLevel = level === 'All' || z.label === level;
       const q = search.toLowerCase();
@@ -65,7 +42,7 @@ export function History() {
       ? b.date.getTime() - a.date.getTime()
       : a.date.getTime() - b.date.getTime());
     return rows;
-  }, [search, level, sortDir]);
+  }, [search, level, sortDir, logs]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -74,9 +51,12 @@ export function History() {
   const handleSearch = (v: string) => { setSearch(v); setPage(1); };
 
   // Summary counts
-  const highCount = ALL_LOGS.filter(r => r.uv > 6).length;
-  const avgUV = (ALL_LOGS.reduce((s, r) => s + r.uv, 0) / ALL_LOGS.length).toFixed(1);
-  const locationSet = new Set(ALL_LOGS.map(r => r.location)).size;
+  const highCount = logs.filter(r => r.uv > 6).length;
+  const avgUV = logs.length > 0 ? (logs.reduce((s, r) => s + r.uv, 0) / logs.length).toFixed(1) : '0.0';
+  const locationSet = new Set(logs.map(r => r.location)).size;
+
+  if (loading) return <LoadingState />;
+  if (error) return <ErrorState onRetry={() => window.location.reload()} />;
 
   return (
     <div className="p-5 md:p-6 max-w-7xl mx-auto">
@@ -84,7 +64,7 @@ export function History() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-slate-800 font-semibold" style={{ fontSize: '1.2rem' }}>History</h1>
-          <p className="text-slate-400 mt-0.5" style={{ fontSize: '0.8rem' }}>{ALL_LOGS.length} UV log entries recorded</p>
+          <p className="text-slate-400 mt-0.5" style={{ fontSize: '0.8rem' }}>{logs.length} UV log entries recorded</p>
         </div>
         <button
           onClick={() => exportCSV(filtered)}
@@ -101,7 +81,7 @@ export function History() {
       {/* Summary cards */}
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 mb-5">
         {[
-          { label: 'Total Logs', value: ALL_LOGS.length, color: '#2563EB' },
+          { label: 'Total Logs', value: logs.length, color: '#2563EB' },
           { label: 'High UV Events', value: highCount, color: '#EF4444' },
           { label: 'Average UV', value: avgUV, color: '#F97316' },
           { label: 'Locations', value: locationSet, color: '#22C55E' },

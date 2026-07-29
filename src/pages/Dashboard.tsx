@@ -7,213 +7,45 @@ import {
   Battery, Wifi, Shield, Clock, Activity, AlertTriangle,
   Sun, Zap, ChevronUp, ChevronDown,
 } from 'lucide-react';
+import { StatCard } from '../components/common/StatCard';
+import { UVGauge } from '../components/common/UVGauge';
+import { MiniMetric } from '../components/common/MiniMetric';
+import { UV_ZONES } from '../constants/uv';
+import { useUVData } from '../hooks/useUVData';
+import { ChartTooltip } from '../components/charts/ChartTooltip';
+import { dashboardService } from '../services/dashboard.service';
+import type { DashboardStat } from '../types/dashboard';
+import { LoadingState } from '../components/common/LoadingState';
+import { ErrorState } from '../components/common/ErrorState';
 
-// ─── UV helpers ───────────────────────────────────────────────────────────────
-export const UV_ZONES = [
-  { max: 2, label: 'Low', color: '#22C55E', bg: '#F0FDF4', border: '#BBF7D0', text: '#16A34A' },
-  { max: 5, label: 'Moderate', color: '#EAB308', bg: '#FEFCE8', border: '#FDE68A', text: '#CA8A04' },
-  { max: 7, label: 'High', color: '#F97316', bg: '#FFF7ED', border: '#FED7AA', text: '#EA580C' },
-  { max: 10, label: 'Very High', color: '#EF4444', bg: '#FEF2F2', border: '#FECACA', text: '#DC2626' },
-  { max: Infinity, label: 'Extreme', color: '#9333EA', bg: '#FAF5FF', border: '#E9D5FF', text: '#9333EA' },
-];
-export const getUVZone = (v: number) => UV_ZONES.find(z => v <= z.max) ?? UV_ZONES[4];
-
-// ─── Animated SVG Gauge ───────────────────────────────────────────────────────
-const polarToCartesian = (cx: number, cy: number, r: number, deg: number) => {
-  const rad = ((deg - 90) * Math.PI) / 180;
-  return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
-};
-
-function UVGauge({ value }: { value: number }) {
-  const cx = 130, cy = 150, r = 100, sw = 14;
-  // Semi-circle: 180° sweep from 180° (left) to 0° (right)
-  const arcLen = Math.PI * r; 
-
-  const startPt = polarToCartesian(cx, cy, r, 270); // 180 deg
-  const endPt   = polarToCartesian(cx, cy, r, 90);  // 0 deg
-  // Simple semi-circle arc path
-  const arcPath = `M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${cx + r} ${cy}`;
-
-  const fraction = Math.min(Math.max(value / 12, 0), 1);
-  const progressLen = fraction * arcLen;
-
-  // Indicator dot position - simple 180 degree rotation from 180 to 0 (clockwise)
-  // 180 index on left, 0 on right. 
-  // Wait, polarToCartesian 0 is right? Usually 0 is up or right.
-  // Let's re-verify the helper: rad = ((deg - 90) * Math.PI) / 180
-  // deg 180 -> rad = 90 deg (down?) No.
-  // Let's use standard angles for clarity: 180 (left) -> 360 (right)
-  const arcStart = 270; // 180 degrees left
-  const arcEnd = 90; // 0 degrees right
-  const dotAngle = arcStart + (fraction * 180);
-  const dot = polarToCartesian(cx, cy, r, dotAngle);
-
-  const zone = getUVZone(value);
-
-  // Zone boundary ticks at UV 0, 2, 5, 7, 10, 12
-  const tickUVs = [0, 2, 5, 7, 10, 12];
-  const ticks = tickUVs.map(uv => {
-    const a = arcStart + (uv / 12) * 180;
-    const inner = polarToCartesian(cx, cy, r - 8, a);
-    const outer = polarToCartesian(cx, cy, r + 8, a);
-    return { uv, inner, outer };
-  });
-
-  return (
-    <svg viewBox="0 0 260 180" style={{ width: '100%', maxWidth: 280 }}>
-      <defs>
-        <filter id="arcGlow" x="-20%" y="-20%" width="140%" height="140%">
-          <feGaussianBlur stdDeviation="3" result="blur" />
-          <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-        </filter>
-      </defs>
-
-      {/* Background track (gray) */}
-      <path d={arcPath} fill="none" stroke="#F1F5F9" strokeWidth={sw} strokeLinecap="round" />
-
-      {/* Progress arc */}
-      <path
-        d={arcPath}
-        fill="none"
-        stroke={zone.color}
-        strokeWidth={sw}
-        strokeLinecap="round"
-        filter="url(#arcGlow)"
-        style={{
-          strokeDasharray: `${progressLen.toFixed(2)} ${arcLen.toFixed(2)}`,
-          transition: 'stroke-dasharray 1s cubic-bezier(0.34,1.56,0.64,1), stroke 0.4s ease',
-        }}
-      />
-
-      {/* Tick marks (simplified) */}
-      {ticks.map(({ uv, inner, outer }) => (
-        <line
-          key={`tick-${uv}`}
-          x1={inner.x.toFixed(2)} y1={inner.y.toFixed(2)}
-          x2={outer.x.toFixed(2)} y2={outer.y.toFixed(2)}
-          stroke="#CBD5E1" strokeWidth={1} opacity={0.5}
-        />
-      ))}
-
-      {/* Center: UV number */}
-      <text x={cx} y={cy - 10} textAnchor="middle" fontSize={48} fontWeight={700}
-        fill="#1E293B" fontFamily="Poppins, sans-serif" style={{ transition: 'fill 0.4s' }}>
-        {value.toFixed(1)}
-      </text>
-      <text x={cx} y={cy + 12} textAnchor="middle" fontSize={10} fill="#94A3B8" fontWeight={600}
-        fontFamily="Poppins, sans-serif" style={{ letterSpacing: '0.05em' }}>
-        UV INDEX
-      </text>
-
-      {/* Level badge */}
-      <rect x={cx - 35} y={cy + 22} width={70} height={18} rx={9}
-        fill={zone.bg} stroke={zone.border} strokeWidth={1} />
-      <text x={cx} y={cy + 34} textAnchor="middle" fontSize={10} fontWeight={600}
-        fill={zone.text} fontFamily="Poppins, sans-serif">
-        {zone.label}
-      </text>
-    </svg>
-  );
-}
-
-// ─── Hourly data generator ────────────────────────────────────────────────────
-function generateHourly() {
-  const hour = new Date().getHours();
-  return Array.from({ length: 24 }, (_, h) => {
-    let uv = 0;
-    if (h >= 6 && h <= 19) {
-      const t = (h - 6) / 13;
-      uv = Math.max(0, 9.8 * Math.sin(Math.PI * t) * (0.82 + Math.random() * 0.36));
-      uv = parseFloat(uv.toFixed(1));
-    }
-    return { hour: `${String(h).padStart(2, '0')}:00`, uv, isCurrent: h === hour };
-  });
-}
-
-// ─── Tooltip ─────────────────────────────────────────────────────────────────
-function ChartTooltip({ active, payload, label }: any) {
-  if (!active || !payload?.length) return null;
-  const v = payload[0].value as number;
-  const z = getUVZone(v);
-  return (
-    <div className="bg-white border rounded-xl px-3 py-2 shadow-xl text-xs" style={{ borderColor: z.border }}>
-      <div className="text-slate-400 mb-0.5">{label}</div>
-      <div className="font-semibold" style={{ color: z.color }}>UV {v.toFixed(1)} · {z.label}</div>
-    </div>
-  );
-}
-
-// ─── Stat card ────────────────────────────────────────────────────────────────
-function StatCard({
-  icon: Icon, label, value, sub, delta, iconColor, iconBg,
-}: {
-  icon: React.ElementType; label: string; value: string; sub: string;
-  delta?: { dir: 'up' | 'down'; val: string }; iconColor: string; iconBg: string;
-}) {
-  return (
-    <div className="bg-white rounded-2xl p-4 shadow-sm flex gap-3 items-start" style={{ border: '1px solid #E8F0FE' }}>
-      <div className="rounded-xl p-2.5 flex-shrink-0" style={{ background: iconBg }}>
-        <Icon size={17} style={{ color: iconColor }} />
-      </div>
-      <div className="min-w-0">
-        <div className="text-slate-400" style={{ fontSize: '0.7rem', fontWeight: 500, letterSpacing: '0.04em', textTransform: 'uppercase' }}>{label}</div>
-        <div className="text-slate-800 font-semibold mt-0.5" style={{ fontSize: '0.95rem' }}>{value}</div>
-        <div className="flex items-center gap-1 mt-0.5">
-          <span className="text-slate-400" style={{ fontSize: '0.7rem' }}>{sub}</span>
-          {delta && (
-            <span
-              className="flex items-center gap-0.5 font-medium"
-              style={{ fontSize: '0.65rem', color: delta.dir === 'up' ? '#EF4444' : '#22C55E' }}
-            >
-              {delta.dir === 'up' ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
-              {delta.val}
-            </span>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Mini metric ─────────────────────────────────────────────────────────────
-function MiniMetric({ label, value, bar, barColor, onClick }: { label: string; value: string; bar: number; barColor: string; onClick?: () => void }) {
-  return (
-    <div
-      className="bg-white rounded-2xl p-4 shadow-sm transition-all duration-150"
-      style={{ border: '1px solid #E8F0FE', cursor: onClick ? 'pointer' : 'default' }}
-      onClick={onClick}
-      onMouseEnter={e => { if (onClick) (e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 16px rgba(37,99,235,0.10)'; }}
-      onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = ''; }}
-    >
-      <div className="text-slate-400 mb-1" style={{ fontSize: '0.7rem', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</div>
-      <div className="text-slate-800 font-bold mb-2.5" style={{ fontSize: '1.5rem' }}>{value}</div>
-      <div className="h-1.5 rounded-full bg-slate-100">
-        <div className="h-1.5 rounded-full transition-all duration-700" style={{ width: `${bar}%`, background: barColor }} />
-      </div>
-    </div>
-  );
-}
+import { useNavigate } from 'react-router';
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
-export function Dashboard({ onNavigate }: { onNavigate?: (page: string) => void } = {}) {
-  const [uvValue, setUvValue] = useState(7.2);
-  const [hourlyData, setHourlyData] = useState(generateHourly);
-  const [tick, setTick] = useState(0);
+export function Dashboard() {
+  const navigate = useNavigate();
+  const { uvValue, hourlyData, zone } = useUVData();
+  const now = new Date();
+
+  const [stats, setStats] = useState<DashboardStat[]>([]);
+  const [metrics, setMetrics] = useState({ peakUV: '', peakTime: '' });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
-    const id = setInterval(() => {
-      setUvValue(prev => {
-        const next = Math.min(11, Math.max(0.1, +(prev + (Math.random() - 0.48) * 0.5).toFixed(1)));
-        return next;
-      });
-      setHourlyData(generateHourly());
-      setTick(t => t + 1);
-    }, 4000);
-    return () => clearInterval(id);
+    Promise.all([
+      dashboardService.getStats(),
+      dashboardService.getMetrics()
+    ])
+      .then(([statsData, metricsData]) => {
+        setStats(statsData);
+        setMetrics(metricsData);
+        setLoading(false);
+      })
+      .catch(() => setError(true));
   }, []);
 
-  const zone = getUVZone(uvValue);
-  const now = new Date();
+  if (loading) return <LoadingState />;
+  if (error) return <ErrorState onRetry={() => window.location.reload()} />;
 
   return (
     <div className="p-5 md:p-6 max-w-7xl mx-auto">
@@ -241,10 +73,9 @@ export function Dashboard({ onNavigate }: { onNavigate?: (page: string) => void 
 
       {/* Top stat cards */}
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 mb-5">
-        <StatCard icon={Battery} label="Battery" value="82%" sub="~14h left" iconColor="#2563EB" iconBg="#EFF6FF" />
-        <StatCard icon={Wifi} label="Status" value="Connected" sub="Strong signal" iconColor="#22C55E" iconBg="#F0FDF4" />
-        <StatCard icon={Clock} label="UV Exposure" value="2h 15m" sub="Today · since 6 AM" delta={{ dir: 'up', val: '+18m' }} iconColor="#F97316" iconBg="#FFF7ED" />
-        <StatCard icon={Shield} label="SPF Status" value="SPF 50" sub="Recommended now" iconColor="#9333EA" iconBg="#FAF5FF" />
+        {stats.map(s => (
+          <StatCard key={s.id} {...s} />
+        ))}
       </div>
 
       {/* Main grid */}
@@ -255,9 +86,9 @@ export function Dashboard({ onNavigate }: { onNavigate?: (page: string) => void 
           style={{
             border: '1px solid #E2E8F0',
             boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
-            cursor: onNavigate ? 'pointer' : 'default',
+            cursor: 'pointer',
           }}
-          onClick={() => onNavigate?.('history')}
+          onClick={() => navigate('/history')}
           title="View history"
         >
           {/* Subtle background glow based on UV intensity */}
@@ -291,7 +122,7 @@ export function Dashboard({ onNavigate }: { onNavigate?: (page: string) => void 
             {[
               { label: 'Low', val: '0.0', color: '#22C55E', sub: 'Baseline' },
               { label: 'Live', val: uvValue.toFixed(1), color: zone.color, sub: 'Current', active: true },
-              { label: 'Peak', val: '9.3', color: '#EF4444', sub: '1:42 PM' },
+              { label: 'Peak', val: metrics.peakUV, color: '#EF4444', sub: metrics.peakTime },
             ].map(({ label, val, color, sub, active }) => (
               <div 
                 key={label} 
@@ -339,10 +170,10 @@ export function Dashboard({ onNavigate }: { onNavigate?: (page: string) => void 
 
           {/* 4-box mini metrics */}
           <div className="grid grid-cols-2 gap-3">
-            <MiniMetric label="Peak UV Today" value="9.3" bar={(9.3/12)*100} barColor="#EF4444" />
+            <MiniMetric label="Peak UV Today" value={metrics.peakUV} bar={(parseFloat(metrics.peakUV)/12)*100} barColor="#EF4444" />
             <MiniMetric label="UV Dose (SED)" value="18.4" bar={70} barColor="#F97316" />
             <MiniMetric label="Burn Time Left" value="24 min" bar={35} barColor="#9333EA" />
-            <MiniMetric label="Active Alerts" value="3" bar={60} barColor="#EF4444" onClick={() => onNavigate?.('alerts')} />
+            <MiniMetric label="Active Alerts" value="3" bar={60} barColor="#EF4444" onClick={() => navigate('/alerts')} />
           </div>
         </div>
       </div>
