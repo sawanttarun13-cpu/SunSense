@@ -11,6 +11,5 @@ export interface NotificationSettings {
 export interface AppSettings {
   spfLevel: number;
   uvThreshold: number;
-  theme: string;
   notifications: NotificationSettings;
 }

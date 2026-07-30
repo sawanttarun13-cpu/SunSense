@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Bell, Sun, Smartphone, Shield, Moon, Bluetooth, ChevronRight, Check, Sliders, Wifi, Volume2 } from 'lucide-react';
-import { SPF_OPTS, THEME_OPTS } from '../constants/settings';
+import { Bell, Sun, Smartphone, Shield, Bluetooth, ChevronRight, Check, Sliders, Wifi, Volume2 } from 'lucide-react';
+import { SPF_OPTS } from '../constants/settings';
 import { settingsService } from '../services/settings.service';
 import { LoadingState } from '../components/common/LoadingState';
 import { ErrorState } from '../components/common/ErrorState';
@@ -85,7 +85,6 @@ function NotifRow({
 export function SettingsPage() {
   const [spf, setSpf] = useState(30);
   const [threshold, setThreshold] = useState(6);
-  const [theme, setTheme] = useState('Light');
   const [saved, setSaved] = useState(false);
   const [notifs, setNotifs] = useState({
     extreme: true, high: true, spfReminder: true,
@@ -103,7 +102,6 @@ export function SettingsPage() {
       .then(([settingsData, aboutData]) => {
         setSpf(settingsData.spfLevel);
         setThreshold(settingsData.uvThreshold);
-        setTheme(settingsData.theme);
         setNotifs(settingsData.notifications);
         setAbout(aboutData);
         setLoading(false);
@@ -254,36 +252,6 @@ export function SettingsPage() {
           <Toggle on={notifs.sound} onChange={() => toggle('sound')} />
         </div>
       </Section>
-
-      {/* Appearance */}
-      <Section title="Appearance">
-        <div className="px-5 py-4 flex items-center gap-3">
-          <div className="rounded-xl p-2.5 flex-shrink-0" style={{ background: '#F1F5F9' }}>
-            <Moon size={14} className="text-slate-500" />
-          </div>
-          <div className="flex-1">
-            <div className="text-slate-700 font-medium" style={{ fontSize: '0.82rem' }}>Interface Theme</div>
-            <div className="text-slate-400 mt-0.5" style={{ fontSize: '0.7rem' }}>Affects dashboard appearance</div>
-          </div>
-          <div className="flex rounded-xl overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
-            {THEME_OPTS.map(t => (
-              <button
-                key={t}
-                onClick={() => setTheme(t)}
-                className="px-3.5 py-1.5 transition-colors"
-                style={{
-                  fontSize: '0.75rem', fontWeight: 500,
-                  background: theme === t ? '#2563EB' : '#fff',
-                  color: theme === t ? '#fff' : '#64748B',
-                }}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
-        </div>
-      </Section>
-
 
       {/* About */}
       <div

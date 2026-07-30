@@ -11,8 +11,7 @@ export const MOCK_SETTINGS: AppSettings = {
     batteryLow: true,
     disconnect: false,
     sound: true
-  },
-  theme: 'System'
+  }
 };
 
 export const MOCK_ABOUT = {
