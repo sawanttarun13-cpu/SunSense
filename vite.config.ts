@@ -33,4 +33,8 @@ export default defineConfig({
 
   // File types to support raw imports. Never add .css, .tsx, or .ts files to this.
   assetsInclude: ['**/*.svg', '**/*.csv'],
+
+  server: {
+    allowedHosts: true, // Allow all hosts so ngrok works without updating the config every time the URL changes
+  },
 })

@@ -92,7 +92,7 @@ export function Dashboard() {
           title="View history"
         >
           {/* Subtle background glow based on UV intensity */}
-          <div 
+          <div
             className="absolute top-0 right-0 w-32 h-32 blur-3xl opacity-10 rounded-full -mr-16 -mt-16 transition-colors duration-1000"
             style={{ background: zone.color }}
           />
@@ -124,8 +124,8 @@ export function Dashboard() {
               { label: 'Live', val: uvValue.toFixed(1), color: zone.color, sub: 'Current', active: true },
               { label: 'Peak', val: metrics.peakUV, color: '#EF4444', sub: metrics.peakTime },
             ].map(({ label, val, color, sub, active }) => (
-              <div 
-                key={label} 
+              <div
+                key={label}
                 className={`rounded-2xl p-3 text-center border transition-all duration-500 ${active ? 'bg-white shadow-md' : 'bg-slate-50/50'}`}
                 style={{ borderColor: active ? zone.border : '#F1F5F9' }}
               >
@@ -153,9 +153,9 @@ export function Dashboard() {
                 <div className="font-semibold" style={{ fontSize: '0.85rem', color: zone.text }}>
                   {zone.label === 'Low' ? 'UV levels are low — enjoy the sun!' :
                     zone.label === 'Moderate' ? 'Apply SPF 30+ before going out.' :
-                    zone.label === 'High' ? 'SPF 50 recommended. Limit exposure.' :
-                    zone.label === 'Very High' ? 'Seek shade! Wear protective clothing.' :
-                    'Extreme UV! Stay indoors if possible.'}
+                      zone.label === 'High' ? 'SPF 50 recommended. Limit exposure.' :
+                        zone.label === 'Very High' ? 'Seek shade! Wear protective clothing.' :
+                          'Extreme UV! Stay indoors if possible.'}
                 </div>
                 <div className="text-slate-500 mt-0.5" style={{ fontSize: '0.72rem' }}>
                   Reapply sunscreen every 2 hours · Avoid 10AM–4PM exposure
@@ -170,7 +170,7 @@ export function Dashboard() {
 
           {/* 4-box mini metrics */}
           <div className="grid grid-cols-2 gap-3">
-            <MiniMetric label="Peak UV Today" value={metrics.peakUV} bar={(parseFloat(metrics.peakUV)/12)*100} barColor="#EF4444" />
+            <MiniMetric label="Peak UV Today" value={metrics.peakUV} bar={(parseFloat(metrics.peakUV) / 12) * 100} barColor="#EF4444" />
             <MiniMetric label="UV Dose (SED)" value="18.4" bar={70} barColor="#F97316" />
             <MiniMetric label="Burn Time Left" value="24 min" bar={35} barColor="#9333EA" />
             <MiniMetric label="Active Alerts" value="3" bar={60} barColor="#EF4444" onClick={() => navigate('/alerts')} />
@@ -229,7 +229,7 @@ export function Dashboard() {
           </AreaChart>
         </ResponsiveContainer>
 
-          {/* Zone color legend */}
+        {/* Zone color legend */}
         <div className="flex items-center gap-1 mt-3 pt-3 border-t border-slate-100">
           {UV_ZONES.map((z, idx) => (
             <div key={`legend-${z.label}-${idx}`} className="flex-1 rounded py-1 text-center" style={{ background: z.bg }}>

@@ -10,16 +10,36 @@ function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) => void 
   return (
     <button
       onClick={() => onChange(!on)}
-      className="relative flex-shrink-0 rounded-full transition-colors duration-200 focus:outline-none"
-      style={{ width: 44, height: 24, background: on ? '#2563EB' : '#CBD5E1' }}
       role="switch"
       aria-checked={on}
+      style={{
+        position: 'relative',
+        display: 'inline-flex',
+        flexShrink: 0,
+        width: 48,
+        height: 26,
+        borderRadius: 999,
+        border: 'none',
+        cursor: 'pointer',
+        padding: 0,
+        outline: 'none',
+        background: on ? '#2563EB' : '#CBD5E1',
+        transition: 'background-color 0.3s ease',
+      }}
     >
       <span
-        className="absolute rounded-full bg-white shadow-sm transition-transform duration-200"
         style={{
-          top: 3, width: 18, height: 18,
-          transform: on ? 'translateX(23px)' : 'translateX(3px)',
+          position: 'absolute',
+          top: 3,
+          left: 3,
+          width: 20,
+          height: 20,
+          borderRadius: '50%',
+          background: '#ffffff',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.25)',
+          transform: on ? 'translateX(22px)' : 'translateX(0px)',
+          transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+          willChange: 'transform',
         }}
       />
     </button>
@@ -100,9 +120,9 @@ export function SettingsPage() {
 
   const thresholdZone = threshold <= 2 ? { color: '#16A34A', bg: '#F0FDF4' }
     : threshold <= 5 ? { color: '#CA8A04', bg: '#FEFCE8' }
-    : threshold <= 7 ? { color: '#EA580C', bg: '#FFF7ED' }
-    : threshold <= 10 ? { color: '#DC2626', bg: '#FEF2F2' }
-    : { color: '#9333EA', bg: '#FAF5FF' };
+      : threshold <= 7 ? { color: '#EA580C', bg: '#FFF7ED' }
+        : threshold <= 10 ? { color: '#DC2626', bg: '#FEF2F2' }
+          : { color: '#9333EA', bg: '#FAF5FF' };
 
   if (loading) return <LoadingState />;
   if (error) return <ErrorState onRetry={() => window.location.reload()} />;

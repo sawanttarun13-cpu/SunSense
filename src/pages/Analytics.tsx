@@ -50,7 +50,7 @@ function StatBox({ label, value, sub, color, trend }: { label: string; value: st
 // ─── Analytics page ───────────────────────────────────────────────────────────
 export function Analytics() {
   const [range, setRange] = useState<'week' | 'month'>('week');
-  
+
   const [weekly, setWeekly] = useState<any[]>([]);
   const [monthly, setMonthly] = useState<any[]>([]);
   const [peakHours, setPeakHours] = useState<any[]>([]);
@@ -211,10 +211,10 @@ export function Analytics() {
                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-20 pointer-events-none">
                   <div className="rounded-lg px-2.5 py-1.5 text-white whitespace-nowrap shadow-lg text-center" style={{ background: '#1E293B', fontSize: '0.65rem', lineHeight: 1.5 }}>
                     <div className="font-semibold">
-                      {({'#86EFAC':'Low','#FDE047':'Moderate','#FDBA74':'High','#FCA5A5':'Very High','#C4B5FD':'Extreme'} as Record<string,string>)[c] ?? 'No data'}
+                      {({ '#86EFAC': 'Low', '#FDE047': 'Moderate', '#FDBA74': 'High', '#FCA5A5': 'Very High', '#C4B5FD': 'Extreme' } as Record<string, string>)[c] ?? 'No data'}
                     </div>
                     <div style={{ color: '#94A3B8' }}>
-                      {({'#86EFAC':'≤ 2','#FDE047':'≤ 5','#FDBA74':'≤ 7','#FCA5A5':'≤ 10','#C4B5FD':'12+'} as Record<string,string>)[c] ?? '—'}
+                      {({ '#86EFAC': '≤ 2', '#FDE047': '≤ 5', '#FDBA74': '≤ 7', '#FCA5A5': '≤ 10', '#C4B5FD': '12+' } as Record<string, string>)[c] ?? '—'}
                     </div>
                   </div>
                   <div className="w-2 h-2 mx-auto -mt-1 rotate-45 rounded-sm" style={{ background: '#1E293B' }} />
