@@ -2,7 +2,7 @@ import type { DeviceInfo, BatteryInfo, WifiInfo, SystemInfo, SensorHealth } from
 
 export const MOCK_DEVICE = {
   info: {
-    model: 'UV Shield Pro (UVK-2001)',
+    model: 'SunSense (UVK-2001)',
     serialNumber: 'UV24-8842-XK',
     uptime: '14h 22m',
     readingsToday: '1,440',
@@ -12,12 +12,11 @@ export const MOCK_DEVICE = {
   battery: {
     level: 82,
     type: 'Li-Po 380 mAh',
-    charging: 'Not connected',
-    cycles: '142 / 500'
+    charging: 'Not connected'
   },
   wifi: {
     bars: 3 as const,
-    ssid: 'HomeNetwork_5G',
+    ssid: 'HomeNetwork_2.4G',
     ip: '192.168.1.142',
     mac: 'A4:C1:38:22:90:F1'
   },
@@ -27,8 +26,6 @@ export const MOCK_DEVICE = {
     lastUpdate: '14 days ago'
   },
   sensors: {
-    ml8511: { ok: true, val: 'Normal (1.2V)' },
-    thermometer: { ok: true, val: '24.2°C' },
-    cpu: { ok: false, val: 'High (68°C)' }
+    ml8511: { ok: true, val: 'Normal (1.2V)' }
   }
 };

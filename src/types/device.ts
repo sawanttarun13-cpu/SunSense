@@ -11,7 +11,6 @@ export interface BatteryInfo {
   level: number; // percentage
   type: string;
   charging: string;
-  cycles: string;
 }
 
 export interface WifiInfo {
@@ -29,6 +28,4 @@ export interface SystemInfo {
 
 export interface SensorHealth {
   ml8511: { ok: boolean; val: string };
-  thermometer: { ok: boolean; val: string };
-  cpu: { ok: boolean; val: string };
 }

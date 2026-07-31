@@ -35,19 +35,19 @@ export function Login() {
       <p className="text-slate-400 mb-8" style={{ fontSize: '0.82rem' }}>Sign in to your SunSense account</p>
       <form onSubmit={submit} className="space-y-4">
         <div>
-          <label className="block font-medium text-slate-600 mb-1.5" style={{ fontSize: '0.78rem' }}>Email address</label>
-          <input type="email" value={email} onChange={e => setEmail(e.target.value)}
+          <label htmlFor="email" className="block font-medium text-slate-600 mb-1.5" style={{ fontSize: '0.78rem' }}>Email address</label>
+          <input type="email" id="email" name="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)}
             onFocus={() => setFocused('email')} onBlur={() => setFocused(null)}
             placeholder="alex@example.com" className="w-full rounded-xl px-4 py-3 bg-white text-slate-800"
             style={{ ...inputBorder(focused, 'email'), fontSize: '0.85rem' }} />
         </div>
         <div>
           <div className="flex items-center justify-between mb-1.5">
-            <label className="font-medium text-slate-600" style={{ fontSize: '0.78rem' }}>Password</label>
+            <label htmlFor="password" className="font-medium text-slate-600" style={{ fontSize: '0.78rem' }}>Password</label>
             <button type="button" className="text-blue-500 hover:text-blue-700" style={{ fontSize: '0.72rem' }}>Forgot password?</button>
           </div>
           <div className="relative">
-            <input type={show ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
+            <input type={show ? 'text' : 'password'} id="password" name="password" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)}
               onFocus={() => setFocused('password')} onBlur={() => setFocused(null)}
               placeholder="••••••••" className="w-full rounded-xl px-4 py-3 bg-white text-slate-800 pr-11"
               style={{ ...inputBorder(focused, 'password'), fontSize: '0.85rem' }} />

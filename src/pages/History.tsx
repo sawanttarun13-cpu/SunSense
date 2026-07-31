@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { Search, Download, SlidersHorizontal, ChevronLeft, ChevronRight, MapPin, ArrowUpDown } from 'lucide-react';
 import {
   PAGE_SIZE, LEVEL_OPTS,
-  fmtDate, fmtTime, fmtDuration, exportCSV,
+  fmtDate, fmtTime, exportCSV,
 } from '../mockData/history';
 import type { UVLogEntry } from '../types/history';
 import { getUVZone } from '../constants/uv';
@@ -35,7 +35,7 @@ export function History() {
       const matchLevel = level === 'All' || z.label === level;
       const q = search.toLowerCase();
       const matchSearch = !q || fmtDate(r.date).toLowerCase().includes(q) ||
-        r.location.toLowerCase().includes(q) || r.uv.toString().includes(q);
+        fmtTime(r.date).toLowerCase().includes(q) || r.uv.toString().includes(q);
       return matchLevel && matchSearch;
     });
     rows = [...rows].sort((a, b) => sortDir === 'desc'
@@ -53,7 +53,6 @@ export function History() {
   // Summary counts
   const highCount = logs.filter(r => r.uv > 6).length;
   const avgUV = logs.length > 0 ? (logs.reduce((s, r) => s + r.uv, 0) / logs.length).toFixed(1) : '0.0';
-  const locationSet = new Set(logs.map(r => r.location)).size;
 
   if (loading) return <LoadingState />;
   if (error) return <ErrorState onRetry={() => window.location.reload()} />;
@@ -79,12 +78,11 @@ export function History() {
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 mb-5">
+      <div className="grid grid-cols-2 xl:grid-cols-3 gap-3 mb-5">
         {[
           { label: 'Total Logs', value: logs.length, color: '#2563EB' },
           { label: 'High UV Events', value: highCount, color: '#EF4444' },
           { label: 'Average UV', value: avgUV, color: '#F97316' },
-          { label: 'Locations', value: locationSet, color: '#22C55E' },
         ].map(({ label, value, color }) => (
           <div key={label} className="bg-white rounded-2xl p-4 shadow-sm" style={{ border: '1px solid #E8F0FE' }}>
             <div className="text-slate-400 mb-1" style={{ fontSize: '0.7rem', textTransform: 'uppercase', fontWeight: 500, letterSpacing: '0.04em' }}>{label}</div>
@@ -102,7 +100,7 @@ export function History() {
             <input
               value={search}
               onChange={e => handleSearch(e.target.value)}
-              placeholder="Search by date, location, UV value…"
+              placeholder="Search by date, time or UV Index..."
               className="w-full pl-9 pr-4 py-2.5 rounded-xl outline-none transition-all"
               style={{
                 background: '#F8FAFF', border: '1.5px solid #E2E8F0', fontSize: '0.8rem', color: '#1E293B',
@@ -145,7 +143,7 @@ export function History() {
           <table className="w-full">
             <thead>
               <tr style={{ borderBottom: '1px solid #F1F5F9', background: '#FAFBFF' }}>
-                {['Date', 'Time', 'UV Index', 'Level', 'Duration', 'Location'].map((col, ci) => (
+                {['Date', 'Time', 'UV Index', 'Level'].map((col, ci) => (
                   <th
                     key={col}
                     className="text-left px-4 py-3"
@@ -198,13 +196,6 @@ export function History() {
                       >
                         {z.label}
                       </span>
-                    </td>
-                    <td className="px-4 py-3" style={{ fontSize: '0.8rem', color: '#64748B' }}>{fmtDuration(log.duration)}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-1.5" style={{ fontSize: '0.8rem', color: '#64748B' }}>
-                        <MapPin size={11} className="text-slate-400" />
-                        {log.location}
-                      </div>
                     </td>
                   </tr>
                 );

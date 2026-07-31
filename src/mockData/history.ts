@@ -1,11 +1,5 @@
 import { getUVZone } from '../constants/uv';
 
-// ─── Location pool ────────────────────────────────────────────────────────────
-export const LOCATIONS = [
-  'City Park', 'Beach Front', 'Office Rooftop', 'Home Garden', 'Downtown',
-  'Sports Field', 'Lake Shore', 'Mountain Trail', 'Mall Entrance',
-];
-
 // ─── Log entry type ───────────────────────────────────────────────────────────
 import type { UVLogEntry } from '../types/history';
 
@@ -14,13 +8,10 @@ function makeLog(i: number): UVLogEntry {
   const base = new Date('2026-07-13T18:00:00');
   base.setMinutes(base.getMinutes() - i * 47);
   const uv = parseFloat((Math.random() * 11.2 + 0.3).toFixed(1));
-  const mins = Math.floor(Math.random() * 95 + 8);
   return {
     id: i + 1,
     date: base,
     uv,
-    duration: mins,
-    location: LOCATIONS[i % LOCATIONS.length],
   };
 }
 
@@ -41,17 +32,12 @@ export function fmtTime(d: Date): string {
   return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 }
 
-export function fmtDuration(m: number): string {
-  if (m < 60) return `${m}m`;
-  return `${Math.floor(m / 60)}h ${m % 60}m`;
-}
-
 // ─── CSV export ───────────────────────────────────────────────────────────────
 export function exportCSV(rows: UVLogEntry[]): void {
-  const header = 'Date,Time,UV Index,Level,Duration,Location\n';
+  const header = 'Date,Time,UV Index,Level\n';
   const body = rows.map(r => {
     const z = getUVZone(r.uv);
-    return `${fmtDate(r.date)},${fmtTime(r.date)},${r.uv},${z.label},${fmtDuration(r.duration)},${r.location}`;
+    return `"${fmtDate(r.date)}",${fmtTime(r.date)},${r.uv},${z.label}`;
   }).join('\n');
   const blob = new Blob([header + body], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);

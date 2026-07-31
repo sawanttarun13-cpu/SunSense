@@ -30,7 +30,6 @@ export function Profile() {
   const [editing, setEditing] = useState(false);
   const [saved, setSaved] = useState(false);
   const [name, setName] = useState('');
-  const [initials, setInitials] = useState('');
   const [location, setLocation] = useState('');
   const [age, setAge] = useState('');
 
@@ -46,7 +45,6 @@ export function Profile() {
     ])
       .then(([prof, skins, sens, achs]) => {
         setName(prof.name);
-        setInitials(prof.initials);
         setLocation(prof.location);
         setAge(prof.age);
         setSkinType(prof.skinType);
@@ -66,6 +64,7 @@ export function Profile() {
   const selectedSens = sensitivityLevels[sensitivity];
 
   const handleSave = () => {
+    profileService.updateProfile({ name, location, age, skinType, sensitivity });
     setEditing(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
@@ -92,7 +91,7 @@ export function Profile() {
             className="w-20 h-20 rounded-2xl flex items-center justify-center font-bold flex-shrink-0"
             style={{ background: 'rgba(255,255,255,0.15)', fontSize: '1.8rem', letterSpacing: '-1px' }}
           >
-            {initials}
+            {name.split(' ').filter(Boolean).map(n => n[0]).join('').substring(0, 2).toUpperCase()}
           </div>
 
           <div className="flex-1">

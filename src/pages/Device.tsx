@@ -52,7 +52,7 @@ function WifiStrength({ bars }: { bars: 1 | 2 | 3 | 4 }) {
       </div>
       <div>
         <span className="font-bold text-slate-800" style={{ fontSize: '1.3rem' }}>{labels[bars]}</span>
-        <div className="text-slate-400" style={{ fontSize: '0.7rem' }}>-65 dBm · 5 GHz</div>
+        <div className="text-slate-400" style={{ fontSize: '0.7rem' }}>-65 dBm · 2.4 GHz</div>
       </div>
     </div>
   );
@@ -201,10 +201,6 @@ export function Device() {
           <div className="mt-3 pt-3" style={{ borderTop: '1px solid #F1F5F9' }}>
             <InfoRow label="Type" value={deviceData.battery.type} />
             <InfoRow label="Charging" value={deviceData.battery.charging} />
-            <div className="flex items-center justify-between pt-2.5" style={{ fontSize: '0.78rem' }}>
-              <span className="text-slate-400">Cycles used</span>
-              <span className="text-slate-700 font-medium">{deviceData.battery.cycles}</span>
-            </div>
           </div>
         </div>
 
@@ -257,8 +253,6 @@ export function Device() {
             <span className="ml-auto rounded-full px-2.5 py-1 font-semibold" style={{ background: '#DCFCE7', color: '#16A34A', fontSize: '0.68rem' }}>Excellent</span>
           </div>
           <SensorRow name="UV Sensor (ML8511)" ok={deviceData.sensors.ml8511.ok} value={deviceData.sensors.ml8511.val} />
-          <SensorRow name="Temperature Probe" ok={deviceData.sensors.thermometer.ok} value={deviceData.sensors.thermometer.val} />
-          <SensorRow name="CPU Health" ok={deviceData.sensors.cpu.ok} value={deviceData.sensors.cpu.val} />
           <div className="flex items-center justify-between pt-2.5 mt-2" style={{ borderTop: '1px solid #F1F5F9', fontSize: '0.78rem' }}>
             <span className="text-slate-400">Firmware</span>
             <span className="text-slate-700 font-medium">{deviceData.system.firmware}</span>

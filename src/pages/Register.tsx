@@ -42,6 +42,7 @@ export function Register() {
     e.preventDefault();
     if (!skinType) { setError('Please select your skin type.'); return; }
     setError(''); setLoading(true);
+    profileService.updateProfile({ name, location, skinType });
     setTimeout(() => { setLoading(false); navigate('/dashboard'); }, 1400);
   };
 
@@ -65,23 +66,23 @@ export function Register() {
           <p className="text-slate-400 mb-7" style={{ fontSize: '0.82rem' }}>Step 1 of 2 — account details</p>
           <form onSubmit={step1} className="space-y-4">
             <div>
-              <label className="block font-medium text-slate-600 mb-1.5" style={{ fontSize: '0.78rem' }}>Full name</label>
-              <input type="text" value={name} onChange={e => setName(e.target.value)}
+              <label htmlFor="name" className="block font-medium text-slate-600 mb-1.5" style={{ fontSize: '0.78rem' }}>Full name</label>
+              <input type="text" id="name" name="name" autoComplete="name" value={name} onChange={e => setName(e.target.value)}
                 onFocus={() => setFocused('name')} onBlur={() => setFocused(null)}
                 placeholder="Alex Johnson" className="w-full rounded-xl px-4 py-3 bg-white text-slate-800"
                 style={{ ...inputBorder(focused, 'name'), fontSize: '0.85rem' }} />
             </div>
             <div>
-              <label className="block font-medium text-slate-600 mb-1.5" style={{ fontSize: '0.78rem' }}>Email address</label>
-              <input type="email" value={email} onChange={e => setEmail(e.target.value)}
+              <label htmlFor="email" className="block font-medium text-slate-600 mb-1.5" style={{ fontSize: '0.78rem' }}>Email address</label>
+              <input type="email" id="email" name="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)}
                 onFocus={() => setFocused('email')} onBlur={() => setFocused(null)}
                 placeholder="alex@example.com" className="w-full rounded-xl px-4 py-3 bg-white text-slate-800"
                 style={{ ...inputBorder(focused, 'email'), fontSize: '0.85rem' }} />
             </div>
             <div>
-              <label className="block font-medium text-slate-600 mb-1.5" style={{ fontSize: '0.78rem' }}>Password</label>
+              <label htmlFor="password" className="block font-medium text-slate-600 mb-1.5" style={{ fontSize: '0.78rem' }}>Password</label>
               <div className="relative">
-                <input type={show ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
+                <input type={show ? 'text' : 'password'} id="password" name="password" autoComplete="new-password" value={password} onChange={e => setPassword(e.target.value)}
                   onFocus={() => setFocused('password')} onBlur={() => setFocused(null)}
                   placeholder="Min. 8 characters" className="w-full rounded-xl px-4 py-3 bg-white text-slate-800 pr-11"
                   style={{ ...inputBorder(focused, 'password'), fontSize: '0.85rem' }} />

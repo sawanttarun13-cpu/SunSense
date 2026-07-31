@@ -147,6 +147,7 @@ export function Analytics() {
               <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
               <XAxis dataKey="hour" tickLine={false} axisLine={false} tick={{ fill: '#94A3B8', fontSize: 9 }} interval={3} />
               <YAxis domain={[0, 12]} tickLine={false} axisLine={false} tick={{ fill: '#94A3B8', fontSize: 9 }} />
+              <Tooltip content={<BarTip />} cursor={{ fill: 'rgba(0,0,0,0.04)' }} />
               <Bar dataKey="uv" name="UV Index" radius={[4, 4, 0, 0]}>
                 {peakHours.map((e, i) => (
                   <Cell key={`cell-${i}`} fill={getUVZone(e.uv).color} fillOpacity={0.82} />

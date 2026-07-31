@@ -117,8 +117,12 @@ available
 
 ## Phase 9
 
-Backend Analytics: - Risk Level - SPF Recommendation -
-Daily/Weekly/Monthly Reports - Trends
+Backend Analytics:
+- Risk Level
+- SPF Recommendation
+- Daily/Weekly/Monthly Reports
+- Trends
+- **Important Calculation Note**: The backend will calculate User UV Exposure Duration and Total UV Dose (SED) by analyzing the timestamps and values of incoming readings. Because the device is wearable/portable, if it records UV > 0, we assume active exposure and integrate these readings over time to generate duration and SED metrics.
 
 ## Phase 10
 
