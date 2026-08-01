@@ -10,8 +10,3 @@ export const DASHBOARD_STATS: DashboardStat[] = [
   { id: 'exposure', icon: Clock, label: 'UV Exposure', value: '2h 15m', sub: 'Today · since 6 AM', delta: { dir: 'up', val: '+18m' }, iconColor: '#F97316', iconBg: '#FFF7ED' },
   { id: 'spf', icon: Shield, label: 'SPF Status', value: 'SPF 50', sub: 'Recommended now', iconColor: '#9333EA', iconBg: '#FAF5FF' }
 ];
-
-export const DASHBOARD_METRICS = {
-  peakUV: '9.3',
-  peakTime: '1:42 PM'
-};

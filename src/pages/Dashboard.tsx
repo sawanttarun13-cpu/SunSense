@@ -3,16 +3,16 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, ReferenceLine,
 } from 'recharts';
-import {
-  Battery, Wifi, Shield, Clock, Activity, AlertTriangle,
-  Sun, Zap, ChevronUp, ChevronDown,
-} from 'lucide-react';
+import { Sun } from 'lucide-react';
 import { StatCard } from '../components/common/StatCard';
 import { UVGauge } from '../components/common/UVGauge';
 import { MiniMetric } from '../components/common/MiniMetric';
 import { UV_ZONES } from '../constants/uv';
 import { useUVData } from '../hooks/useUVData';
+import { useSunscreen } from '../hooks/useSunscreen';
 import { ChartTooltip } from '../components/charts/ChartTooltip';
+import { SunscreenTracker } from '../components/dashboard/SunscreenTracker';
+import { ApplySunscreenModal } from '../components/dashboard/ApplySunscreenModal';
 import { dashboardService } from '../services/dashboard.service';
 import type { DashboardStat } from '../types/dashboard';
 import { LoadingState } from '../components/common/LoadingState';
@@ -23,22 +23,19 @@ import { useNavigate } from 'react-router';
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 export function Dashboard() {
   const navigate = useNavigate();
-  const { uvValue, hourlyData, zone } = useUVData();
+  const { uvValue, hourlyData, zone, peakUV, lowUV, peakTime } = useUVData();
+  const sunscreen = useSunscreen();
   const now = new Date();
 
   const [stats, setStats] = useState<DashboardStat[]>([]);
-  const [metrics, setMetrics] = useState({ peakUV: '', peakTime: '' });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
-    Promise.all([
-      dashboardService.getStats(),
-      dashboardService.getMetrics()
-    ])
-      .then(([statsData, metricsData]) => {
+    dashboardService.getStats()
+      .then(statsData => {
         setStats(statsData);
-        setMetrics(metricsData);
         setLoading(false);
       })
       .catch(() => setError(true));
@@ -120,9 +117,9 @@ export function Dashboard() {
           {/* Professional Metric Grid */}
           <div className="mt-8 grid grid-cols-3 gap-4 relative z-10">
             {[
-              { label: 'Low', val: '0.0', color: '#22C55E', sub: 'Baseline' },
+              { label: 'Low', val: lowUV.toFixed(1), color: '#22C55E', sub: 'Today\'s low' },
               { label: 'Live', val: uvValue.toFixed(1), color: zone.color, sub: 'Current', active: true },
-              { label: 'Peak', val: metrics.peakUV, color: '#EF4444', sub: metrics.peakTime },
+              { label: 'Peak', val: peakUV.toFixed(1), color: '#EF4444', sub: peakTime },
             ].map(({ label, val, color, sub, active }) => (
               <div
                 key={label}
@@ -151,14 +148,14 @@ export function Dashboard() {
               </div>
               <div className="flex-1">
                 <div className="font-semibold" style={{ fontSize: '0.85rem', color: zone.text }}>
-                  {zone.label === 'Low' ? 'UV levels are low — enjoy the sun!' :
-                    zone.label === 'Moderate' ? 'Apply SPF 30+ before going out.' :
-                      zone.label === 'High' ? 'SPF 50 recommended. Limit exposure.' :
-                        zone.label === 'Very High' ? 'Seek shade! Wear protective clothing.' :
-                          'Extreme UV! Stay indoors if possible.'}
+                  {sunscreen.status === 'unprotected' ? "You haven't applied sunscreen." :
+                    sunscreen.status === 'protected' ? "Protection Active" :
+                      "Protection Expired"}
                 </div>
                 <div className="text-slate-500 mt-0.5" style={{ fontSize: '0.72rem' }}>
-                  Reapply sunscreen every 2 hours · Avoid 10AM–4PM exposure
+                  {sunscreen.status === 'unprotected' ? "Apply SPF before prolonged UV exposure." :
+                    sunscreen.status === 'protected' ? `Next reapplication at ${sunscreen.expiresAt?.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}` :
+                      "Please reapply sunscreen."}
                 </div>
               </div>
               <div className="text-right flex-shrink-0">
@@ -170,11 +167,14 @@ export function Dashboard() {
 
           {/* 4-box mini metrics */}
           <div className="grid grid-cols-2 gap-3">
-            <MiniMetric label="Peak UV Today" value={metrics.peakUV} bar={(parseFloat(metrics.peakUV) / 12) * 100} barColor="#EF4444" />
+            <MiniMetric label="Peak UV Today" value={peakUV.toFixed(1)} bar={(peakUV / 12) * 100} barColor="#EF4444" />
             <MiniMetric label="UV Dose (SED)" value="18.4" bar={70} barColor="#F97316" />
             <MiniMetric label="Burn Time Left" value="24 min" bar={35} barColor="#9333EA" />
             <MiniMetric label="Active Alerts" value="3" bar={60} barColor="#EF4444" onClick={() => navigate('/alerts')} />
           </div>
+
+          {/* Sunscreen Tracker */}
+          <SunscreenTracker onApplyClick={() => setIsModalOpen(true)} />
         </div>
       </div>
 
@@ -240,6 +240,13 @@ export function Dashboard() {
           ))}
         </div>
       </div>
+
+      {isModalOpen && (
+        <ApplySunscreenModal
+          onClose={() => setIsModalOpen(false)}
+          onApply={sunscreen.applySunscreen}
+        />
+      )}
     </div>
   );
 }

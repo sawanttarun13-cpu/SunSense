@@ -129,7 +129,7 @@ export function Device() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-slate-800 font-semibold" style={{ fontSize: '1.2rem' }}>Device</h1>
-          <p className="text-slate-400 mt-0.5" style={{ fontSize: '0.8rem' }}>UV Shield Keychain · UVK-2001</p>
+          <p className="text-slate-400 mt-0.5" style={{ fontSize: '0.8rem' }}>SunSense-101</p>
         </div>
         <button
           onClick={handleSync}

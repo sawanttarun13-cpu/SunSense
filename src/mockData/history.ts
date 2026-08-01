@@ -1,13 +1,22 @@
 import { getUVZone } from '../constants/uv';
-
-// ─── Log entry type ───────────────────────────────────────────────────────────
 import type { UVLogEntry } from '../types/history';
 
-// ─── Log factory ─────────────────────────────────────────────────────────────
+// ─── Deterministic seeded random ──────────────────────────────────────────────
+// Same seed → same value, always. Simulates stable database records.
+function seededRandom(seed: number): number {
+  const x = Math.sin(seed * 9301 + 49297) * 233280;
+  return x - Math.floor(x);
+}
+
+// ─── Log factory (deterministic) ──────────────────────────────────────────────
+// Each log entry is anchored to a fixed past timestamp.
+// The UV value is derived from a seed based on the entry index — never random.
+// This matches how PostgreSQL rows would look: fixed id, fixed timestamp, fixed reading.
 function makeLog(i: number): UVLogEntry {
   const base = new Date('2026-07-13T18:00:00');
   base.setMinutes(base.getMinutes() - i * 47);
-  const uv = parseFloat((Math.random() * 11.2 + 0.3).toFixed(1));
+  // Seeded UV: index i always gives the same UV value across refreshes
+  const uv = parseFloat((seededRandom(i + 1) * 11.2 + 0.3).toFixed(1));
   return {
     id: i + 1,
     date: base,
@@ -15,7 +24,9 @@ function makeLog(i: number): UVLogEntry {
   };
 }
 
-// ─── All logs ─────────────────────────────────────────────────────────────────
+// ─── All logs (immutable after generation) ────────────────────────────────────
+// Generated ONCE at module load. Because seededRandom is deterministic,
+// every app reload produces the exact same 72 rows — like querying a DB.
 export const ALL_LOGS: UVLogEntry[] = Array.from({ length: 72 }, (_, i) => makeLog(i))
   .sort((a, b) => b.date.getTime() - a.date.getTime());
 

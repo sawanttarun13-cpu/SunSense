@@ -2,7 +2,7 @@ import type { DeviceInfo, BatteryInfo, WifiInfo, SystemInfo, SensorHealth } from
 
 export const MOCK_DEVICE = {
   info: {
-    model: 'SunSense (UVK-2001)',
+    model: 'SunSense-101',
     serialNumber: 'UV24-8842-XK',
     uptime: '14h 22m',
     readingsToday: '1,440',

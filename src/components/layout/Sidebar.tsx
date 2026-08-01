@@ -55,7 +55,7 @@ function SidebarContent({
             </div>
             <div>
               <div className="text-white font-semibold leading-tight" style={{ fontSize: '0.875rem' }}>SunSense</div>
-              <div style={{ color: '#7EB3FF', fontSize: '0.7rem' }}>Pro Keychain · UVK-2001</div>
+              <div style={{ color: '#7EB3FF', fontSize: '0.7rem' }}>SunSense-101</div>
             </div>
           </div>
         )}

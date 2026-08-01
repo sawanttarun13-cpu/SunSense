@@ -23,7 +23,7 @@ export function BrandPanel({ headline, sub, badge }: { headline: React.ReactNode
         <h1 className="text-white font-bold leading-tight mb-3" style={{ fontSize: '2rem' }}>{headline}</h1>
         <p style={{ fontSize: '0.82rem', color: '#93C5FD', lineHeight: 1.7 }}>{sub}</p>
       </div>
-      <div style={{ fontSize: '0.68rem', color: '#60A5FA' }}>© 2025 SunSense · Pro Keychain UVK-2001</div>
+      <div style={{ fontSize: '0.68rem', color: '#60A5FA' }}>© 2025 SunSense · SunSense-101</div>
     </div>
   );
 }

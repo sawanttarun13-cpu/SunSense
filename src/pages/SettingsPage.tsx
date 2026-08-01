@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Bell, Sun, Smartphone, Shield, Bluetooth, ChevronRight, Check, Sliders, Wifi, Volume2 } from 'lucide-react';
+import { Bell, Sun, Smartphone, Shield, ChevronRight, Check, Sliders, Wifi, Volume2 } from 'lucide-react';
 import { SPF_OPTS } from '../constants/settings';
 import { settingsService } from '../services/settings.service';
 import { LoadingState } from '../components/common/LoadingState';
@@ -152,7 +152,7 @@ export function SettingsPage() {
           <div>
             <div className="flex items-center gap-2 mb-2">
               <Sun size={14} style={{ color: '#EA580C' }} />
-              <span className="font-medium text-slate-700" style={{ fontSize: '0.82rem' }}>Recommended SPF Level</span>
+              <span className="font-medium text-slate-700" style={{ fontSize: '0.82rem' }}>Preferred SPF Recommendation</span>
             </div>
             <div className="flex gap-2">
               {SPF_OPTS.map(v => (
@@ -173,7 +173,7 @@ export function SettingsPage() {
               ))}
             </div>
             <p className="text-slate-400 mt-2" style={{ fontSize: '0.72rem' }}>
-              App will recommend SPF {spf} when UV exceeds the alert threshold below.
+              Choose your preferred minimum SPF recommendation. The application will use this preference together with your current UV Index and skin type to provide personalized sunscreen recommendations.
             </p>
           </div>
 
@@ -240,7 +240,7 @@ export function SettingsPage() {
         <NotifRow icon={Bell} iconBg="#FEF2F2" iconColor="#DC2626" label="SPF Reapplication" sub="Reminder every 2 hours during high UV" on={notifs.spfReminder} onChange={() => toggle('spfReminder')} />
         <NotifRow icon={Sun} iconBg="#EFF6FF" iconColor="#2563EB" label="Daily UV Summary" sub="Evening report of today's UV data" on={notifs.dailySummary} onChange={() => toggle('dailySummary')} />
         <NotifRow icon={Smartphone} iconBg="#F0FDF4" iconColor="#16A34A" label="Battery Low Alert" sub="When device battery drops below 20%" on={notifs.batteryLow} onChange={() => toggle('batteryLow')} />
-        <NotifRow icon={Wifi} iconBg="#FFFBEB" iconColor="#D97706" label="Disconnect Alert" sub="When keychain goes out of range" on={notifs.disconnect} onChange={() => toggle('disconnect')} />
+        <NotifRow icon={Wifi} iconBg="#FFFBEB" iconColor="#D97706" label="Disconnect Alert" sub="When device loses Wi-Fi connection" on={notifs.disconnect} onChange={() => toggle('disconnect')} />
         <div className="flex items-center gap-3 px-5 py-4">
           <div className="rounded-xl p-2.5 flex-shrink-0" style={{ background: '#F8FAFF' }}>
             <Volume2 size={14} style={{ color: '#64748B' }} />
@@ -259,7 +259,7 @@ export function SettingsPage() {
         style={{ background: '#F8FAFF', border: '1px solid #E8F0FE' }}
       >
         <div className="text-slate-400 space-y-1" style={{ fontSize: '0.72rem' }}>
-          <div>UV Shield App {about?.appVersion} · Build {about?.build} · Firmware {about?.firmware}</div>
+          <div>SunSense {about?.appVersion} · Build {about?.build} · Firmware {about?.firmware}</div>
           <div className="flex justify-center gap-5 mt-2">
             {['Privacy Policy', 'Terms of Use', 'Support', 'Licenses'].map(l => (
               <button key={l} className="text-blue-500 hover:underline">{l}</button>
