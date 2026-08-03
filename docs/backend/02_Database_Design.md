@@ -14,9 +14,9 @@
 - `updated_at` (TIMESTAMP)
 
 ### 2. `devices`
-**Purpose**: Stores registered ESP8266 devices.
+**Purpose**: Stores the registered ESP8266 device for the user (MVP: One device per user).
 - `id` (UUID, PK)
-- `user_id` (UUID, FK -> users.id)
+- `user_id` (UUID, Unique, FK -> users.id)
 - `name` (VARCHAR) - e.g., "Backpack Keychain"
 - `firmware_version` (VARCHAR)
 - `battery_level` (INT 0-100)

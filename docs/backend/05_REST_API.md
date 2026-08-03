@@ -10,14 +10,13 @@
 ## Server / System (`/api/v1/server`)
 - `GET /api/v1/server/time` - **Purpose:** Provide trusted server time (UTC) for ESP8266 when reconnecting after offline operation to ensure accurate timestamping of queued readings.
 
-## Devices (`/api/v1/devices`)
-- `POST /api/v1/devices/register` - Registers a new ESP8266 device, returning Device ID & Secret.
-- `POST /api/v1/devices/heartbeat` - **Purpose:** Allow ESP8266 to periodically send Battery percentage, Charging state, Wi-Fi RSSI, Firmware version, Device uptime, Last sync, and Sensor health. Powers the frontend Device page.
-- `GET /api/v1/devices` - Lists all devices owned by user.
-- `GET /api/v1/devices/{id}` - Gets specific device status.
-- `PATCH /api/v1/devices/{id}` - Updates device name.
-- `DELETE /api/v1/devices/{id}` - Unpairs/deletes device and cascades data.
-- `GET /api/v1/devices/firmware/latest` - **[Future Feature / Phase 6]** Returns latest firmware binary for Over-The-Air (OTA) updates. Not implemented in Phase 3B.
+## Device (`/api/v1/device`)
+- `POST /api/v1/device/register` - Registers the ESP8266 device, returning Device ID & Secret. Fails if user already has a device.
+- `POST /api/v1/device/heartbeat` - **Purpose:** Allow ESP8266 to periodically send Battery percentage, Charging state, Wi-Fi RSSI, Firmware version, Device uptime, Last sync, and Sensor health.
+- `GET /api/v1/device` - Gets the user's registered device status.
+- `PATCH /api/v1/device` - Updates device name.
+- `DELETE /api/v1/device` - Unpairs/deletes the device and cascades data.
+- `GET /api/v1/device/firmware/latest` - **[Future Feature / Phase 6]** Returns latest firmware binary for Over-The-Air (OTA) updates. Not implemented in Phase 3B.
 
 ## Readings (`/api/v1/readings`)
 - `POST /api/v1/readings` - **[ESP8266 Endpoint]** Ingests one or more UV readings. (Requires Device Auth).

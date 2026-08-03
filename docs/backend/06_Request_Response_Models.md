@@ -15,7 +15,7 @@
 { "status": "success", "inserted": 1, "duplicates": 0 }
 ```
 
-## 2. POST /api/v1/devices/heartbeat
+## 2. POST /api/v1/device/heartbeat
 **Headers**: `x-device-id`, `x-api-key`
 **Request Body**:
 ```json

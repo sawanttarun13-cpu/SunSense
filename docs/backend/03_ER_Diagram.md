@@ -2,7 +2,7 @@
 
 ```mermaid
 erDiagram
-    users ||--o{ devices : owns
+    users ||--|o devices : owns
     users ||--o{ sunscreen_applications : logs
     users ||--o{ alerts : receives
     users ||--|| settings : configures
@@ -93,5 +93,5 @@ erDiagram
 
 ## Relationship Rules
 - **Cascade Deletes**: Deleting a User cascades to Devices, Settings, Notification Preferences, Alerts, Exposure Sessions, and Sunscreen Applications.
-- **One-to-Many**: One User has multiple Devices (Multi-device support). One Device has many UV Readings and Exposure Sessions.
-- **One-to-One**: Users have strictly one Settings profile and one Notification Preferences profile. Devices have exactly one Device Token.
+- **One-to-Many**: One Device has many UV Readings and Exposure Sessions.
+- **One-to-One**: Users have strictly one Device (MVP Hard Limit), one Settings profile, and one Notification Preferences profile. Devices have exactly one Device Token.
