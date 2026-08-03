@@ -4,7 +4,7 @@ exports.errorHandler = void 0;
 const apiResponse_1 = require("../utils/apiResponse");
 const logger_1 = require("../utils/logger");
 const env_1 = require("../config/env");
-const errorHandler = (err, req, res, next) => {
+const errorHandler = (err, req, res, _next) => {
     logger_1.logger.error('Unhandled Exception:', err);
     const statusCode = err.statusCode || 500;
     const message = err.message || 'Internal Server Error';
