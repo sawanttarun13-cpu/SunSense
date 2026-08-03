@@ -46,6 +46,18 @@ export class AuthService {
     };
   }
 
+  async refreshToken(token: string) {
+    try {
+      const decoded = jwt.verify(token, config.jwtSecret) as { userId: string };
+      const user = await userRepo.findById(decoded.userId);
+      if (!user) throw new Error('User not found');
+      
+      return jwt.sign({ userId: user.id }, config.jwtSecret, { expiresIn: '15m' });
+    } catch {
+      throw new Error('Invalid token');
+    }
+  }
+
   async getProfile(userId: string) {
     const user = await userRepo.findById(userId);
     if (!user) throw new Error('User not found');

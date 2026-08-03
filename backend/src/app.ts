@@ -10,6 +10,7 @@ import healthRoutes from './routes/health.routes';
 import authRoutes from './routes/auth.routes';
 import deviceRoutes from './routes/device.routes';
 import { config } from './config/env';
+import { globalLimiter } from './middleware/rateLimiter';
 
 const app = express();
 
@@ -25,6 +26,7 @@ app.use(compression());
 app.use(express.json());
 app.use(cookieParser());
 app.use(morganMiddleware);
+app.use(globalLimiter);
 
 // API Routes
 app.use('/api/v1/auth', authRoutes);

@@ -23,7 +23,7 @@ const requireAuth = async (req, res, next) => {
         req.userId = user.id;
         next();
     }
-    catch (_) {
+    catch {
         return (0, apiResponse_1.sendError)(res, 'Unauthorized - Invalid token', 401);
     }
 };

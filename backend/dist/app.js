@@ -15,6 +15,7 @@ const health_routes_1 = __importDefault(require("./routes/health.routes"));
 const auth_routes_1 = __importDefault(require("./routes/auth.routes"));
 const device_routes_1 = __importDefault(require("./routes/device.routes"));
 const env_1 = require("./config/env");
+const rateLimiter_1 = require("./middleware/rateLimiter");
 const app = (0, express_1.default)();
 // Global Middlewares
 app.use((0, helmet_1.default)());
@@ -26,6 +27,7 @@ app.use((0, compression_1.default)());
 app.use(express_1.default.json());
 app.use((0, cookie_parser_1.default)());
 app.use(logger_1.morganMiddleware);
+app.use(rateLimiter_1.globalLimiter);
 // API Routes
 app.use('/api/v1/auth', auth_routes_1.default);
 app.use('/api/v1/device', device_routes_1.default);

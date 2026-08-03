@@ -30,7 +30,7 @@ const requireDeviceAuth = async (req, res, next) => {
         req.deviceId = deviceId;
         next();
     }
-    catch (_) {
+    catch {
         return (0, apiResponse_1.sendError)(res, 'Unauthorized - Internal Error', 500);
     }
 };

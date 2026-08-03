@@ -35,6 +35,19 @@ export class AuthController {
     }
   }
 
+  async refresh(req: Request, res: Response) {
+    try {
+      const refreshToken = req.cookies.refreshToken;
+      if (!refreshToken) {
+        return sendError(res, 'No refresh token provided', 401);
+      }
+      const token = await authService.refreshToken(refreshToken);
+      return sendSuccess(res, { token });
+    } catch {
+      return sendError(res, 'Invalid refresh token', 401);
+    }
+  }
+
   async logout(req: Request, res: Response) {
     res.clearCookie('refreshToken');
     return sendSuccess(res, { message: 'Logged out successfully' });

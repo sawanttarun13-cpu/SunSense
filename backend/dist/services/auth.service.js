@@ -42,6 +42,18 @@ class AuthService {
             refreshToken
         };
     }
+    async refreshToken(token) {
+        try {
+            const decoded = jsonwebtoken_1.default.verify(token, env_1.config.jwtSecret);
+            const user = await userRepo.findById(decoded.userId);
+            if (!user)
+                throw new Error('User not found');
+            return jsonwebtoken_1.default.sign({ userId: user.id }, env_1.config.jwtSecret, { expiresIn: '15m' });
+        }
+        catch {
+            throw new Error('Invalid token');
+        }
+    }
     async getProfile(userId) {
         const user = await userRepo.findById(userId);
         if (!user)
