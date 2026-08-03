@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import morgan from 'morgan';
 
 export const logger = {

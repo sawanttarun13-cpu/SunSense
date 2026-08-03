@@ -7,6 +7,8 @@ import { morganMiddleware } from './utils/logger';
 import { errorHandler } from './middleware/errorHandler';
 import { notFoundHandler } from './middleware/notFoundHandler';
 import healthRoutes from './routes/health.routes';
+import authRoutes from './routes/auth.routes';
+import deviceRoutes from './routes/device.routes';
 import { config } from './config/env';
 
 const app = express();
@@ -25,6 +27,8 @@ app.use(cookieParser());
 app.use(morganMiddleware);
 
 // API Routes
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/device', deviceRoutes);
 app.use('/api/v1', healthRoutes);
 
 // 404 Handler
