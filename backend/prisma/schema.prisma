@@ -7,155 +7,175 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id            String   @id @default(uuid()) @db.Uuid
-  email         String   @unique @db.VarChar(255)
-  password_hash String   @db.VarChar(255)
-  name          String?  @db.VarChar(255)
-  skin_type     Int      @db.SmallInt // 1-6
-  preferred_spf Int      @db.SmallInt
-  created_at    DateTime @default(now()) @db.Timestamp(6)
-  updated_at    DateTime @updatedAt @db.Timestamp(6)
+enum RiskLevel {
+  LOW
+  MODERATE
+  HIGH
+  VERY_HIGH
+  EXTREME
+}
 
-  devices                  Device[]
-  sunscreen_applications   SunscreenApplication[]
-  alerts                   Alert[]
-  settings                 Setting?
-  notification_preferences NotificationPreference?
-  exposure_sessions        ExposureSession[]
+enum AlertType {
+  BURN_WARNING
+  REAPPLY_SUNSCREEN
+  DAILY_LIMIT
+  OFFLINE_SYNC
+  BATTERY_LOW
+}
+
+enum SyncStatus {
+  SUCCESS
+  PARTIAL
+  FAILED
+}
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String   @unique @db.VarChar(255)
+  passwordHash String   @map("password_hash") @db.VarChar(255)
+  name         String?  @db.VarChar(255)
+  skinType     Int      @map("skin_type") @db.SmallInt // 1-6
+  preferredSpf Int      @map("preferred_spf") @db.SmallInt
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  devices                 Device[]
+  sunscreenApplications   SunscreenApplication[]
+  alerts                  Alert[]
+  settings                Setting?
+  notificationPreferences NotificationPreference?
+  exposureSessions        ExposureSession[]
 
   @@map("users")
 }
 
 model Device {
-  id               String    @id @default(uuid()) @db.Uuid
-  user_id          String    @db.Uuid
-  name             String    @db.VarChar(255)
-  firmware_version String?   @db.VarChar(50)
-  battery_level    Int?      @db.SmallInt // 0-100
-  wifi_ssid        String?   @db.VarChar(255)
-  ip_address       String?   @db.VarChar(50)
-  last_ping        DateTime? @db.Timestamp(6)
-  created_at       DateTime  @default(now()) @db.Timestamp(6)
+  id              String    @id @default(uuid()) @db.Uuid
+  userId          String    @map("user_id") @db.Uuid
+  name            String    @db.VarChar(255)
+  firmwareVersion String?   @map("firmware_version") @db.VarChar(50)
+  batteryLevel    Int?      @map("battery_level") @db.SmallInt // 0-100
+  wifiSsid        String?   @map("wifi_ssid") @db.VarChar(255)
+  ipAddress       String?   @map("ip_address") @db.VarChar(50)
+  lastPing        DateTime? @map("last_ping") @db.Timestamp(6)
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
 
-  user              User              @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  device_token      DeviceToken?
-  uv_readings       UVReading[]
-  exposure_sessions ExposureSession[]
-  device_sync_logs  DeviceSyncLog[]
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deviceToken      DeviceToken?
+  uvReadings       UVReading[]
+  exposureSessions ExposureSession[]
+  deviceSyncLogs   DeviceSyncLog[]
 
   @@map("devices")
 }
 
 model DeviceToken {
-  device_id    String    @id @db.Uuid
-  api_key_hash String    @db.VarChar(255)
-  created_at   DateTime  @default(now()) @db.Timestamp(6)
-  last_used_at DateTime? @db.Timestamp(6)
+  deviceId   String    @id @map("device_id") @db.Uuid
+  apiKeyHash String    @map("api_key_hash") @db.VarChar(255)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  lastUsedAt DateTime? @map("last_used_at") @db.Timestamp(6)
 
-  device Device @relation(fields: [device_id], references: [id], onDelete: Cascade)
+  device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
 
   @@map("device_tokens")
 }
 
 model UVReading {
-  id          String   @id @default(uuid()) @db.Uuid
-  device_id   String   @db.Uuid
-  uv_index    Decimal  @db.Decimal(4, 2)
-  recorded_at DateTime @db.Timestamp(6)
-  created_at  DateTime @default(now()) @db.Timestamp(6)
+  id         String   @id @default(uuid()) @db.Uuid
+  deviceId   String   @map("device_id") @db.Uuid
+  uvIndex    Decimal  @map("uv_index") @db.Decimal(4, 2)
+  recordedAt DateTime @map("recorded_at") @db.Timestamp(6)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamp(6)
 
-  device Device @relation(fields: [device_id], references: [id], onDelete: Cascade)
+  device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
 
-  @@unique([device_id, recorded_at])
-  @@index([device_id])
-  @@index([recorded_at])
+  @@unique([deviceId, recordedAt])
+  @@index([deviceId])
+  @@index([recordedAt])
   @@map("uv_readings")
 }
 
 model ExposureSession {
-  session_id       String   @id @default(uuid()) @db.Uuid
-  user_id          String   @db.Uuid
-  device_id        String   @db.Uuid
-  start_time       DateTime @db.Timestamp(6)
-  end_time         DateTime @db.Timestamp(6)
-  duration_seconds Int
-  average_uv_index Decimal  @db.Decimal(4, 2)
-  accumulated_sed  Decimal  @db.Decimal(6, 2)
-  calculated_risk  String   @db.VarChar(50)
-  created_at       DateTime @default(now()) @db.Timestamp(6)
+  sessionId       String    @id @default(uuid()) @map("session_id") @db.Uuid
+  userId          String    @map("user_id") @db.Uuid
+  deviceId        String    @map("device_id") @db.Uuid
+  startTime       DateTime  @map("start_time") @db.Timestamp(6)
+  endTime         DateTime  @map("end_time") @db.Timestamp(6)
+  durationSeconds Int       @map("duration_seconds")
+  averageUvIndex  Decimal   @map("average_uv_index") @db.Decimal(4, 2)
+  accumulatedSed  Decimal   @map("accumulated_sed") @db.Decimal(6, 2)
+  calculatedRisk  RiskLevel @map("calculated_risk")
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
 
-  user   User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  device Device @relation(fields: [device_id], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
 
-  @@index([user_id])
+  @@index([userId])
   @@map("exposure_sessions")
 }
 
 model SunscreenApplication {
-  id          String   @id @default(uuid()) @db.Uuid
-  user_id     String   @db.Uuid
-  applied_spf Int      @db.SmallInt
-  applied_at  DateTime @db.Timestamp(6)
-  expires_at  DateTime @db.Timestamp(6)
-  created_at  DateTime @default(now()) @db.Timestamp(6)
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  appliedSpf Int      @map("applied_spf") @db.SmallInt
+  appliedAt  DateTime @map("applied_at") @db.Timestamp(6)
+  expiresAt  DateTime @map("expires_at") @db.Timestamp(6)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamp(6)
 
-  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([user_id])
+  @@index([userId])
   @@map("sunscreen_applications")
 }
 
 model Alert {
-  id           String   @id @default(uuid()) @db.Uuid
-  user_id      String   @db.Uuid
-  type         String   @db.VarChar(50)
-  message      String   @db.Text
-  triggered_at DateTime @db.Timestamp(6)
-  is_read      Boolean  @default(false)
-  is_dismissed Boolean  @default(false)
+  id          String    @id @default(uuid()) @db.Uuid
+  userId      String    @map("user_id") @db.Uuid
+  type        AlertType
+  message     String    @db.Text
+  triggeredAt DateTime  @map("triggered_at") @db.Timestamp(6)
+  isRead      Boolean   @default(false) @map("is_read")
+  isDismissed Boolean   @default(false) @map("is_dismissed")
 
-  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([user_id])
+  @@index([userId])
   @@map("alerts")
 }
 
 model Setting {
-  user_id               String   @id @db.Uuid
-  alert_threshold       Decimal  @db.Decimal(4, 2)
-  notifications_enabled Boolean  @default(true)
-  email_alerts          Boolean  @default(false)
-  updated_at            DateTime @updatedAt @db.Timestamp(6)
+  userId         String   @id @map("user_id") @db.Uuid
+  alertThreshold Decimal  @map("alert_threshold") @db.Decimal(4, 2)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamp(6)
 
-  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("settings")
 }
 
 model NotificationPreference {
-  user_id                 String   @id @db.Uuid
-  email_notifications     Boolean  @default(true)
-  push_notifications      Boolean  @default(true)
-  smart_alert_preferences Json     @default("{}")
-  reminder_preferences    Json     @default("{}")
-  quiet_hours_start       DateTime @db.Time()
-  quiet_hours_end         DateTime @db.Time()
-  updated_at              DateTime @updatedAt @db.Timestamp(6)
+  userId                String   @id @map("user_id") @db.Uuid
+  emailNotifications    Boolean  @default(true) @map("email_notifications")
+  pushNotifications     Boolean  @default(true) @map("push_notifications")
+  smartAlertPreferences Json     @default("{}") @map("smart_alert_preferences") @db.JsonB
+  reminderPreferences   Json     @default("{}") @map("reminder_preferences") @db.JsonB
+  quietHoursStart       DateTime @map("quiet_hours_start") @db.Time()
+  quietHoursEnd         DateTime @map("quiet_hours_end") @db.Time()
+  updatedAt             DateTime @updatedAt @map("updated_at") @db.Timestamp(6)
 
-  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("notification_preferences")
 }
 
 model DeviceSyncLog {
-  id               String   @id @default(uuid()) @db.Uuid
-  device_id        String   @db.Uuid
-  sync_time        DateTime @db.Timestamp(6)
-  records_uploaded Int
-  status           String   @db.VarChar(50)
+  id              String     @id @default(uuid()) @db.Uuid
+  deviceId        String     @map("device_id") @db.Uuid
+  syncTime        DateTime   @map("sync_time") @db.Timestamp(6)
+  recordsUploaded Int        @map("records_uploaded")
+  status          SyncStatus
 
-  device Device @relation(fields: [device_id], references: [id], onDelete: Cascade)
+  device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
 
   @@map("device_sync_logs")
 }
