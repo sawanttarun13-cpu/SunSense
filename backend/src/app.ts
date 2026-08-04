@@ -9,6 +9,12 @@ import { notFoundHandler } from './middleware/notFoundHandler';
 import healthRoutes from './routes/health.routes';
 import authRoutes from './routes/auth.routes';
 import deviceRoutes from './routes/device.routes';
+import dashboardRoutes from './routes/dashboard/dashboard.routes';
+import analyticsRoutes from './routes/analytics/analytics.routes';
+import historyRoutes from './routes/history/history.routes';
+import alertsRoutes from './routes/alerts/alerts.routes';
+import profileRoutes from './routes/profile/profile.routes';
+import settingsRoutes from './routes/settings/settings.routes';
 import { config } from './config/env';
 import { globalLimiter } from './middleware/rateLimiter';
 
@@ -31,6 +37,12 @@ app.use(globalLimiter);
 // API Routes
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/device', deviceRoutes);
+app.use('/api/v1/dashboard', dashboardRoutes);
+app.use('/api/v1/analytics', analyticsRoutes);
+app.use('/api/v1/history', historyRoutes);
+app.use('/api/v1/alerts', alertsRoutes);
+app.use('/api/v1/profile', profileRoutes);
+app.use('/api/v1/settings', settingsRoutes);
 app.use('/api/v1', healthRoutes);
 
 // 404 Handler
