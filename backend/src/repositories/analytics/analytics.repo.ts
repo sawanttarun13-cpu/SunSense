@@ -1,5 +1,10 @@
+import { prisma } from '../../config/prisma';
+
 export class AnalyticsRepository {
-  async getAggregates(_userId: string) {
-    return [];
+  async getSessions(userId: string) {
+    return prisma.exposureSession.findMany({
+      where: { userId },
+      orderBy: { startTime: 'asc' }
+    });
   }
 }

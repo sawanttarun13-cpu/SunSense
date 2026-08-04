@@ -5,6 +5,8 @@ const history_repo_1 = require("../../repositories/history/history.repo");
 const historyRepo = new history_repo_1.HistoryRepository();
 class HistoryService {
     async getHistory(userId, page, limit, startDateStr, endDateStr) {
+        if (limit > 100)
+            limit = 100;
         const skip = (page - 1) * limit;
         const startDate = startDateStr ? new Date(startDateStr) : undefined;
         const endDate = endDateStr ? new Date(endDateStr) : undefined;

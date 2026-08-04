@@ -14,6 +14,8 @@ const notFoundHandler_1 = require("./middleware/notFoundHandler");
 const health_routes_1 = __importDefault(require("./routes/health.routes"));
 const auth_routes_1 = __importDefault(require("./routes/auth.routes"));
 const device_routes_1 = __importDefault(require("./routes/device.routes"));
+const readings_routes_1 = __importDefault(require("./routes/readings/readings.routes"));
+const sunscreen_routes_1 = __importDefault(require("./routes/sunscreen/sunscreen.routes"));
 const dashboard_routes_1 = __importDefault(require("./routes/dashboard/dashboard.routes"));
 const analytics_routes_1 = __importDefault(require("./routes/analytics/analytics.routes"));
 const history_routes_1 = __importDefault(require("./routes/history/history.routes"));
@@ -37,6 +39,8 @@ app.use(rateLimiter_1.globalLimiter);
 // API Routes
 app.use('/api/v1/auth', auth_routes_1.default);
 app.use('/api/v1/device', device_routes_1.default);
+app.use('/api/v1/readings', readings_routes_1.default);
+app.use('/api/v1/sunscreen', sunscreen_routes_1.default);
 app.use('/api/v1/dashboard', dashboard_routes_1.default);
 app.use('/api/v1/analytics', analytics_routes_1.default);
 app.use('/api/v1/history', history_routes_1.default);

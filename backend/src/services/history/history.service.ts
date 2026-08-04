@@ -3,6 +3,7 @@ const historyRepo = new HistoryRepository();
 
 export class HistoryService {
   async getHistory(userId: string, page: number, limit: number, startDateStr?: string, endDateStr?: string) {
+    if (limit > 100) limit = 100;
     const skip = (page - 1) * limit;
     const startDate = startDateStr ? new Date(startDateStr) : undefined;
     const endDate = endDateStr ? new Date(endDateStr) : undefined;
