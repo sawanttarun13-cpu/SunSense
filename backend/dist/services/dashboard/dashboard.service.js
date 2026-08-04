@@ -7,7 +7,6 @@ class DashboardService {
     async getDashboard(userId) {
         const data = await dashboardRepo.getOverview(userId);
         return {
-            status: 'active',
             deviceConnected: !!data.device,
             lastSync: data.device?.lastPing || null,
             todayExposure: 0,

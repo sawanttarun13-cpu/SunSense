@@ -20,3 +20,5 @@ export class HistoryRepository {
     return prisma.exposureSession.findFirst({ where: { sessionId: id, userId } });
   }
 }
+
+

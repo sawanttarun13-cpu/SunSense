@@ -5,9 +5,9 @@ export class SettingsService {
   async getSettings(userId: string) {
     const data = await settingsRepo.findByUserId(userId);
     return {
-      alertThreshold: data.settings?.alertThreshold || 5.0,
-      emailNotifications: data.preferences?.emailNotifications ?? true,
-      pushNotifications: data.preferences?.pushNotifications ?? true,
+      alertThreshold: data.settings?.alertThreshold ?? null,
+      emailNotifications: data.preferences?.emailNotifications ?? null,
+      pushNotifications: data.preferences?.pushNotifications ?? null,
     };
   }
   async updateSettings(userId: string, data: any) {
