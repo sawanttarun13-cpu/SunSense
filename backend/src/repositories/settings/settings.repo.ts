@@ -1,12 +1,60 @@
+/**
+ * --------------------------------------------------------
+ * File: settings.repo.ts
+ * Layer: Repository / Data Access
+ *
+ * Purpose:
+ * Provides read and upsert access to the `settings` and
+ * `notification_preferences` tables. Both tables are
+ * user-scoped with a 1-to-1 relationship to the users table.
+ *
+ * Uses upsert (create-or-update) for writes so the caller
+ * does not need to know whether a row already exists. This
+ * is important because settings rows are not automatically
+ * created at registration — they are created on first update.
+ *
+ * Tables Managed:
+ * settings, notification_preferences
+ *
+ * Used By:
+ * SettingsService — Read and update user settings
+ *
+ * Does NOT:
+ * Contain any business logic. Queries only.
+ * --------------------------------------------------------
+ */
 import { prisma } from '../../config/prisma';
 
 export class SettingsRepository {
+
+  /**
+   * Retrieves both the settings and notification preferences for a user.
+   *
+   * Returns null for either field if the user has not yet saved
+   * settings (i.e., no row exists). The SettingsService uses
+   * null-coalescing to return null to the frontend gracefully.
+   *
+   * @param userId - UUID of the authenticated user.
+   * @returns      { settings: Setting | null, preferences: NotificationPreference | null }
+   */
   async findByUserId(userId: string) {
     const settings = await prisma.setting.findUnique({ where: { userId } });
     const prefs = await prisma.notificationPreference.findUnique({ where: { userId } });
     return { settings, preferences: prefs };
   }
   
+  /**
+   * Creates or updates the user's UV alert threshold setting.
+   *
+   * If `alertThreshold` is undefined (not provided in the request body),
+   * the function short-circuits without touching the database.
+   * This prevents accidental null overwrites when the user
+   * only wants to update notification preferences.
+   *
+   * @param userId         - UUID of the authenticated user.
+   * @param alertThreshold - New UV Index threshold for alert generation. Optional.
+   * @returns              The upserted Setting record, or null if alertThreshold was not provided.
+   */
   async upsertSettings(userId: string, alertThreshold?: number) {
     if (alertThreshold === undefined) return null;
     return prisma.setting.upsert({
@@ -16,9 +64,29 @@ export class SettingsRepository {
     });
   }
 
+  /**
+   * Creates or updates the user's notification preferences.
+   *
+   * If neither emailNotif nor pushNotif is provided, short-circuits
+   * without touching the database.
+   *
+   * Default values for quietHoursStart/End are set to midnight UTC
+   * (1970-01-01T00:00:00Z) on initial creation because PostgreSQL's
+   * TIME column requires a non-null value. These will be made configurable
+   * in a future phase when the quiet hours UI is implemented.
+   *
+   * @param userId      - UUID of the authenticated user.
+   * @param emailNotif  - Toggle email notifications. Optional.
+   * @param pushNotif   - Toggle push notifications. Optional.
+   * @returns           The upserted NotificationPreference record, or null if nothing was provided.
+   */
   async upsertPreferences(userId: string, emailNotif?: boolean, pushNotif?: boolean) {
     if (emailNotif === undefined && pushNotif === undefined) return null;
+
+    // Default placeholder for quietHours — required by the DB schema.
+    // Will be replaced with actual user-configurable times in Phase 8.
     const defaultDate = new Date('1970-01-01T00:00:00Z');
+
     return prisma.notificationPreference.upsert({
       where: { userId },
       update: { emailNotifications: emailNotif, pushNotifications: pushNotif },

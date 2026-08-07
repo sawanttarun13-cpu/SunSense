@@ -1,3 +1,25 @@
+/**
+ * --------------------------------------------------------
+ * File: device.controller.ts
+ * Layer: Controller / HTTP Handler
+ *
+ * Purpose:
+ * Handles HTTP requests for ESP8266 device management
+ * including registration (pairing), status retrieval,
+ * and device authentication verification.
+ *
+ * Endpoints served:
+ * POST /api/v1/device/register
+ * GET  /api/v1/device
+ * GET  /api/v1/device/auth (internal — device auth check)
+ *
+ * Layer:
+ * Controller (HTTP only — no business logic)
+ *
+ * Uses:
+ * DeviceService — Device registration and lookup
+ * --------------------------------------------------------
+ */
 import { Response } from 'express';
 import { DeviceService } from '../services/device.service';
 import { sendSuccess, sendError } from '../utils/apiResponse';
@@ -7,16 +29,45 @@ import { DeviceAuthRequest } from '../middleware/requireDeviceAuth';
 const deviceService = new DeviceService();
 
 export class DeviceController {
+
+  /**
+   * POST /api/v1/device/register
+   *
+   * Protected Route | Requires: Authorization: Bearer <token>
+   *
+   * Registers a new ESP8266 device for the authenticated user.
+   * The returned apiKey must be stored immediately in the device firmware
+   * as it will not be retrievable again.
+   *
+   * Request Body: { name: "My SunSense Device" }
+   *
+   * Responses:
+   * 201 → { deviceId, apiKey, name } — Device registered successfully
+   * 409 → 'MVP Limit: Users may only have one active device.' — Already paired
+   */
   async register(req: AuthRequest, res: Response) {
     try {
       const { name } = req.body;
       const result = await deviceService.registerDevice(req.userId!, name);
       return sendSuccess(res, result, 201);
     } catch (error: any) {
-      return sendError(res, error.message, 409); // Conflict
+      return sendError(res, error.message, 409); // 409 Conflict — device already registered
     }
   }
 
+  /**
+   * GET /api/v1/device
+   *
+   * Protected Route | Requires: Authorization: Bearer <token>
+   *
+   * Returns the authenticated user's registered device status.
+   * Used by the frontend to display device name, battery level,
+   * firmware version, and connectivity information.
+   *
+   * Responses:
+   * 200 → { id, userId, name, firmwareVersion, batteryLevel, wifiSsid, ipAddress, lastPing }
+   * 404 → 'No device found for this user'
+   */
   async getDevice(req: AuthRequest, res: Response) {
     try {
       const result = await deviceService.getDevice(req.userId!);
@@ -26,8 +77,20 @@ export class DeviceController {
     }
   }
 
+  /**
+   * GET /api/v1/device/auth
+   *
+   * Device Auth Route | Requires: x-device-id + x-api-key headers
+   *
+   * A simple endpoint for verifying device credentials.
+   * If requireDeviceAuth middleware passes, the device is authenticated.
+   * Used primarily for testing device connectivity during setup.
+   *
+   * Responses:
+   * 200 → { message: 'Device authenticated', deviceId }
+   * 401 → Handled by requireDeviceAuth middleware before reaching here
+   */
   async authenticate(req: DeviceAuthRequest, res: Response) {
-    // If middleware passes, it's authenticated
     try {
       const result = await deviceService.authenticateDevice(req.deviceId!);
       return sendSuccess(res, { message: 'Device authenticated', deviceId: result.id });
