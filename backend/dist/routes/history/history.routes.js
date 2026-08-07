@@ -1,4 +1,11 @@
 "use strict";
+/**
+ * ---------------------------------------------------------
+ * File: history.routes.ts
+ * Purpose:
+ * API route definitions for history.routes.
+ * ---------------------------------------------------------
+ */
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const history_controller_1 = require("../../controllers/history/history.controller");

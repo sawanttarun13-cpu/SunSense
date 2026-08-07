@@ -1,5 +1,14 @@
+/**
+ * ---------------------------------------------------------
+ * File: settings.ts
+ * Purpose:
+ * Frontend file for settings.
+ * ---------------------------------------------------------
+ */
+
 import type { NotificationSettings, AppSettings } from '../types/settings';
 
+// Frontend logic for settings.
 export const MOCK_SETTINGS: AppSettings = {
   spfLevel: 30,
   uvThreshold: 6,

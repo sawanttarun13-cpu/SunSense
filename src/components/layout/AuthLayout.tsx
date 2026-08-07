@@ -1,8 +1,17 @@
+/**
+ * ---------------------------------------------------------
+ * File: AuthLayout.tsx
+ * Purpose:
+ * React component for AuthLayout.
+ * ---------------------------------------------------------
+ */
+
 import { Sun } from 'lucide-react';
 import React from 'react';
 
 const FONT: React.CSSProperties = { fontFamily: "'Poppins', sans-serif" };
 
+// Reusable AuthLayout component.
 export function BrandPanel({ headline, sub, badge }: { headline: React.ReactNode; sub: string; badge: string }) {
   return (
     <div

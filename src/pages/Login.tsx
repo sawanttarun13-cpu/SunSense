@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: Login.tsx
+ * Purpose:
+ * React page component for Login.
+ * ---------------------------------------------------------
+ */
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Eye, EyeOff, ArrowRight, Loader } from 'lucide-react';
@@ -7,6 +15,7 @@ function inputBorder(focused: string | null, field: string) {
   return { border: `1.5px solid ${focused === field ? '#2563EB' : '#E2E8F0'}`, outline: 'none', transition: 'border-color 0.15s' };
 }
 
+// Login page shown to the user.
 export function Login() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');

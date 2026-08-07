@@ -1,7 +1,16 @@
+/**
+ * ---------------------------------------------------------
+ * File: alerts.ts
+ * Purpose:
+ * Frontend file for alerts.
+ * ---------------------------------------------------------
+ */
+
 import { AlertTriangle, Zap, Shield, Bell, Info, CheckCircle, Sun, X } from 'lucide-react';
 import type { AlertItem, AlertSeverity, SeverityStyle } from '../types/alert';
 
 // ─── Alert data ───────────────────────────────────────────────────────────────
+// Frontend logic for alerts.
 export const ALERT_DATA: AlertItem[] = [
   { id: 1,  severity: 'extreme',  title: 'Extreme UV Event',             message: 'UV index reached 11.4 — extreme levels detected. Seek shade immediately and apply SPF 50+ sunscreen.',                                              time: 'Today · 12:45 PM',    uvValue: 11.4, icon: Zap,           isNew: true },
   { id: 2,  severity: 'critical', title: 'Very High UV Warning',         message: 'UV index 9.3. Apply broad-spectrum sunscreen, wear protective clothing and limit sun exposure to 15 minutes.',                                          time: 'Today · 11:30 AM',    uvValue: 9.3,  icon: AlertTriangle,  isNew: true },

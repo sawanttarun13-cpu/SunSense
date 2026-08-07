@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: Register.tsx
+ * Purpose:
+ * React page component for Register.
+ * ---------------------------------------------------------
+ */
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { Eye, EyeOff, ArrowRight, Loader, Check } from 'lucide-react';
@@ -9,6 +17,7 @@ function inputBorder(focused: string | null, field: string) {
   return { border: `1.5px solid ${focused === field ? '#2563EB' : '#E2E8F0'}`, outline: 'none', transition: 'border-color 0.15s' };
 }
 
+// Register page shown to the user.
 export function Register() {
   const navigate = useNavigate();
   const [step, setStep] = useState<1 | 2>(1);

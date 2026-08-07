@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: chart.tsx
+ * Purpose:
+ * React component for chart.
+ * ---------------------------------------------------------
+ */
+
 "use client";
 
 import * as React from "react";

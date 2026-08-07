@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: Profile.tsx
+ * Purpose:
+ * React page component for Profile.
+ * ---------------------------------------------------------
+ */
+
 import { useState, useEffect } from 'react';
 import { User, MapPin, Calendar, Sun, Edit3, Check, Award, Clock, TrendingUp, Shield, Flame } from 'lucide-react';
 import { UV_ZONES } from '../constants/uv';
@@ -20,6 +28,7 @@ function StatCard({ icon: Icon, label, value, color, bg }: { icon: React.Element
   );
 }
 
+// Profile page shown to the user.
 export function Profile() {
   const [skinTypes, setSkinTypes] = useState<SkinType[]>([]);
   const [sensitivityLevels, setSensitivityLevels] = useState<SensitivityLevel[]>([]);

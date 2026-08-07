@@ -1,9 +1,18 @@
 "use strict";
+/**
+ * ---------------------------------------------------------
+ * File: sunscreen.controller.ts
+ * Purpose:
+ * Handles all HTTP requests for sunscreen.controller.
+ * ---------------------------------------------------------
+ */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SunscreenController = void 0;
 const sunscreen_service_1 = require("../../services/sunscreen/sunscreen.service");
 const apiResponse_1 = require("../../utils/apiResponse");
 const sunscreenService = new sunscreen_service_1.SunscreenService();
+// Handles sunscreen.controller-related HTTP requests.
+// Calls the respective service and returns API responses.
 class SunscreenController {
     async apply(req, res) {
         try {

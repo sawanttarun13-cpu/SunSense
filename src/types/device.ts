@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: device.ts
+ * Purpose:
+ * TypeScript type definitions for device.
+ * ---------------------------------------------------------
+ */
+
 export interface DeviceInfo {
   model: string;
   serialNumber: string;

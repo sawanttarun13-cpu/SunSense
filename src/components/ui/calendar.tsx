@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: calendar.tsx
+ * Purpose:
+ * React component for calendar.
+ * ---------------------------------------------------------
+ */
+
 "use client";
 
 import * as React from "react";

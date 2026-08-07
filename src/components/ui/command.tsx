@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: command.tsx
+ * Purpose:
+ * React component for command.
+ * ---------------------------------------------------------
+ */
+
 "use client";
 
 import * as React from "react";

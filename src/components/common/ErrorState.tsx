@@ -1,5 +1,14 @@
+/**
+ * ---------------------------------------------------------
+ * File: ErrorState.tsx
+ * Purpose:
+ * React component for ErrorState.
+ * ---------------------------------------------------------
+ */
+
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 
+// Reusable ErrorState component.
 export function ErrorState({ 
   message = 'Something went wrong while loading data.', 
   onRetry 

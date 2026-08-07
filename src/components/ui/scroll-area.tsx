@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: scroll-area.tsx
+ * Purpose:
+ * React component for scroll-area.
+ * ---------------------------------------------------------
+ */
+
 "use client";
 
 import * as React from "react";

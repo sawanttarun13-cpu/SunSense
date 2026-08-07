@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: UVGauge.tsx
+ * Purpose:
+ * React component for UVGauge.
+ * ---------------------------------------------------------
+ */
+
 import React from 'react';
 import { getUVZone } from '../../utils/uv';
 
@@ -6,6 +14,7 @@ const polarToCartesian = (cx: number, cy: number, r: number, deg: number) => {
   return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
 };
 
+// Reusable UVGauge component.
 export function UVGauge({ value }: { value: number }) {
   const cx = 130, cy = 150, r = 100, sw = 14;
   const arcLen = Math.PI * r; 

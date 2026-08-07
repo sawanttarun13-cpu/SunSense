@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: settings.routes.ts
+ * Purpose:
+ * API route definitions for settings.routes.
+ * ---------------------------------------------------------
+ */
+
 import { Router } from 'express';
 import { SettingsController } from '../../controllers/settings/settings.controller';
 import { validateRequest } from '../../middleware/validateRequest';

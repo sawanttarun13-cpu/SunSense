@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: alerts.routes.ts
+ * Purpose:
+ * API route definitions for alerts.routes.
+ * ---------------------------------------------------------
+ */
+
 import { Router } from 'express';
 import { AlertsController } from '../../controllers/alerts/alerts.controller';
 import { requireAuth } from '../../middleware/requireAuth';

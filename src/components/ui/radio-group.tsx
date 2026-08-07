@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: radio-group.tsx
+ * Purpose:
+ * React component for radio-group.
+ * ---------------------------------------------------------
+ */
+
 "use client";
 
 import * as React from "react";

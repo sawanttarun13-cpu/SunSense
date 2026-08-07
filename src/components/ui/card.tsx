@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: card.tsx
+ * Purpose:
+ * React component for card.
+ * ---------------------------------------------------------
+ */
+
 import * as React from "react";
 
 import { cn } from "./utils";

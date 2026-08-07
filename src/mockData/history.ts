@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: history.ts
+ * Purpose:
+ * Frontend file for history.
+ * ---------------------------------------------------------
+ */
+
 import { getUVZone } from '../constants/uv';
 import type { UVLogEntry } from '../types/history';
 
@@ -27,6 +35,7 @@ function makeLog(i: number): UVLogEntry {
 // ─── All logs (immutable after generation) ────────────────────────────────────
 // Generated ONCE at module load. Because seededRandom is deterministic,
 // every app reload produces the exact same 72 rows — like querying a DB.
+// Frontend logic for history.
 export const ALL_LOGS: UVLogEntry[] = Array.from({ length: 72 }, (_, i) => makeLog(i))
   .sort((a, b) => b.date.getTime() - a.date.getTime());
 

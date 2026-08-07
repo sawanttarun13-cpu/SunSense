@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: input.tsx
+ * Purpose:
+ * React component for input.
+ * ---------------------------------------------------------
+ */
+
 import * as React from "react";
 
 import { cn } from "./utils";

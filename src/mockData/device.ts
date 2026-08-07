@@ -1,5 +1,14 @@
+/**
+ * ---------------------------------------------------------
+ * File: device.ts
+ * Purpose:
+ * Frontend file for device.
+ * ---------------------------------------------------------
+ */
+
 import type { DeviceInfo, BatteryInfo, WifiInfo, SystemInfo, SensorHealth } from '../types/device';
 
+// Frontend logic for device.
 export const MOCK_DEVICE = {
   info: {
     model: 'SunSense-101',

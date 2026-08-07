@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: tooltip.tsx
+ * Purpose:
+ * React component for tooltip.
+ * ---------------------------------------------------------
+ */
+
 "use client";
 
 import * as React from "react";

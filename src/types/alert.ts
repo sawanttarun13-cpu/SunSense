@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: alert.ts
+ * Purpose:
+ * TypeScript type definitions for alert.
+ * ---------------------------------------------------------
+ */
+
 // ─── Alert severity levels ────────────────────────────────────────────────────
 export type AlertSeverity = 'extreme' | 'critical' | 'warning' | 'info' | 'resolved';
 

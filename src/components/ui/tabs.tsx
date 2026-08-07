@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: tabs.tsx
+ * Purpose:
+ * React component for tabs.
+ * ---------------------------------------------------------
+ */
+
 "use client";
 
 import * as React from "react";

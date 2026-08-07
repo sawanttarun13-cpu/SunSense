@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: switch.tsx
+ * Purpose:
+ * React component for switch.
+ * ---------------------------------------------------------
+ */
+
 "use client";
 
 import * as React from "react";

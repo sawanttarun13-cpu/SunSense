@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: profile.ts
+ * Purpose:
+ * TypeScript type definitions for profile.
+ * ---------------------------------------------------------
+ */
+
 // ─── Fitzpatrick skin type ────────────────────────────────────────────────────
 export interface SkinType {
   id: number;

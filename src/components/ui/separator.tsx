@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: separator.tsx
+ * Purpose:
+ * React component for separator.
+ * ---------------------------------------------------------
+ */
+
 "use client";
 
 import * as React from "react";

@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: profile.controller.ts
+ * Purpose:
+ * Handles all HTTP requests for profile.controller.
+ * ---------------------------------------------------------
+ */
+
 import { Response } from 'express';
 import { ProfileService } from '../../services/profile/profile.service';
 import { sendSuccess, sendError } from '../../utils/apiResponse';
@@ -5,6 +13,8 @@ import { AuthRequest } from '../../middleware/requireAuth';
 
 const profileService = new ProfileService();
 
+// Handles profile.controller-related HTTP requests.
+// Calls the respective service and returns API responses.
 export class ProfileController {
   async get(req: AuthRequest, res: Response) {
     try {

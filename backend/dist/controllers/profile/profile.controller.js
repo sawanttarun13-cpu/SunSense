@@ -1,9 +1,18 @@
 "use strict";
+/**
+ * ---------------------------------------------------------
+ * File: profile.controller.ts
+ * Purpose:
+ * Handles all HTTP requests for profile.controller.
+ * ---------------------------------------------------------
+ */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ProfileController = void 0;
 const profile_service_1 = require("../../services/profile/profile.service");
 const apiResponse_1 = require("../../utils/apiResponse");
 const profileService = new profile_service_1.ProfileService();
+// Handles profile.controller-related HTTP requests.
+// Calls the respective service and returns API responses.
 class ProfileController {
     async get(req, res) {
         try {

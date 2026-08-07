@@ -1,3 +1,12 @@
+/**
+ * ---------------------------------------------------------
+ * File: device.ts
+ * Purpose:
+ * Constants for device.
+ * ---------------------------------------------------------
+ */
+
+// Application constants.
 export const BATTERY_THRESHOLDS = {
   CRITICAL: 20,
   WARNING: 50,

@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: sheet.tsx
+ * Purpose:
+ * React component for sheet.
+ * ---------------------------------------------------------
+ */
+
 "use client";
 
 import * as React from "react";

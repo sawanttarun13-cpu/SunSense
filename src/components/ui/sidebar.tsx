@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: sidebar.tsx
+ * Purpose:
+ * React component for sidebar.
+ * ---------------------------------------------------------
+ */
+
 "use client";
 
 import * as React from "react";

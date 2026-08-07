@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: dropdown-menu.tsx
+ * Purpose:
+ * React component for dropdown-menu.
+ * ---------------------------------------------------------
+ */
+
 "use client";
 
 import * as React from "react";

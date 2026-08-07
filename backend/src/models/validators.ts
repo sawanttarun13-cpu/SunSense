@@ -1,5 +1,14 @@
+/**
+ * ---------------------------------------------------------
+ * File: validators.ts
+ * Purpose:
+ * Backend file for validators.
+ * ---------------------------------------------------------
+ */
+
 import { z } from 'zod';
 
+// Backend logic for validators.
 export const RegisterSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),

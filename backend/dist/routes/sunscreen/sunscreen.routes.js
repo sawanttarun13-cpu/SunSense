@@ -1,4 +1,11 @@
 "use strict";
+/**
+ * ---------------------------------------------------------
+ * File: sunscreen.routes.ts
+ * Purpose:
+ * API route definitions for sunscreen.routes.
+ * ---------------------------------------------------------
+ */
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const sunscreen_controller_1 = require("../../controllers/sunscreen/sunscreen.controller");

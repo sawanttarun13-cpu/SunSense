@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: resizable.tsx
+ * Purpose:
+ * React component for resizable.
+ * ---------------------------------------------------------
+ */
+
 "use client";
 
 import * as React from "react";

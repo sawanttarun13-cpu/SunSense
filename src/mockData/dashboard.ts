@@ -1,9 +1,18 @@
+/**
+ * ---------------------------------------------------------
+ * File: dashboard.ts
+ * Purpose:
+ * Frontend file for dashboard.
+ * ---------------------------------------------------------
+ */
+
 import type { ForwardRefExoticComponent, RefAttributes } from 'react';
 import type { LucideProps } from 'lucide-react';
 import { Battery, Wifi, Clock, Shield } from 'lucide-react';
 
 import type { DashboardStat } from '../types/dashboard';
 
+// Frontend logic for dashboard.
 export const DASHBOARD_STATS: DashboardStat[] = [
   { id: 'battery', icon: Battery, label: 'Battery', value: '82%', sub: '~14h left', iconColor: '#2563EB', iconBg: '#EFF6FF' },
   { id: 'status', icon: Wifi, label: 'Status', value: 'Connected', sub: 'Strong signal', iconColor: '#22C55E', iconBg: '#F0FDF4' },

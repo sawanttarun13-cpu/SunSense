@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: device.routes.ts
+ * Purpose:
+ * API route definitions for device.routes.
+ * ---------------------------------------------------------
+ */
+
 import { Router } from 'express';
 import { DeviceController } from '../controllers/device.controller';
 import { validateRequest } from '../middleware/validateRequest';

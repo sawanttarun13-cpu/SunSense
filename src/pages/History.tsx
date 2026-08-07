@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: History.tsx
+ * Purpose:
+ * React page component for History.
+ * ---------------------------------------------------------
+ */
+
 import { useState, useMemo, useEffect } from 'react';
 import { Search, Download, SlidersHorizontal, ChevronLeft, ChevronRight, MapPin, ArrowUpDown } from 'lucide-react';
 import {
@@ -10,6 +18,7 @@ import { historyService } from '../services/history.service';
 import { LoadingState } from '../components/common/LoadingState';
 import { ErrorState } from '../components/common/ErrorState';
 
+// History page shown to the user.
 export function History() {
   const [logs, setLogs] = useState<UVLogEntry[]>([]);
   const [loading, setLoading] = useState(true);

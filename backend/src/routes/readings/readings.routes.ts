@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: readings.routes.ts
+ * Purpose:
+ * API route definitions for readings.routes.
+ * ---------------------------------------------------------
+ */
+
 import { Router } from 'express';
 import { ReadingsController } from '../../controllers/readings/readings.controller';
 import { validateRequest } from '../../middleware/validateRequest';

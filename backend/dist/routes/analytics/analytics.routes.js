@@ -1,4 +1,11 @@
 "use strict";
+/**
+ * ---------------------------------------------------------
+ * File: analytics.routes.ts
+ * Purpose:
+ * API route definitions for analytics.routes.
+ * ---------------------------------------------------------
+ */
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const analytics_controller_1 = require("../../controllers/analytics/analytics.controller");

@@ -1,7 +1,15 @@
 "use strict";
+/**
+ * ---------------------------------------------------------
+ * File: validators.ts
+ * Purpose:
+ * Backend file for validators.
+ * ---------------------------------------------------------
+ */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DeviceAuthenticateSchema = exports.DeviceRegisterSchema = exports.LoginSchema = exports.RegisterSchema = void 0;
 const zod_1 = require("zod");
+// Backend logic for validators.
 exports.RegisterSchema = zod_1.z.object({
     email: zod_1.z.string().email(),
     password: zod_1.z.string().min(8),

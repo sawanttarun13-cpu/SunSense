@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: analytics.routes.ts
+ * Purpose:
+ * API route definitions for analytics.routes.
+ * ---------------------------------------------------------
+ */
+
 import { Router } from 'express';
 import { AnalyticsController } from '../../controllers/analytics/analytics.controller';
 import { requireAuth } from '../../middleware/requireAuth';

@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: select.tsx
+ * Purpose:
+ * React component for select.
+ * ---------------------------------------------------------
+ */
+
 "use client";
 
 import * as React from "react";

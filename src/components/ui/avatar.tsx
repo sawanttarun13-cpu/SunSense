@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: avatar.tsx
+ * Purpose:
+ * React component for avatar.
+ * ---------------------------------------------------------
+ */
+
 "use client";
 
 import * as React from "react";

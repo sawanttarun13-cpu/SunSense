@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: Analytics.tsx
+ * Purpose:
+ * React page component for Analytics.
+ * ---------------------------------------------------------
+ */
+
 import { useState, useEffect } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -48,6 +56,7 @@ function StatBox({ label, value, sub, color, trend }: { label: string; value: st
 }
 
 // ─── Analytics page ───────────────────────────────────────────────────────────
+// Analytics page shown to the user.
 export function Analytics() {
   const [range, setRange] = useState<'week' | 'month'>('week');
 

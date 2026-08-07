@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: sunscreen.routes.ts
+ * Purpose:
+ * API route definitions for sunscreen.routes.
+ * ---------------------------------------------------------
+ */
+
 import { Router } from 'express';
 import { SunscreenController } from '../../controllers/sunscreen/sunscreen.controller';
 import { requireAuth } from '../../middleware/requireAuth';

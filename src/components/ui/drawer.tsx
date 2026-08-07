@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: drawer.tsx
+ * Purpose:
+ * React component for drawer.
+ * ---------------------------------------------------------
+ */
+
 "use client";
 
 import * as React from "react";

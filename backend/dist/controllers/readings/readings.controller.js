@@ -5,6 +5,27 @@ const device_ingestion_service_1 = require("../../services/ingestion/device-inge
 const apiResponse_1 = require("../../utils/apiResponse");
 const ingestionService = new device_ingestion_service_1.DeviceIngestionService();
 class ReadingsController {
+    /**
+     * POST /api/v1/readings
+     *
+     * Protected (User JWT + Device API Key)
+     *
+     * Ingests a batch of UV readings from the ESP8266.
+     * The device ID is extracted from the x-device-id header
+     * (already validated by requireDeviceAuth middleware).
+     *
+     * Request Body:
+     * {
+     *   "readings": [
+     *     { "uvIndex": 7.4, "recordedAt": "2026-08-07T10:30:00Z" },
+     *     { "uvIndex": 8.1, "recordedAt": "2026-08-07T10:31:00Z" }
+     *   ]
+     * }
+     *
+     * Responses:
+     * 200 → { success: true, status: 'success', inserted: N, duplicates: M }
+     * 400 → Missing x-device-id header or processing error
+     */
     async process(req, res) {
         try {
             const deviceId = req.headers['x-device-id'];

@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: alert-dialog.tsx
+ * Purpose:
+ * React component for alert-dialog.
+ * ---------------------------------------------------------
+ */
+
 "use client";
 
 import * as React from "react";

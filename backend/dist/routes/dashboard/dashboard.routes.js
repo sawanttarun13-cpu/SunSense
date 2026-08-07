@@ -1,4 +1,11 @@
 "use strict";
+/**
+ * ---------------------------------------------------------
+ * File: dashboard.routes.ts
+ * Purpose:
+ * API route definitions for dashboard.routes.
+ * ---------------------------------------------------------
+ */
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const dashboard_controller_1 = require("../../controllers/dashboard/dashboard.controller");

@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: SunscreenTracker.tsx
+ * Purpose:
+ * React component for SunscreenTracker.
+ * ---------------------------------------------------------
+ */
+
 import { Shield, Clock, Plus } from 'lucide-react';
 import { useSunscreen } from '../../hooks/useSunscreen';
 
@@ -5,6 +13,7 @@ interface Props {
   onApplyClick: () => void;
 }
 
+// Reusable SunscreenTracker component.
 export function SunscreenTracker({ onApplyClick }: Props) {
   const { status, appliedSPF, appliedAt, expiresAt, remainingMs } = useSunscreen();
 

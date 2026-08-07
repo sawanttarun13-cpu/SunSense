@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: Alerts.tsx
+ * Purpose:
+ * React page component for Alerts.
+ * ---------------------------------------------------------
+ */
+
 import { useState, useEffect } from 'react';
 import { Bell, X } from 'lucide-react';
 import type { AlertSeverity, AlertItem } from '../types/alert';
@@ -6,6 +14,7 @@ import { alertsService } from '../services/alerts.service';
 import { LoadingState } from '../components/common/LoadingState';
 import { ErrorState } from '../components/common/ErrorState';
 
+// Alerts page shown to the user.
 export function Alerts() {
   const [activeFilter, setActiveFilter] = useState<AlertSeverity | 'all'>('all');
   const [dismissed, setDismissed] = useState<Set<number>>(new Set());

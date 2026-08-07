@@ -1,4 +1,11 @@
 "use strict";
+/**
+ * ---------------------------------------------------------
+ * File: device.routes.ts
+ * Purpose:
+ * API route definitions for device.routes.
+ * ---------------------------------------------------------
+ */
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const device_controller_1 = require("../controllers/device.controller");

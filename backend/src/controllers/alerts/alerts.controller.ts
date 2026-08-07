@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: alerts.controller.ts
+ * Purpose:
+ * Handles all HTTP requests for alerts.controller.
+ * ---------------------------------------------------------
+ */
+
 import { Response } from 'express';
 import { AlertsService } from '../../services/alerts/alerts.service';
 import { sendSuccess, sendError } from '../../utils/apiResponse';
@@ -5,6 +13,8 @@ import { AuthRequest } from '../../middleware/requireAuth';
 
 const alertsService = new AlertsService();
 
+// Handles alerts.controller-related HTTP requests.
+// Calls the respective service and returns API responses.
 export class AlertsController {
   async get(req: AuthRequest, res: Response) {
     try {

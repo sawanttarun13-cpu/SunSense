@@ -1,4 +1,11 @@
 "use strict";
+/**
+ * ---------------------------------------------------------
+ * File: readings.routes.ts
+ * Purpose:
+ * API route definitions for readings.routes.
+ * ---------------------------------------------------------
+ */
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const readings_controller_1 = require("../../controllers/readings/readings.controller");

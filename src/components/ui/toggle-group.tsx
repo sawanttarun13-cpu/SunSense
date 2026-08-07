@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: toggle-group.tsx
+ * Purpose:
+ * React component for toggle-group.
+ * ---------------------------------------------------------
+ */
+
 "use client";
 
 import * as React from "react";

@@ -3,9 +3,35 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * --------------------------------------------------------
+ * File: server.ts
+ * Layer: Entry Point
+ *
+ * Purpose:
+ * Boots the Express HTTP server on the configured port.
+ * This is the application's main entry point — it imports
+ * the fully configured Express app and starts listening
+ * for incoming connections.
+ *
+ * Startup Sequence:
+ * 1. Import the Express app from app.ts
+ * 2. Read the port from environment configuration
+ * 3. Start listening on that port
+ * 4. Log confirmation to the console
+ * 5. Exit the process if startup fails
+ * --------------------------------------------------------
+ */
 const app_1 = __importDefault(require("./app"));
 const env_1 = require("./config/env");
 const logger_1 = require("./utils/logger");
+/**
+ * Starts the HTTP server.
+ *
+ * Wrapped in a try/catch so that any fatal startup errors
+ * (e.g., port already in use) are logged clearly before
+ * the process exits rather than producing a cryptic crash.
+ */
 const startServer = () => {
     try {
         app_1.default.listen(env_1.config.port, () => {

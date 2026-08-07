@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: history.controller.ts
+ * Purpose:
+ * Handles all HTTP requests for history.controller.
+ * ---------------------------------------------------------
+ */
+
 import { Response } from 'express';
 import { HistoryService } from '../../services/history/history.service';
 import { sendSuccess, sendError } from '../../utils/apiResponse';
@@ -5,6 +13,8 @@ import { AuthRequest } from '../../middleware/requireAuth';
 
 const historyService = new HistoryService();
 
+// Handles history.controller-related HTTP requests.
+// Calls the respective service and returns API responses.
 export class HistoryController {
   async get(req: AuthRequest, res: Response) {
     try {

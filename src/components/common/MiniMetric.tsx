@@ -1,5 +1,14 @@
+/**
+ * ---------------------------------------------------------
+ * File: MiniMetric.tsx
+ * Purpose:
+ * React component for MiniMetric.
+ * ---------------------------------------------------------
+ */
+
 import React from 'react';
 
+// Reusable MiniMetric component.
 export function MiniMetric({ label, value, bar, barColor, onClick }: { label: string; value: string; bar: number; barColor: string; onClick?: () => void }) {
   return (
     <div

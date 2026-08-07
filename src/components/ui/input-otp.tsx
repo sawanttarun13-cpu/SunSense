@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: input-otp.tsx
+ * Purpose:
+ * React component for input-otp.
+ * ---------------------------------------------------------
+ */
+
 "use client";
 
 import * as React from "react";

@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: progress.tsx
+ * Purpose:
+ * React component for progress.
+ * ---------------------------------------------------------
+ */
+
 "use client";
 
 import * as React from "react";

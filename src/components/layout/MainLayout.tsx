@@ -1,9 +1,18 @@
+/**
+ * ---------------------------------------------------------
+ * File: MainLayout.tsx
+ * Purpose:
+ * React component for MainLayout.
+ * ---------------------------------------------------------
+ */
+
 import React, { useState } from 'react';
 import { Outlet } from 'react-router';
 import { Sidebar } from './Sidebar';
 
 const FONT: React.CSSProperties = { fontFamily: "'Poppins', sans-serif" };
 
+// Reusable MainLayout component.
 export function MainLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 

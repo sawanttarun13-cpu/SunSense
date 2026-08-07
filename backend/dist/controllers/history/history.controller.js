@@ -1,9 +1,18 @@
 "use strict";
+/**
+ * ---------------------------------------------------------
+ * File: history.controller.ts
+ * Purpose:
+ * Handles all HTTP requests for history.controller.
+ * ---------------------------------------------------------
+ */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HistoryController = void 0;
 const history_service_1 = require("../../services/history/history.service");
 const apiResponse_1 = require("../../utils/apiResponse");
 const historyService = new history_service_1.HistoryService();
+// Handles history.controller-related HTTP requests.
+// Calls the respective service and returns API responses.
 class HistoryController {
     async get(req, res) {
         try {

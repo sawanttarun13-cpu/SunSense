@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: Sidebar.tsx
+ * Purpose:
+ * React component for Sidebar.
+ * ---------------------------------------------------------
+ */
+
 import { useState, useEffect } from 'react';
 import {
   ChevronLeft, ChevronRight, Sun, Wifi, Battery, Menu, X, LogOut,
@@ -206,6 +214,7 @@ function SidebarContent({
   );
 }
 
+// Reusable Sidebar component.
 export function Sidebar(props: SidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
 

@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: settings.ts
+ * Purpose:
+ * TypeScript type definitions for settings.
+ * ---------------------------------------------------------
+ */
+
 export interface NotificationSettings {
   extreme: boolean;
   high: boolean;

@@ -1,4 +1,11 @@
 "use strict";
+/**
+ * ---------------------------------------------------------
+ * File: health.routes.ts
+ * Purpose:
+ * API route definitions for health.routes.
+ * ---------------------------------------------------------
+ */
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const apiResponse_1 = require("../utils/apiResponse");

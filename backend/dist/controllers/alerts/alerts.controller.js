@@ -1,9 +1,18 @@
 "use strict";
+/**
+ * ---------------------------------------------------------
+ * File: alerts.controller.ts
+ * Purpose:
+ * Handles all HTTP requests for alerts.controller.
+ * ---------------------------------------------------------
+ */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AlertsController = void 0;
 const alerts_service_1 = require("../../services/alerts/alerts.service");
 const apiResponse_1 = require("../../utils/apiResponse");
 const alertsService = new alerts_service_1.AlertsService();
+// Handles alerts.controller-related HTTP requests.
+// Calls the respective service and returns API responses.
 class AlertsController {
     async get(req, res) {
         try {

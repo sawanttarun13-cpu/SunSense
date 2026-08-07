@@ -1,9 +1,18 @@
 "use strict";
+/**
+ * ---------------------------------------------------------
+ * File: settings.controller.ts
+ * Purpose:
+ * Handles all HTTP requests for settings.controller.
+ * ---------------------------------------------------------
+ */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SettingsController = void 0;
 const settings_service_1 = require("../../services/settings/settings.service");
 const apiResponse_1 = require("../../utils/apiResponse");
 const settingsService = new settings_service_1.SettingsService();
+// Handles settings.controller-related HTTP requests.
+// Calls the respective service and returns API responses.
 class SettingsController {
     async get(req, res) {
         try {

@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: checkbox.tsx
+ * Purpose:
+ * React component for checkbox.
+ * ---------------------------------------------------------
+ */
+
 "use client";
 
 import * as React from "react";

@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: Dashboard.tsx
+ * Purpose:
+ * React page component for Dashboard.
+ * ---------------------------------------------------------
+ */
+
 import { useState, useEffect } from 'react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -21,6 +29,7 @@ import { ErrorState } from '../components/common/ErrorState';
 import { useNavigate } from 'react-router';
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
+// Dashboard page shown to the user.
 export function Dashboard() {
   const navigate = useNavigate();
   const { uvValue, hourlyData, zone, peakUV, lowUV, peakTime } = useUVData();

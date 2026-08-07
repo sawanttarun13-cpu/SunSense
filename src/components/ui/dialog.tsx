@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: dialog.tsx
+ * Purpose:
+ * React component for dialog.
+ * ---------------------------------------------------------
+ */
+
 "use client";
 
 import * as React from "react";

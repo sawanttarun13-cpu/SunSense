@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: profile.routes.ts
+ * Purpose:
+ * API route definitions for profile.routes.
+ * ---------------------------------------------------------
+ */
+
 import { Router } from 'express';
 import { ProfileController } from '../../controllers/profile/profile.controller';
 import { validateRequest } from '../../middleware/validateRequest';

@@ -1,3 +1,4 @@
+// Seeds the database with sample data for development and testing.
 /* eslint-disable no-console */
 /**
  * ─────────────────────────────────────────────────────────────────────────────

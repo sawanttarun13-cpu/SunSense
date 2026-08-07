@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: hover-card.tsx
+ * Purpose:
+ * React component for hover-card.
+ * ---------------------------------------------------------
+ */
+
 "use client";
 
 import * as React from "react";

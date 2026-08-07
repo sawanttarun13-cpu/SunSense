@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: SettingsPage.tsx
+ * Purpose:
+ * React page component for SettingsPage.
+ * ---------------------------------------------------------
+ */
+
 import { useState, useEffect } from 'react';
 import { Bell, Sun, Smartphone, Shield, ChevronRight, Check, Sliders, Wifi, Volume2 } from 'lucide-react';
 import { SPF_OPTS } from '../constants/settings';
@@ -82,6 +90,7 @@ function NotifRow({
 
 // SPF_OPTS and THEME_OPTS imported from constants/settings
 
+// SettingsPage page shown to the user.
 export function SettingsPage() {
   const [spf, setSpf] = useState(30);
   const [threshold, setThreshold] = useState(6);

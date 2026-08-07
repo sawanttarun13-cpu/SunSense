@@ -1,6 +1,15 @@
+/**
+ * ---------------------------------------------------------
+ * File: profile.ts
+ * Purpose:
+ * Frontend file for profile.
+ * ---------------------------------------------------------
+ */
+
 import type { SkinType, SensitivityLevel, Achievement } from '../types/profile';
 
 // ─── Fitzpatrick scale ────────────────────────────────────────────────────────
+// Frontend logic for profile.
 export const SKIN_TYPES: SkinType[] = [
   { id: 1, label: 'Type I',   desc: 'Always burns, never tans',            tone: '#FDDCB5', burn: 10 },
   { id: 2, label: 'Type II',  desc: 'Burns easily, tans poorly',           tone: '#F5C898', burn: 15 },

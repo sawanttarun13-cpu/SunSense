@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: toggle.tsx
+ * Purpose:
+ * React component for toggle.
+ * ---------------------------------------------------------
+ */
+
 "use client";
 
 import * as React from "react";

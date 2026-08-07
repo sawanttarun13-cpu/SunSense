@@ -1,4 +1,11 @@
 "use strict";
+/**
+ * ---------------------------------------------------------
+ * File: alerts.routes.ts
+ * Purpose:
+ * API route definitions for alerts.routes.
+ * ---------------------------------------------------------
+ */
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const alerts_controller_1 = require("../../controllers/alerts/alerts.controller");

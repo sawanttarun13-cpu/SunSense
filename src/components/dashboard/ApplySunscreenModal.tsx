@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: ApplySunscreenModal.tsx
+ * Purpose:
+ * React component for ApplySunscreenModal.
+ * ---------------------------------------------------------
+ */
+
 import { useState } from 'react';
 import { Shield } from 'lucide-react';
 
@@ -6,6 +14,7 @@ interface Props {
   onApply: (spf: number, time: Date) => void;
 }
 
+// Reusable ApplySunscreenModal component.
 export function ApplySunscreenModal({ onClose, onApply }: Props) {
   const [spf, setSpf] = useState<number>(50);
   // Default to current time, formatted for an <input type="time" />

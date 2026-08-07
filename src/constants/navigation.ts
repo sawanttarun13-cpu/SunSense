@@ -1,8 +1,17 @@
+/**
+ * ---------------------------------------------------------
+ * File: navigation.ts
+ * Purpose:
+ * Constants for navigation.
+ * ---------------------------------------------------------
+ */
+
 import {
   LayoutDashboard, TrendingUp, Clock, Bell, Cpu, Settings, User,
 } from 'lucide-react';
 
 // ─── Sidebar navigation items ─────────────────────────────────────────────────
+// Application constants.
 export const navItems: { id: string; label: string; icon: React.ElementType; badge?: string }[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'analytics', label: 'Analytics', icon: TrendingUp },

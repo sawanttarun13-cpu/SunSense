@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: analytics.ts
+ * Purpose:
+ * Frontend file for analytics.
+ * ---------------------------------------------------------
+ */
+
 import { getUVZone } from '../constants/uv';
 
 // ─── Deterministic seeded random ──────────────────────────────────────────────
@@ -14,6 +22,7 @@ const now = new Date();
 const weekSeed = now.getFullYear() * 100 + Math.floor(now.getMonth() * 4 + now.getDate() / 7);
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+// Frontend logic for analytics.
 export const weeklyData = DAYS.map((day, i) => {
   const s = weekSeed + i;
   const avg = parseFloat((3.0 + seededRandom(s) * 5.5).toFixed(1));

@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: accordion.tsx
+ * Purpose:
+ * React component for accordion.
+ * ---------------------------------------------------------
+ */
+
 "use client";
 
 import * as React from "react";

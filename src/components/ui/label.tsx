@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: label.tsx
+ * Purpose:
+ * React component for label.
+ * ---------------------------------------------------------
+ */
+
 "use client";
 
 import * as React from "react";

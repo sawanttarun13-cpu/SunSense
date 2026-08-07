@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: Device.tsx
+ * Purpose:
+ * React page component for Device.
+ * ---------------------------------------------------------
+ */
+
 import { useState, useEffect } from 'react';
 import {
   Battery, Wifi, Cpu, Clock, Zap, Activity, RefreshCw,
@@ -98,6 +106,7 @@ function ResourceBar({ label, pct, color }: { label: string; pct: number; color:
 }
 
 // ─── Device page ──────────────────────────────────────────────────────────────
+// Device page shown to the user.
 export function Device() {
   const [deviceData, setDeviceData] = useState<any>(null);
   const [loading, setLoading] = useState(true);

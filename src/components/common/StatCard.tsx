@@ -1,6 +1,15 @@
+/**
+ * ---------------------------------------------------------
+ * File: StatCard.tsx
+ * Purpose:
+ * React component for StatCard.
+ * ---------------------------------------------------------
+ */
+
 import React from 'react';
 import { ChevronUp, ChevronDown } from 'lucide-react';
 
+// Reusable StatCard component.
 export function StatCard({
   icon: Icon, label, value, sub, delta, iconColor, iconBg,
 }: {

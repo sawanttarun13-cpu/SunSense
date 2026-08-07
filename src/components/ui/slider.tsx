@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: slider.tsx
+ * Purpose:
+ * React component for slider.
+ * ---------------------------------------------------------
+ */
+
 "use client";
 
 import * as React from "react";

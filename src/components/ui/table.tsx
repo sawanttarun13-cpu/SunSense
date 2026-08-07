@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: table.tsx
+ * Purpose:
+ * React component for table.
+ * ---------------------------------------------------------
+ */
+
 "use client";
 
 import * as React from "react";

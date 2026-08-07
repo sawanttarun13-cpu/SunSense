@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: carousel.tsx
+ * Purpose:
+ * React component for carousel.
+ * ---------------------------------------------------------
+ */
+
 "use client";
 
 import * as React from "react";

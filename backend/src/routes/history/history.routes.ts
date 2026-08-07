@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: history.routes.ts
+ * Purpose:
+ * API route definitions for history.routes.
+ * ---------------------------------------------------------
+ */
+
 import { Router } from 'express';
 import { HistoryController } from '../../controllers/history/history.controller';
 import { requireAuth } from '../../middleware/requireAuth';

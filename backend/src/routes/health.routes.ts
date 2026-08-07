@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: health.routes.ts
+ * Purpose:
+ * API route definitions for health.routes.
+ * ---------------------------------------------------------
+ */
+
 import { Router } from 'express';
 import { sendSuccess, sendError } from '../utils/apiResponse';
 import { config } from '../config/env';

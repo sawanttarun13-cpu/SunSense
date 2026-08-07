@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: popover.tsx
+ * Purpose:
+ * React component for popover.
+ * ---------------------------------------------------------
+ */
+
 "use client";
 
 import * as React from "react";

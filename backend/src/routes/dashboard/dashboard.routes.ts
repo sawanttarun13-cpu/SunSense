@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: dashboard.routes.ts
+ * Purpose:
+ * API route definitions for dashboard.routes.
+ * ---------------------------------------------------------
+ */
+
 import { Router } from 'express';
 import { DashboardController } from '../../controllers/dashboard/dashboard.controller';
 import { requireAuth } from '../../middleware/requireAuth';

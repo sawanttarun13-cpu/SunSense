@@ -1,4 +1,11 @@
 "use strict";
+/**
+ * ---------------------------------------------------------
+ * File: settings.routes.ts
+ * Purpose:
+ * API route definitions for settings.routes.
+ * ---------------------------------------------------------
+ */
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const settings_controller_1 = require("../../controllers/settings/settings.controller");

@@ -1,6 +1,15 @@
+/**
+ * ---------------------------------------------------------
+ * File: ChartTooltip.tsx
+ * Purpose:
+ * React component for ChartTooltip.
+ * ---------------------------------------------------------
+ */
+
 import { getUVZone } from '../../constants/uv';
 
 // ─── Recharts custom tooltip for UV charts ────────────────────────────────────
+// Reusable ChartTooltip component.
 export function ChartTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   const v = payload[0].value as number;

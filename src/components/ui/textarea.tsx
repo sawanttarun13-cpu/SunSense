@@ -1,3 +1,11 @@
+/**
+ * ---------------------------------------------------------
+ * File: textarea.tsx
+ * Purpose:
+ * React component for textarea.
+ * ---------------------------------------------------------
+ */
+
 import * as React from "react";
 
 import { cn } from "./utils";

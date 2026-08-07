@@ -1,4 +1,11 @@
 "use strict";
+/**
+ * ---------------------------------------------------------
+ * File: profile.routes.ts
+ * Purpose:
+ * API route definitions for profile.routes.
+ * ---------------------------------------------------------
+ */
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const profile_controller_1 = require("../../controllers/profile/profile.controller");
