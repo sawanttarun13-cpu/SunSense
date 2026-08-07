@@ -8,7 +8,11 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "lint": "eslint .",
-    "format": "prettier --write \"src/**/*.ts\""
+    "format": "prettier --write \"src/**/*.ts\"",
+    "seed": "npx ts-node --project tsconfig.json prisma/seed.ts"
+  },
+  "prisma": {
+    "seed": "npm run seed"
   },
   "keywords": [],
   "author": "",
@@ -44,6 +48,7 @@
     "prisma": "^5.22.0",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.65.0"
+    "typescript-eslint": "^8.65.0",
+    "ts-node": "^10.9.2"
   }
 }
