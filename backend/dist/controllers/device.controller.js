@@ -2,8 +2,10 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DeviceController = void 0;
 const device_service_1 = require("../services/device.service");
+const heartbeat_service_1 = require("../services/heartbeat.service");
 const apiResponse_1 = require("../utils/apiResponse");
 const deviceService = new device_service_1.DeviceService();
+const heartbeatService = new heartbeat_service_1.HeartbeatService();
 class DeviceController {
     /**
      * POST /api/v1/device/register
@@ -53,7 +55,7 @@ class DeviceController {
         }
     }
     /**
-     * GET /api/v1/device/auth
+     * POST /api/v1/device/authenticate
      *
      * Device Auth Route | Requires: x-device-id + x-api-key headers
      *
@@ -72,6 +74,42 @@ class DeviceController {
         }
         catch (error) {
             return (0, apiResponse_1.sendError)(res, error.message, 401);
+        }
+    }
+    /**
+     * POST /api/v1/device/heartbeat
+     *
+     * Device Auth Route | Requires: x-device-id + x-api-key headers
+     *
+     * Receives a heartbeat payload from the ESP8266 with device telemetry.
+     * Updates battery level, firmware version, and lastPing on the device record.
+     *
+     * Request Body (validated by HeartbeatSchema):
+     * {
+     *   "batteryPercentage":   85,
+     *   "chargingState":       false,
+     *   "wifiRssi":            -65,
+     *   "firmwareVersion":     "1.0.0-phase5a",
+     *   "deviceUptimeSeconds": 86400,
+     *   "sensorHealth":        "OK"
+     * }
+     *
+     * Persisted: batteryPercentage → batteryLevel, firmwareVersion, lastPing (now)
+     * Acknowledged but not persisted: chargingState, wifiRssi, deviceUptimeSeconds, sensorHealth
+     *
+     * Responses:
+     * 200 → { success: true }
+     * 400 → Validation error (invalid payload)
+     * 401 → Handled by requireDeviceAuth middleware
+     */
+    async heartbeat(req, res) {
+        try {
+            const { batteryPercentage, firmwareVersion } = req.body;
+            const result = await heartbeatService.processHeartbeat(req.deviceId, batteryPercentage, firmwareVersion);
+            return (0, apiResponse_1.sendSuccess)(res, result);
+        }
+        catch (error) {
+            return (0, apiResponse_1.sendError)(res, error.message, 500);
         }
     }
 }

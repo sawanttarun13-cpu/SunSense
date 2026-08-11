@@ -88,4 +88,34 @@ export class DeviceRepository {
       create: { deviceId, apiKeyHash }
     });
   }
+
+  /**
+   * Updates device telemetry fields received in a heartbeat payload.
+   *
+   * Persists the subset of heartbeat data that has dedicated columns
+   * in the `devices` table:
+   *   - batteryLevel     ← batteryPercentage from heartbeat
+   *   - firmwareVersion  ← firmwareVersion from heartbeat
+   *   - lastPing         ← current server time (signals device is alive)
+   *
+   * Fields accepted by the heartbeat endpoint but not persisted
+   * (no column exists): chargingState, wifiRssi, deviceUptimeSeconds,
+   * sensorHealth. They are validated and acknowledged per contract.
+   *
+   * @param deviceId        - UUID of the authenticated device.
+   * @param batteryLevel    - Battery percentage (0–100).
+   * @param firmwareVersion - Firmware version string from device config.
+   * @param now             - Current server timestamp for lastPing.
+   * @returns               The updated Device record.
+   */
+  async updateHeartbeat(deviceId: string, batteryLevel: number, firmwareVersion: string, now: Date) {
+    return prisma.device.update({
+      where: { id: deviceId },
+      data: {
+        batteryLevel,
+        firmwareVersion,
+        lastPing: now,
+      },
+    });
+  }
 }

@@ -27,7 +27,8 @@
  *
  * Route Prefix Map:
  * /api/v1/auth       → Authentication (register, login, refresh, logout, me)
- * /api/v1/device     → Device management (register, status, auth)
+ * /api/v1/device     → Device management (register, status, auth, heartbeat)
+ * /api/v1/server     → Server utilities (GET /api/v1/server/time)
  * /api/v1/readings   → UV reading ingestion (ESP8266 endpoint)
  * /api/v1/sunscreen  → Sunscreen tracker (apply, status)
  * /api/v1/dashboard  → Dashboard metrics aggregation
@@ -50,6 +51,7 @@ import { notFoundHandler } from './middleware/notFoundHandler';
 import healthRoutes from './routes/health.routes';
 import authRoutes from './routes/auth.routes';
 import deviceRoutes from './routes/device.routes';
+import serverRoutes from './routes/server.routes';
 import readingsRoutes from './routes/readings/readings.routes';
 import sunscreenRoutes from './routes/sunscreen/sunscreen.routes';
 import dashboardRoutes from './routes/dashboard/dashboard.routes';
@@ -99,6 +101,7 @@ app.use(globalLimiter);
 
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/device', deviceRoutes);
+app.use('/api/v1/server', serverRoutes);
 app.use('/api/v1/readings', readingsRoutes);
 app.use('/api/v1/sunscreen', sunscreenRoutes);
 app.use('/api/v1/dashboard', dashboardRoutes);

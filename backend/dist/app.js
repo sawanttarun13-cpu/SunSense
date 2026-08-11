@@ -32,7 +32,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
  *
  * Route Prefix Map:
  * /api/v1/auth       → Authentication (register, login, refresh, logout, me)
- * /api/v1/device     → Device management (register, status, auth)
+ * /api/v1/device     → Device management (register, status, auth, heartbeat)
+ * /api/v1/server     → Server utilities (GET /api/v1/server/time)
  * /api/v1/readings   → UV reading ingestion (ESP8266 endpoint)
  * /api/v1/sunscreen  → Sunscreen tracker (apply, status)
  * /api/v1/dashboard  → Dashboard metrics aggregation
@@ -55,6 +56,7 @@ const notFoundHandler_1 = require("./middleware/notFoundHandler");
 const health_routes_1 = __importDefault(require("./routes/health.routes"));
 const auth_routes_1 = __importDefault(require("./routes/auth.routes"));
 const device_routes_1 = __importDefault(require("./routes/device.routes"));
+const server_routes_1 = __importDefault(require("./routes/server.routes"));
 const readings_routes_1 = __importDefault(require("./routes/readings/readings.routes"));
 const sunscreen_routes_1 = __importDefault(require("./routes/sunscreen/sunscreen.routes"));
 const dashboard_routes_1 = __importDefault(require("./routes/dashboard/dashboard.routes"));
@@ -91,6 +93,7 @@ app.use(rateLimiter_1.globalLimiter);
 // ─── API Route Groups ────────────────────────────────────────────────────────
 app.use('/api/v1/auth', auth_routes_1.default);
 app.use('/api/v1/device', device_routes_1.default);
+app.use('/api/v1/server', server_routes_1.default);
 app.use('/api/v1/readings', readings_routes_1.default);
 app.use('/api/v1/sunscreen', sunscreen_routes_1.default);
 app.use('/api/v1/dashboard', dashboard_routes_1.default);
