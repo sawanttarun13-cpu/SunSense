@@ -23,7 +23,7 @@ void WiFiManager::begin() {
 }
 
 void WiFiManager::connect() {
-  if (_state == WiFiState::CONNECTED) {
+  if (_state == SunSenseWiFiState::CONNECTED) {
     Logger::debug("WIFI", "Already connected — ignoring connect() call");
     return;
   }
@@ -31,7 +31,7 @@ void WiFiManager::connect() {
 }
 
 void WiFiManager::_startConnection() {
-  _state = WiFiState::CONNECTING;
+  _state = SunSenseWiFiState::CONNECTING;
   _connectStart = millis();
   _retryCount = 0;
 
@@ -43,8 +43,8 @@ void WiFiManager::_startConnection() {
 
 void WiFiManager::loop() {
   switch (_state) {
-    case WiFiState::CONNECTING:
-    case WiFiState::RECONNECTING: {
+    case SunSenseWiFiState::CONNECTING:
+    case SunSenseWiFiState::RECONNECTING: {
       if (WiFi.status() == WL_CONNECTED) {
         _onConnected();
       } else if (millis() - _connectStart > WIFI_CONNECT_TIMEOUT_MS) {
@@ -56,7 +56,7 @@ void WiFiManager::loop() {
       break;
     }
 
-    case WiFiState::CONNECTED: {
+    case SunSenseWiFiState::CONNECTED: {
       // Monitor for connection drops
       if (WiFi.status() != WL_CONNECTED) {
         Logger::warn("WIFI", "Connection lost — entering reconnect mode");
@@ -65,14 +65,14 @@ void WiFiManager::loop() {
       break;
     }
 
-    case WiFiState::DISCONNECTED: {
+    case SunSenseWiFiState::DISCONNECTED: {
       // Schedule reconnection after delay
       if (millis() - _lastRetryTime > WIFI_RECONNECT_DELAY_MS) {
         if (_retryCount < WIFI_MAX_RETRIES) {
           _retryCount++;
           Logger::info("WIFI", "Reconnect attempt " + String(_retryCount) +
             "/" + String(WIFI_MAX_RETRIES));
-          _state = WiFiState::RECONNECTING;
+          _state = SunSenseWiFiState::RECONNECTING;
           _connectStart = millis();
           WiFi.begin(WIFI_SSID, WIFI_PASSWORD); // Password NEVER logged
           _lastRetryTime = millis();
@@ -91,23 +91,23 @@ void WiFiManager::loop() {
 }
 
 void WiFiManager::_onConnected() {
-  _state = WiFiState::CONNECTED;
+  _state = SunSenseWiFiState::CONNECTED;
   _retryCount = 0;
   Logger::info("WIFI", "Connected! IP: " + WiFi.localIP().toString() +
     " | RSSI: " + String(WiFi.RSSI()) + " dBm");
 }
 
 void WiFiManager::_onDisconnected() {
-  _state = WiFiState::DISCONNECTED;
+  _state = SunSenseWiFiState::DISCONNECTED;
   _lastRetryTime = millis();
   WiFi.disconnect();
 }
 
 bool WiFiManager::isConnected() const {
-  return _state == WiFiState::CONNECTED && WiFi.status() == WL_CONNECTED;
+  return _state == SunSenseWiFiState::CONNECTED && WiFi.status() == WL_CONNECTED;
 }
 
-WiFiState WiFiManager::getState() const {
+SunSenseWiFiState WiFiManager::getState() const {
   return _state;
 }
 

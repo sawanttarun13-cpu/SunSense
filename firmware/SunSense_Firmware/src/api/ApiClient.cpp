@@ -157,8 +157,9 @@ ApiResult ApiClient::sendHeartbeat(int batteryPct, bool isCharging, int rssi,
     result.message = "Heartbeat endpoint not yet implemented on backend (404)";
     Logger::warn("API", "POST /api/v1/device/heartbeat → 404 (Backend implementation pending)");
   } else {
+    String errorBody = http.getString();
     result.success = false;
-    result.message = "HTTP " + String(result.httpCode);
+    result.message = "HTTP " + String(result.httpCode) + " | " + errorBody;
     Logger::error("API", "Heartbeat failed — " + result.message);
   }
 

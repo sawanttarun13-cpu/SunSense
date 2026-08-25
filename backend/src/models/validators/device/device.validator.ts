@@ -31,7 +31,7 @@ import { z } from 'zod';
 
 /** Zod schema for POST /api/v1/device/heartbeat request body. */
 export const HeartbeatSchema = z.object({
-  batteryPercentage:   z.number().int().min(0).max(100),
+  batteryPercentage:   z.number().int().min(-1).max(100),
   chargingState:       z.boolean(),
   wifiRssi:            z.number().int().min(-150).max(0),
   firmwareVersion:     z.string().min(1).max(50),

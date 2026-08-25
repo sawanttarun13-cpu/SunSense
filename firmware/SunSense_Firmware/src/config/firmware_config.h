@@ -43,7 +43,7 @@
 // NOTE: The ESP8266 cannot resolve 'localhost' — use the machine's LAN IP
 // when connecting to a locally running backend during development.
 // -----------------------------------------------------------------------------
-#define BACKEND_BASE_URL     "http://192.168.1.100:5000"   // PLACEHOLDER — replace with real LAN IP
+#define BACKEND_BASE_URL     "http://10.182.234.104:5000"   // Automatically updated with local IP
 #define API_PREFIX           "/api/v1"
 
 // Assembled endpoint paths — constructed from BACKEND_BASE_URL + API_PREFIX
@@ -65,9 +65,8 @@
 // - DEVICE_API_KEY is a 64-char hex secret. DO NOT print to Serial.
 //   DO NOT commit the real value to Git.
 // -----------------------------------------------------------------------------
-#define DEVICE_ID      "00000000-0000-0000-0000-000000000000"    // PLACEHOLDER — replace with real UUID
-#define DEVICE_API_KEY "PLACEHOLDER_API_KEY_64_CHAR_HEX_REPLACE_BEFORE_FLASH"  // PLACEHOLDER
-
+#define DEVICE_ID       "cdea2948-f7c9-42ea-ab14-f050b4907849"
+#define DEVICE_API_KEY "cf917a342b54c44420eeb40181f056607a2b3dec7b2bc3d34c6a92b2e4f5652f"
 // -----------------------------------------------------------------------------
 // Wi-Fi Configuration
 //
@@ -75,9 +74,8 @@
 // The firmware uses WPA2 personal (PSK) mode.
 // The Wi-Fi manager will attempt reconnection automatically.
 // -----------------------------------------------------------------------------
-#define WIFI_SSID     "YOUR_WIFI_SSID"       // PLACEHOLDER — replace with real SSID
-#define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"   // PLACEHOLDER — replace with real password
-
+#define WIFI_SSID     "OnePlus Nord CE 3 Lite 5G 1c15"       
+#define WIFI_PASSWORD "244466666"   
 // Wi-Fi connection parameters
 #define WIFI_CONNECT_TIMEOUT_MS  15000   // Maximum time to wait for initial connection (15 seconds)
 #define WIFI_RECONNECT_DELAY_MS   5000   // Delay between reconnection attempts (5 seconds)

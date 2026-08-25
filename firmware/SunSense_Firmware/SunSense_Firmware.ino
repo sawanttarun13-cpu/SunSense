@@ -7,7 +7,7 @@
  * Purpose:
  * Main Arduino sketch for the SunSense UV monitoring keychain device.
  * Coordinates all subsystems: sensor, display, battery, Wi-Fi,
- * time synchronization, API communication, and offline queuing.
+ * time synchronization, API communication, and offline queuing.2
  *
  * Hardware: ESP8266 NodeMCU + ML8511 UV Sensor + 1.3" I2C OLED + TP4056
  *
@@ -45,21 +45,22 @@
  * =============================================================================
  */
 
-// ─── Standard Library Includes ───────────────────────────────────────────────
+// ─── Core & Third-Party Libraries ─────────────────────────────────────────────
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
+#include <ArduinoJson.h>
 
 // ─── Firmware Module Includes ─────────────────────────────────────────────────
-#include "../config/firmware_config.h"
-#include "../utils/Logger.h"
-#include "../models/Reading.h"
-#include "../sensors/ML8511/ML8511.h"
-#include "../display/Display.h"
-#include "../battery/Battery.h"
-#include "../connectivity/WiFiManager.h"
-#include "../api/ApiClient.h"
-#include "../time/TimeSync.h"
-#include "../storage/OfflineQueue.h"
+#include "src/config/firmware_config.h"
+#include "src/utils/Logger.h"
+#include "src/models/Reading.h"
+#include "src/sensors/ML8511/ML8511.h"
+#include "src/display/Display.h"
+#include "src/battery/Battery.h"
+#include "src/connectivity/WiFiManager.h"
+#include "src/api/ApiClient.h"
+#include "src/time/TimeSync.h"
+#include "src/storage/OfflineQueue.h"
 
 // ─── Module Instances ─────────────────────────────────────────────────────────
 static ML8511       sensor(ML8511_EN_PIN, ML8511_OUT_PIN);

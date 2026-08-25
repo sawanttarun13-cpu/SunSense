@@ -97,7 +97,7 @@ void Display::showConnecting() {
 
 void Display::showOffline(int queueSize) {
   if (!_initialized) {
-    Logger::warn("DISPLAY", "[STATUS] Offline | Queue: " + String(queueSize) + " readings");
+    // Logger::warn("DISPLAY", "[STATUS] Offline | Queue: " + String(queueSize) + " readings"); // Silenced to prevent spam in loop()
     return;
   }
   // HARDWARE PENDING: Show offline indicator + queue count on OLED.

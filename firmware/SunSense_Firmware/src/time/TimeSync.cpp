@@ -109,12 +109,12 @@ bool TimeSync::_syncFromServer(const String& serverBaseUrl) {
     return false;
   }
 
-  if (!doc.containsKey("unixTimestamp")) {
-    Logger::error("TIME", "server-time response missing 'unixTimestamp' field");
+  if (!doc["data"].containsKey("unixTimestamp")) {
+    Logger::error("TIME", "server-time response missing 'unixTimestamp' field in data envelope");
     return false;
   }
 
-  unsigned long epoch = doc["unixTimestamp"].as<unsigned long>();
+  unsigned long epoch = doc["data"]["unixTimestamp"].as<unsigned long>();
   _setEpoch(epoch);
   return true;
 }

@@ -34,8 +34,8 @@
 #define ML8511_H
 
 #include <Arduino.h>
-#include "../config/firmware_config.h"
-#include "../utils/Logger.h"
+#include "../../config/firmware_config.h"
+#include "../../utils/Logger.h"
 
 class ML8511 {
 public:

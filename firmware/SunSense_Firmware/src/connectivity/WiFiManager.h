@@ -28,7 +28,7 @@
 #include "../utils/Logger.h"
 
 /** Wi-Fi connection state machine states */
-enum class WiFiState {
+enum class SunSenseWiFiState {
   DISCONNECTED,   // Not connected — no active attempt
   CONNECTING,     // Connection attempt in progress
   CONNECTED,      // Successfully connected to AP
@@ -67,7 +67,7 @@ public:
   /**
    * Returns the current Wi-Fi state for status display.
    */
-  WiFiState getState() const;
+  SunSenseWiFiState getState() const;
 
   /**
    * Returns the current RSSI (signal strength) in dBm.
@@ -88,7 +88,7 @@ public:
   void forceReconnect();
 
 private:
-  WiFiState _state          = WiFiState::DISCONNECTED;
+  SunSenseWiFiState _state          = SunSenseWiFiState::DISCONNECTED;
   uint32_t  _connectStart   = 0;  // millis() timestamp when connection was initiated
   uint32_t  _lastRetryTime  = 0;  // millis() timestamp of last reconnection attempt
   int       _retryCount     = 0;  // Current reconnection attempt count
