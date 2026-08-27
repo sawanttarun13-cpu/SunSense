@@ -35,5 +35,5 @@ export interface SystemInfo {
 }
 
 export interface SensorHealth {
-  ml8511: { ok: boolean; val: string };
+  s12sd: { ok: boolean; val: string };
 }

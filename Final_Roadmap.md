@@ -222,7 +222,7 @@
 
 **Hardware**
 - ESP8266 NodeMCU
-- ML8511 UV Sensor
+- S12SD / GUVA-S12SD UV sensor
 - 1.3" OLED Display
 - TP4056 Charging Module
 - Li-Ion Battery

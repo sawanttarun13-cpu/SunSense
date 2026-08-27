@@ -15,21 +15,16 @@
 #include "Battery.h"
 
 void Battery::begin() {
-  // A0 is shared with ML8511 — final pin assignment pending hardware decision.
+  // A0 is shared with S12SD — final pin assignment pending hardware decision.
   // No pinMode() needed for analog input on ESP8266/Arduino A0.
   Logger::info("BATTERY", "Battery monitor initialized — HARDWARE PENDING (no circuit connected)");
 }
 
 int Battery::readRawADC() {
-  // HARDWARE PENDING: Reads A0 only when ML8511 EN is LOW (sensor disabled).
-  // The ML8511 must be powered off before reading battery voltage to
-  // avoid cross-contamination on the shared A0 pin.
-  //
-  // When hardware is available, the sequence will be:
-  //   ml8511.disable();
-  //   delay(5);  // Allow A0 to settle
-  //   int raw = analogRead(BATTERY_ADC_PIN);
-  //   return raw;
+  // HARDWARE PENDING: A0 is shared with S12SD.
+  // Because the S12SD lacks an EN pin, it cannot be disabled in software.
+  // A hardware multiplexer or separate ADC must be added before this can be implemented.
+
 
   Logger::debug("BATTERY", "readRawADC() called — HARDWARE PENDING (returning 0)");
   return 0; // Stub — returns 0 until hardware connected

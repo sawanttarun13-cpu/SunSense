@@ -44,7 +44,7 @@
  *   - uvIntensity : Computed UV intensity in mW/cm² (hardware-pending formula)
  *
  * NOTE:
- * Physical ML8511 calibration is hardware-pending.
+ * Physical S12SD calibration is hardware-pending.
  * uvIndex and uvIntensity may be 0.0 until hardware is connected and calibrated.
  */
 struct Reading {
@@ -53,7 +53,7 @@ struct Reading {
   char    recordedAt[25];   // ISO 8601 UTC timestamp: "YYYY-MM-DDTHH:MM:SSZ\0"
 
   // ── Diagnostic / local-only fields (not sent to backend) ────────────────────
-  int     rawAdc;           // Raw ADC value from ML8511 OUT pin (0–1023)
+  int     rawAdc;           // Raw ADC value from S12SD OUT pin (0–1023)
   float   voltageV;         // Sensor voltage converted from rawAdc (0.0–3.3V)
   float   uvIntensity;      // UV intensity in mW/cm² — HARDWARE PENDING
 

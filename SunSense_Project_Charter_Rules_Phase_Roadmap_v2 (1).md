@@ -35,7 +35,7 @@ practices.
 ### Hardware
 
 -   ESP8266 NodeMCU
--   ML8511 UV Sensor
+-   S12SD (GUVA-S12SD) UV Sensor
 -   1.3-inch Display Module
 -   Rechargeable Lithium-Ion Battery (3.3V--3.7V, 50--200mA)
 -   5V 1A Charging Module
@@ -50,7 +50,7 @@ practices.
 
 ## 3. Architecture
 
-ESP8266 responsibilities: - Read ML8511 sensor - Read ADC - Convert ADC
+ESP8266 responsibilities: - Read S12SD sensor - Read ADC - Convert ADC
 to voltage - Calculate UV Intensity - Calculate UV Index - Display ONLY
 UV Intensity and UV Index - Send readings to backend using HTTP POST
 

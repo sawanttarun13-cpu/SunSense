@@ -184,7 +184,7 @@ model DeviceToken {
   @@map("device_tokens")
 }
 
-/// Stores raw UV Index readings from the ML8511 sensor on the ESP8266.
+/// Stores raw UV Index readings from the S12SD sensor on the ESP8266.
 ///
 /// This is the primary time-series data table. Every reading sent by the
 /// device is stored here permanently. The ExposureLogicService processes

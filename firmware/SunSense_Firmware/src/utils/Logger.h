@@ -14,7 +14,7 @@
  *   [API]      - HTTP request/response events (no secrets printed)
  *   [TIME]     - Time synchronization events
  *   [QUEUE]    - Offline queue add/upload/flush events
- *   [SENSOR]   - ML8511 readings and ADC events
+ *   [SENSOR]   - S12SD readings and ADC events
  *   [DISPLAY]  - OLED rendering events
  *   [BATTERY]  - Battery level readings
  *

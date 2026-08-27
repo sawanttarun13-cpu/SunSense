@@ -7,9 +7,9 @@
  * Purpose:
  * Main Arduino sketch for the SunSense UV monitoring keychain device.
  * Coordinates all subsystems: sensor, display, battery, Wi-Fi,
- * time synchronization, API communication, and offline queuing.2
+ * time synchronization, API communication, and offline queuing.
  *
- * Hardware: ESP8266 NodeMCU + ML8511 UV Sensor + 1.3" I2C OLED + TP4056
+ * Hardware: ESP8266 NodeMCU + GUVA-S12SD UV Sensor + 1.3" I2C OLED + TP4056
  *
  * HARDWARE STATUS: NOT YET CONNECTED (Phase 5A)
  * This firmware compiles and runs the full software architecture but
@@ -54,7 +54,7 @@
 #include "src/config/firmware_config.h"
 #include "src/utils/Logger.h"
 #include "src/models/Reading.h"
-#include "src/sensors/ML8511/ML8511.h"
+#include "src/sensors/GUVAS12SD/GUVAS12SD.h"
 #include "src/display/Display.h"
 #include "src/battery/Battery.h"
 #include "src/connectivity/WiFiManager.h"
@@ -63,7 +63,7 @@
 #include "src/storage/OfflineQueue.h"
 
 // ─── Module Instances ─────────────────────────────────────────────────────────
-static ML8511       sensor(ML8511_EN_PIN, ML8511_OUT_PIN);
+static GUVAS12SD    sensor(GUVAS12SD_OUT_PIN);
 static Display      display;
 static Battery      battery;
 static WiFiManager  wifiManager;
@@ -75,6 +75,7 @@ static OfflineQueue queue;
 static uint32_t lastReadingTime    = 0;
 static uint32_t lastHeartbeatTime  = 0;
 static uint32_t lastTimeSyncTime   = 0;
+static uint32_t lastDisplayTime    = 0;   // Throttle display refresh (Bug #1 fix)
 static uint32_t bootTime           = 0;
 static bool     wasConnected       = false;   // Tracks previous connection state for reconnect detection
 static bool     deviceAuthenticated = false;  // Set after successful authenticate() on boot
@@ -149,9 +150,17 @@ void loop() {
   }
 
   // ── 6. Update display ─────────────────────────────────────────────────────
-  // Display is refreshed every loop cycle (display.showReading() is fast)
-  if (!isConnected) {
-    display.showOffline(queue.size());
+  // Refresh the display every 2 seconds with the current connection state.
+  // This prevents the OFFLINE screen from overwriting ONLINE between readings,
+  // while keeping display updates efficient (not every loop cycle).
+  if (now - lastDisplayTime >= 2000) {
+    lastDisplayTime = now;
+    if (!isConnected) {
+      display.showOffline(sensor.getLastUVIndex(), queue.size());
+    } else {
+      display.showReading(sensor.getLastUVIndex(), sensor.getLastVoltage(),
+                          true, queue.size());
+    }
   }
 
   // ── ESP8266 watchdog yield ─────────────────────────────────────────────────
@@ -162,14 +171,23 @@ void loop() {
 // onReconnect() — Called once when Wi-Fi transitions to connected
 // ─────────────────────────────────────────────────────────────────────────────
 void onReconnect() {
-  // Step 1: Check backend health
+  // Step 1: Sync time FIRST — independent of backend health.
+  // Time is critical for reading timestamps. If backend is unreachable,
+  // NTP fallback will still provide accurate time via internet.
+  // This prevents readings from being stuck at epoch 1970.
+  if (!timeSync.isSynced()) {
+    lastTimeSyncTime = millis();
+    timeSync.sync(BACKEND_BASE_URL);
+  }
+
+  // Step 2: Check backend health
   bool backendOk = apiClient.checkHealth();
   if (!backendOk) {
     Logger::warn("SYSTEM", "Backend health check failed — will retry on next cycle");
     return;
   }
 
-  // Step 2: Authenticate device (if not already done this session)
+  // Step 3: Authenticate device (if not already done this session)
   if (!deviceAuthenticated) {
     ApiResult authResult = apiClient.authenticate();
     deviceAuthenticated = authResult.success;
@@ -181,11 +199,11 @@ void onReconnect() {
     Logger::info("SYSTEM", "Device authenticated successfully");
   }
 
-  // Step 3: Sync time with server
+  // Step 4: Re-sync time from backend (now that backend is confirmed reachable)
   lastTimeSyncTime = millis();
   timeSync.sync(BACKEND_BASE_URL);
 
-  // Step 4: Flush offline queue
+  // Step 5: Flush offline queue
   if (!queue.isEmpty()) {
     flushOfflineQueue();
   }
@@ -199,8 +217,8 @@ void takeAndProcessReading(bool isOnline) {
   Reading r = createEmptyReading();
   r.rawAdc      = sensor.readRawADC();
   r.voltageV    = sensor.convertToVoltage(r.rawAdc);
-  r.uvIntensity = sensor.convertToUVIntensity(r.voltageV);
-  r.uvIndex     = sensor.convertToUVIndex(r.uvIntensity);
+  r.uvIndex     = sensor.convertToUVIndex(r.voltageV);
+  r.uvIntensity = sensor.convertToUVIntensity(r.uvIndex);
 
   // Populate timestamp
   if (timeSync.isSynced()) {
@@ -219,8 +237,7 @@ void takeAndProcessReading(bool isOnline) {
     " | online: " + String(isOnline));
 
   // Update display with latest reading
-  int battPct = battery.readPercentage();
-  display.showReading(r.uvIndex, r.uvIntensity, isOnline, battPct);
+  display.showReading(r.uvIndex, r.voltageV, isOnline, queue.size());
 
   if (isOnline && deviceAuthenticated) {
     // Try to send directly

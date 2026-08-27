@@ -261,7 +261,7 @@ export function Device() {
             <span className="font-semibold text-slate-600" style={{ fontSize: '0.8rem' }}>Sensor Health</span>
             <span className="ml-auto rounded-full px-2.5 py-1 font-semibold" style={{ background: '#DCFCE7', color: '#16A34A', fontSize: '0.68rem' }}>Excellent</span>
           </div>
-          <SensorRow name="UV Sensor (ML8511)" ok={deviceData.sensors.ml8511.ok} value={deviceData.sensors.ml8511.val} />
+          <SensorRow name="UV Sensor (S12SD)" ok={deviceData.sensors.s12sd.ok} value={deviceData.sensors.s12sd.val} />
           <div className="flex items-center justify-between pt-2.5 mt-2" style={{ borderTop: '1px solid #F1F5F9', fontSize: '0.78rem' }}>
             <span className="text-slate-400">Firmware</span>
             <span className="text-slate-700 font-medium">{deviceData.system.firmware}</span>

@@ -27,7 +27,7 @@ Replace the frontend mock data services with live API calls using Axios. Wire up
 Implement WebSockets (or Socket.IO) to push live UV readings, alerts, battery updates, and device status directly to the frontend.
 
 ### Phase 6 📅 ESP8266 Firmware
-Develop the hardware firmware. Integrate the ML8511 UV sensor, OLED display, battery monitoring, offline reading queue, and Wi-Fi state management.
+Develop the hardware firmware. Integrate the S12SD UV sensor, OLED display, battery monitoring, offline reading queue, and Wi-Fi state management.
 
 ### Phase 7 📅 Device ↔ Backend Integration
 Connect the ESP8266 to the live backend. Implement device registration, API Key authentication, offline chronological synchronization, and OTA update readiness.

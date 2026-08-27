@@ -35,6 +35,6 @@ export const MOCK_DEVICE = {
     lastUpdate: '14 days ago'
   },
   sensors: {
-    ml8511: { ok: true, val: 'Normal (1.2V)' }
+    s12sd: { ok: true, val: 'Normal (1.2V)' }
   }
 };

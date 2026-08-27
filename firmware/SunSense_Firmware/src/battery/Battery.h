@@ -13,10 +13,10 @@
  * Hardware Design Note (for integration phase):
  * The ESP8266 has only ONE analog input (A0) with a 0–1.0V input range
  * (NodeMCU boards have a built-in 100k/220k voltage divider to 0–3.3V).
- * The ML8511 sensor also uses A0. To avoid conflict:
+ * The S12SD sensor also uses A0. To avoid conflict:
  *   Option A: Use a CD4051 analog multiplexer to time-share A0.
  *   Option B: Read battery via a separate digital voltage measurement circuit.
- *   Option C: Read battery only when ML8511 EN pin is LOW (sensor off).
+ *   (Note: S12SD lacks an EN pin, so software toggling is impossible).
  *
  * The sharing strategy will be decided and implemented during hardware integration.
  * The constants BATTERY_MAX_VOLTAGE and BATTERY_MIN_VOLTAGE in firmware_config.h
@@ -46,7 +46,7 @@ public:
    * Reads the raw ADC value from the battery monitoring pin.
    *
    * HARDWARE PENDING: Returns 0 until hardware is connected.
-   * NOTE: Must not conflict with ML8511 ADC reads (pin sharing issue — see header).
+   * NOTE: Must not conflict with S12SD ADC reads (pin sharing issue — see header).
    *
    * @return Raw ADC value (0–1023)
    */

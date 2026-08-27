@@ -43,7 +43,7 @@
 // NOTE: The ESP8266 cannot resolve 'localhost' — use the machine's LAN IP
 // when connecting to a locally running backend during development.
 // -----------------------------------------------------------------------------
-#define BACKEND_BASE_URL     "http://10.182.234.104:5000"   // Automatically updated with local IP
+#define BACKEND_BASE_URL     "http://10.111.164.104:5000"   // Automatically updated with local IP
 #define API_PREFIX           "/api/v1"
 
 // Assembled endpoint paths — constructed from BACKEND_BASE_URL + API_PREFIX
@@ -86,7 +86,7 @@
 // All values are in milliseconds unless otherwise stated.
 // -----------------------------------------------------------------------------
 
-// How often the ML8511 sensor is read and a Reading is generated.
+// How often the S12SD sensor is read and a Reading is generated.
 #define READING_INTERVAL_MS       60000   // 1 minute between readings (matches backend session logic)
 
 // How often the device sends the heartbeat payload to the backend.
@@ -119,11 +119,30 @@
 // Pin assignments will be confirmed during hardware integration.
 // -----------------------------------------------------------------------------
 
-// ML8511 UV Sensor
-// EN pin enables/disables the sensor to save power between readings.
-// OUT pin carries the analog voltage proportional to UV intensity.
-#define ML8511_EN_PIN   D5   // Digital: Sensor enable (HIGH = active)
-#define ML8511_OUT_PIN  A0   // Analog: UV voltage output (0–3.3V)
+// GUVA-S12SD UV Sensor
+// The GUVA-S12SD generally does not have an enable pin, it is always on.
+// SIG/OUT pin carries the analog voltage proportional to UV Index.
+#define GUVAS12SD_OUT_PIN       A0   // Analog: UV voltage output (0–3.3V)
+
+// ── PROVISIONAL S12SD Calibration Constants ─────────────────────────────────
+// STATUS: PROVISIONAL — Requires physical verification during Phase 5B testing.
+//
+// These values are derived from the GUVA-S12SD datasheet (typical values).
+// Actual sensor behavior may differ due to manufacturing variance, operating
+// temperature, and the specific voltage divider on the NodeMCU A0 input.
+//
+// DO NOT treat these as production-calibrated values.
+// Final calibration must be performed against a reference UV meter.
+//
+// GUVA-S12SD Datasheet Reference (typical):
+//   Output voltage is approximately linear with UV Index.
+//   ~0.1V per 1 UV Index (range: 0V at UVI=0, ~1.0V at UVI=10)
+//   Maximum output voltage: ~1.17V (sensor physical limit)
+// ─────────────────────────────────────────────────────────────────────────────
+#define GUVAS12SD_VOLTS_PER_UVI   0.1f   // PROVISIONAL — volts per UV Index unit
+#define GUVAS12SD_MAX_OUTPUT_V    1.2f   // PROVISIONAL — S12SD max output voltage (datasheet ~1.17V, rounded up)
+#define GUVAS12SD_ADC_REF_V       3.3f   // NodeMCU A0 full-scale voltage (built-in voltage divider maps 0-3.3V to 10-bit ADC)
+#define GUVAS12SD_ADC_RESOLUTION  1023.0f // ESP8266 10-bit ADC max value
 
 // NOTE: ESP8266 has only ONE analog input (A0).
 // Battery voltage measurement must share this pin via a multiplexer,
@@ -140,7 +159,7 @@
 // TP4056 Battery Monitoring
 // HARDWARE PENDING: Exact ADC divider circuit values unknown until hardware test.
 // These are structural placeholders only.
-#define BATTERY_ADC_PIN       A0   // Same as ML8511 — requires multiplexing or scheduling
+#define BATTERY_ADC_PIN       A0   // Same as S12SD — requires hardware multiplexing (no EN pin)
 #define BATTERY_MAX_VOLTAGE  4.20  // Full charge (Li-Ion) — HARDWARE PENDING VALIDATION
 #define BATTERY_MIN_VOLTAGE  3.00  // Cutoff voltage — HARDWARE PENDING VALIDATION
 

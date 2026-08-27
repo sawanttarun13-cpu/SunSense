@@ -6,7 +6,7 @@ The SunSense backend operates as a central RESTful API connecting the ESP8266 Io
 ## 2. Component Communication & Data Flow
 ```mermaid
 graph TD
-    A[Sunlight] -->|UV Radiation| B(ML8511 Sensor)
+    A[Sunlight] -->|UV Radiation| B(S12SD Sensor)
     B -->|Analog Voltage| C{ESP8266 NodeMCU}
     C -->|Calculates UV Index & Timestamps| C
     C -->|Wi-Fi Offline?| D[(Local Queue)]
@@ -25,7 +25,7 @@ The system employs a hybrid architecture for communication with the frontend Das
 ## 4. Responsibilities
 
 ### ESP8266 Hardware
-- Read ML8511 analog data and calculate UV Index.
+- Read S12SD analog data and calculate UV Index.
 - Stamp each reading with an accurate timestamp.
 - Transmit readings to the backend via HTTP POST.
 - Transmit periodic heartbeats containing telemetry (battery, Wi-Fi RSSI).

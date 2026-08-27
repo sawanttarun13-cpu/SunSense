@@ -44,6 +44,8 @@ import { prisma } from '../config/prisma';
 export interface DeviceAuthRequest extends Request {
   /** The UUID of the authenticated device. Set by requireDeviceAuth middleware. */
   deviceId?: string;
+  /** The UUID of the user who owns the device. Set by requireDeviceAuth middleware. */
+  userId?: string;
 }
 
 /**
@@ -72,8 +74,11 @@ export const requireDeviceAuth = async (req: DeviceAuthRequest, res: Response, n
       return sendError(res, 'Unauthorized - Missing device credentials', 401);
     }
 
-    // Fetch the stored bcrypt hash for this device
-    const tokenRecord = await prisma.deviceToken.findUnique({ where: { deviceId } });
+    // Fetch the stored bcrypt hash for this device, along with the device record to get the userId
+    const tokenRecord = await prisma.deviceToken.findUnique({
+      where: { deviceId },
+      include: { device: true }
+    });
     if (!tokenRecord) {
       return sendError(res, 'Unauthorized - Invalid device', 401);
     }
@@ -92,6 +97,7 @@ export const requireDeviceAuth = async (req: DeviceAuthRequest, res: Response, n
     });
 
     req.deviceId = deviceId;
+    req.userId = tokenRecord.device.userId;
     next();
   } catch {
     return sendError(res, 'Unauthorized - Internal Error', 500);

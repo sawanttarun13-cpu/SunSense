@@ -16,7 +16,7 @@ It is the software foundation for the physical IoT device that will measure UV e
 | Component | Model |
 |---|---|
 | Microcontroller | ESP8266 NodeMCU (ESP-12E) |
-| UV Sensor | ML8511 Analog UV Sensor |
+| UV Sensor | S12SD (GUVA-S12SD) Analog UV Sensor |
 | Display | 1.3-inch I2C OLED (SSD1306 or SH1106, 128×64) |
 | Battery | 3.7V Li-Ion (single cell) |
 | Charger/Protection | TP4056 module |
@@ -34,9 +34,9 @@ firmware/
 │   └── firmware_config.h       ← All configuration constants and pin assignments
 │
 ├── sensors/
-│   └── ML8511/
-│       ├── ML8511.h            ← UV sensor interface
-│       └── ML8511.cpp          ← UV sensor implementation (HARDWARE PENDING)
+│   └── GUVAS12SD/
+│       ├── GUVAS12SD.h         ← UV sensor interface
+│       └── GUVAS12SD.cpp       ← UV sensor implementation
 │
 ├── display/
 │   ├── Display.h               ← OLED display interface
@@ -259,7 +259,7 @@ On reconnect:
 | `[API]` | HTTP requests and responses |
 | `[TIME]` | Time synchronization |
 | `[QUEUE]` | Offline queue operations |
-| `[SENSOR]` | ML8511 readings |
+| `[SENSOR]` | S12SD readings |
 | `[DISPLAY]` | OLED rendering events |
 | `[BATTERY]` | Battery readings |
 
@@ -290,14 +290,14 @@ On reconnect:
 
 | Item | Required Hardware |
 |---|---|
-| ML8511 ADC readings | ML8511 wired to A0 |
-| UV voltage → UV intensity formula validation | ML8511 + calibrated UV source |
-| UV intensity → UV Index formula validation | ML8511 + WHO reference |
+| S12SD ADC readings | S12SD wired to A0 |
+| UV voltage → UV intensity formula validation | S12SD + datasheet verification |
+| UV intensity → UV Index formula validation | S12SD + WHO reference |
 | OLED display rendering | OLED + I2C wiring |
 | Battery voltage measurement | TP4056 + voltage divider circuit |
 | Battery percentage accuracy | Full discharge curve measurement |
 | TP4056 charging state detection | CHRG pin wired to GPIO |
-| A0 pin sharing (ML8511 vs battery) | Multiplexer or scheduling decision |
+| A0 pin sharing (S12SD vs battery) | Hardware multiplexer (S12SD lacks EN pin) |
 | I2C address confirmation | Physical I2C scanner on hardware |
 | SPIFFS offline queue persistence | Flash filesystem mount |
 | Physical GPIO pin validation | Full hardware assembly |
@@ -323,5 +323,5 @@ On reconnect:
 3. **Time without sync:** If both backend and NTP fail, timestamps default to Unix epoch (`1970-01-01T00:00:00Z`). Backend will reject these readings.
 4. **Volatile queue:** In-memory queue is lost on power cycle. SPIFFS persistence is hardware-pending.
 5. **Arduino IDE path:** `.ino` file uses relative `../` includes. If Arduino IDE cannot resolve these, copy module folders alongside the `.ino` file.
-6. **Single ADC pin:** ML8511 and battery monitoring share A0. Conflict resolution is hardware-pending.
+6. **Single ADC pin:** S12SD and battery monitoring share A0. Conflict resolution is hardware-pending (S12SD lacks an EN pin, meaning a physical multiplexer or separate ADC is required).
 7. **In-IDE compilation not verified** in Phase 5A environment.

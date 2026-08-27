@@ -22,6 +22,7 @@
 
 #include "ApiClient.h"
 #include <ArduinoJson.h>
+#include <ESP8266WiFi.h>   // Required for WiFi.status(), WiFi.localIP() in diagnostics
 
 ApiClient::ApiClient(const String& baseUrl) : _baseUrl(baseUrl) {}
 
@@ -64,8 +65,11 @@ ApiResult ApiClient::sendReadings(const Reading* readings, int count) {
 
   for (int i = 0; i < count; i++) {
     JsonObject obj = arr.createNestedObject();
-    obj["uvIndex"]    = serialized(String(readings[i].uvIndex, 2));
-    obj["recordedAt"] = readings[i].recordedAt;
+    // Backend contract: only { uvIndex, recordedAt } are accepted.
+    // Do NOT send uvIntensity, voltageV, or other diagnostic fields —
+    // the backend Zod validator rejects unknown fields.
+    obj["uvIndex"]     = serialized(String(readings[i].uvIndex, 2));
+    obj["recordedAt"]  = readings[i].recordedAt;
   }
 
   String payload;
@@ -207,7 +211,21 @@ ApiResult ApiClient::authenticate() {
 // ─────────────────────────────────────────────────────────────────────────────
 bool ApiClient::checkHealth() {
   String url = _buildUrl(ENDPOINT_HEALTH);
-  Logger::debug("API", "GET " + url);
+
+  // ── Connection Diagnostics ───────────────────────────────────────────────
+  // Log connection context to help diagnose HTTP -1 failures.
+  // Common causes of HTTP -1:
+  //   - Backend server not running (npm run dev)
+  //   - Backend listening on localhost only (not LAN-accessible)
+  //   - Wrong IP address in BACKEND_BASE_URL
+  //   - Windows Firewall blocking inbound connections on port 5000
+  //   - ESP8266 and laptop on different subnets
+  //
+  // SECURITY: Only WiFi status and IP are logged. NO secrets.
+  Logger::debug("API", "Health check | Target: " + url);
+  Logger::debug("API", "Health check | WiFi status: " + String(WiFi.status()) +
+    " | Device IP: " + WiFi.localIP().toString() +
+    " | RSSI: " + String(WiFi.RSSI()) + " dBm");
 
   HTTPClient http;
   http.begin(_wifiClient, url);
@@ -220,6 +238,15 @@ bool ApiClient::checkHealth() {
     Logger::info("API", "Backend health check: OK (200)");
   } else {
     Logger::warn("API", "Backend health check: FAIL (HTTP " + String(code) + ")");
+    if (code == -1) {
+      Logger::warn("API",
+        "HTTP -1 = TCP connection failed. Checklist:\n"
+        "  1. Is backend running? (npm run dev in backend/ folder)\n"
+        "  2. Is backend bound to 0.0.0.0, not just localhost?\n"
+        "  3. Is BACKEND_BASE_URL IP correct? Current: " + _baseUrl + "\n"
+        "  4. Is Windows Firewall allowing port 5000?\n"
+        "  5. Are ESP8266 and laptop on the same network?");
+    }
   }
 
   http.end();

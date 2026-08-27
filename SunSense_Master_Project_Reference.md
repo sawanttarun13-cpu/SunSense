@@ -7,7 +7,7 @@ SunSense is a production-ready IoT UV monitoring keychain for a client.
 ## Architecture
 
 ``` text
-ML8511 UV Sensor
+S12SD (GUVA-S12SD) UV Sensor
         │
         ▼
 ESP8266 NodeMCU
@@ -30,7 +30,7 @@ Node.js + Express
 ## Hardware
 
 -   ESP8266 NodeMCU
--   ML8511 UV Sensor
+-   S12SD (GUVA-S12SD) UV Sensor
 -   1.3" OLED Display
 -   3.3--3.7V Li-Ion Battery (50--200mAh)
 -   TP4056 Charging Module (5V 1A)
@@ -111,7 +111,7 @@ Implement WebSockets/Socket.IO for live updates.
 
 ## Phase 8
 
-Firmware: - Read ML8511 - Calculate UV Intensity - Calculate UV Index -
+Firmware: - Read S12SD - Calculate UV Intensity - Calculate UV Index -
 Display on OLED - Monitor battery - Sync to backend when Wi-Fi is
 available
 
