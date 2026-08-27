@@ -87,7 +87,7 @@
 // -----------------------------------------------------------------------------
 
 // How often the S12SD sensor is read and a Reading is generated.
-#define READING_INTERVAL_MS       60000   // 1 minute between readings (matches backend session logic)
+#define READING_INTERVAL_MS       10000   // TEMPORARY: 10s for Phase 5B testing (restore to 60000 for production)
 
 // How often the device sends the heartbeat payload to the backend.
 // The heartbeat keeps the device ONLINE status alive on the dashboard.
@@ -124,25 +124,45 @@
 // SIG/OUT pin carries the analog voltage proportional to UV Index.
 #define GUVAS12SD_OUT_PIN       A0   // Analog: UV voltage output (0–3.3V)
 
-// ── PROVISIONAL S12SD Calibration Constants ─────────────────────────────────
-// STATUS: PROVISIONAL — Requires physical verification during Phase 5B testing.
+// =============================================================================
+// GUVA-S12SD CALIBRATION
+// =============================================================================
 //
-// These values are derived from the GUVA-S12SD datasheet (typical values).
-// Actual sensor behavior may differ due to manufacturing variance, operating
-// temperature, and the specific voltage divider on the NodeMCU A0 input.
+// The GUVA-S12SD module provides an analog output.
+// Typical module documentation specifies approximately:
+//   0.0 V -> UVI 0
+//   0.1 V -> UVI 1
+//   0.5 V -> UVI 5
+//   1.0 V -> UVI 10
 //
-// DO NOT treat these as production-calibrated values.
-// Final calibration must be performed against a reference UV meter.
+// IMPORTANT:
+// The ESP8266 NodeMCU A0 connector commonly uses an onboard divider,
+// so analogRead() represents the external A0 voltage over the board's
+// usable range.
 //
-// GUVA-S12SD Datasheet Reference (typical):
-//   Output voltage is approximately linear with UV Index.
-//   ~0.1V per 1 UV Index (range: 0V at UVI=0, ~1.0V at UVI=10)
-//   Maximum output voltage: ~1.17V (sensor physical limit)
-// ─────────────────────────────────────────────────────────────────────────────
-#define GUVAS12SD_VOLTS_PER_UVI   0.1f   // PROVISIONAL — volts per UV Index unit
-#define GUVAS12SD_MAX_OUTPUT_V    1.2f   // PROVISIONAL — S12SD max output voltage (datasheet ~1.17V, rounded up)
-#define GUVAS12SD_ADC_REF_V       3.3f   // NodeMCU A0 full-scale voltage (built-in voltage divider maps 0-3.3V to 10-bit ADC)
-#define GUVAS12SD_ADC_RESOLUTION  1023.0f // ESP8266 10-bit ADC max value
+// These values are INITIAL calibration values.
+// Final calibration should be compared with a reference UV meter.
+//
+#define GUVAS12SD_VOLTS_PER_UVI   0.100f
+
+// Expected maximum sensor output.
+// The GUVA-S12SD itself is approximately 1.17 V maximum according
+// to its device characteristics.
+#define GUVAS12SD_MAX_OUTPUT_V    1.20f
+
+// NodeMCU A0 external input scaling.
+// This is for a typical NodeMCU development board with its onboard
+// A0 divider.
+//
+// If your specific board gives incorrect voltage readings, this value
+// must be calibrated experimentally.
+#define GUVAS12SD_ADC_REF_V       3.30f
+#define GUVAS12SD_ADC_RESOLUTION  1023.0f
+
+// Do not use an artificial UVI=30 display limit.
+// Earth's environmental UV Index is normally represented in the
+// standard 0–11+ scale.
+#define GUVAS12SD_MAX_UVI         15.0f
 
 // NOTE: ESP8266 has only ONE analog input (A0).
 // Battery voltage measurement must share this pin via a multiplexer,

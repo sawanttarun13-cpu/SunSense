@@ -13,14 +13,12 @@ void GUVAS12SD::begin() {
 }
 
 int GUVAS12SD::readRawADC() {
-  // Average multiple ADC samples to reduce noise.
-  // The GUVA-S12SD doesn't have an EN pin — it is always outputting.
-  long sum = 0;
+  uint32_t sum = 0;
   for (int i = 0; i < ADC_SAMPLES; i++) {
     sum += analogRead(_outPin);
-    delay(2); // Short delay between samples for ADC stability
+    delay(3);
+    yield();
   }
-
   _lastRawADC = (int)(sum / ADC_SAMPLES);
   return _lastRawADC;
 }
@@ -43,44 +41,37 @@ float GUVAS12SD::convertToVoltage(int rawAdc) {
 }
 
 float GUVAS12SD::convertToUVIndex(float voltage) {
-  // GUVA-S12SD UV Index Conversion (PROVISIONAL):
+  // -------------------------------------------------------------------------
+  // GUVA-S12SD approximate conversion
   //
-  // Datasheet relationship (typical):
-  //   UV Index ≈ Voltage / 0.1V
+  // 0.1 V ≈ 1 UV Index
   //
-  // At UV Index 1:  ~0.1V output
-  // At UV Index 5:  ~0.5V output
-  // At UV Index 10: ~1.0V output
-  // Sensor max:     ~1.17V output (UV Index ~11.7)
+  // Therefore:
   //
-  // STATUS: PROVISIONAL — requires validation against a reference UV meter.
-  float uvIndex = voltage / GUVAS12SD_VOLTS_PER_UVI;
-
-  // ── Saturation / Anomaly Detection ──────────────────────────────────────
-  // The GUVA-S12SD physically cannot output more than ~1.17V.
-  // If voltage exceeds the datasheet maximum, something is wrong:
-  //   - Sensor saturation (direct intense light on photodiode)
-  //   - Wiring issue (A0 receiving voltage from another source)
-  //   - Electrical noise or floating pin
-  //   - Incorrect voltage divider assumptions
-  //
-  // We REPORT the condition instead of silently clamping.
-  if (voltage > GUVAS12SD_MAX_OUTPUT_V) {
-    Logger::warn("SENSOR",
-      "[S12SD SATURATION] Voltage " + String(voltage, 3) +
-      "V exceeds S12SD datasheet max (" + String(GUVAS12SD_MAX_OUTPUT_V, 1) +
-      "V) — ADC: " + String(_lastRawADC) +
-      " | Calculated UVI: " + String(uvIndex, 1) +
-      " — Possible: sensor saturation / wiring issue / noise");
+  // UVI = voltage / 0.1
+  // -------------------------------------------------------------------------
+  if (voltage <= 0.0f) {
+    _lastUVIndex = 0.0f;
+    return 0.0f;
   }
 
-  // Clamp negative values (ADC noise floor)
-  if (uvIndex < 0.0f) uvIndex = 0.0f;
+  // Detect impossible/suspicious sensor output.
+  if (voltage > GUVAS12SD_MAX_OUTPUT_V) {
+    Logger::warn(
+      "SENSOR",
+      "[S12SD] Output above expected range: " + String(voltage, 3) +
+      " V | ADC=" + String(_lastRawADC)
+    );
+    // Do NOT convert impossible voltage directly into UVI.
+    //
+    // Instead treat the sensor as saturated at its expected maximum.
+    voltage = GUVAS12SD_MAX_OUTPUT_V;
+  }
 
-  // Safety clamp at 30 — this is NOT a calibration cap.
-  // UV Index 30 is physically impossible on Earth's surface.
-  // This prevents ArduinoJson overflow and display corruption only.
-  if (uvIndex > 30.0f) uvIndex = 30.0f;
+  float uvIndex = voltage / GUVAS12SD_VOLTS_PER_UVI;
+
+  if (uvIndex < 0.0f) uvIndex = 0.0f;
+  if (uvIndex > GUVAS12SD_MAX_UVI) uvIndex = GUVAS12SD_MAX_UVI;
 
   _lastUVIndex = uvIndex;
   return uvIndex;

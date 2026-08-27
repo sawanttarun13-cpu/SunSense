@@ -44,6 +44,9 @@ import { Alerts } from './pages/Alerts';
 import { Device } from './pages/Device';
 import { SettingsPage } from './pages/SettingsPage';
 import { Profile } from './pages/Profile';
+import { AuthProvider } from './context/AuthContext';
+import { PrivateRoute } from './components/PrivateRoute';
+import { PublicRoute } from './components/PublicRoute';
 
 /**
  * Root application component.
@@ -54,25 +57,31 @@ import { Profile } from './pages/Profile';
  */
 export default function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        {/* Public auth pages (no sidebar/header layout) */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* Public auth pages (no sidebar/header layout) */}
+          <Route element={<PublicRoute />}>
+            <Route path="/login" element={<Login />} />
+          </Route>
+          <Route path="/register" element={<Register />} />
 
-        {/* Protected pages — wrapped in the persistent sidebar/header shell */}
-        <Route element={<MainLayout />}>
-          {/* Root redirects to the dashboard as the default landing page */}
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/analytics" element={<Analytics />} />
-          <Route path="/history" element={<History />} />
-          <Route path="/alerts" element={<Alerts />} />
-          <Route path="/device" element={<Device />} />
-          <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/profile" element={<Profile />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+          {/* Protected pages — wrapped in the persistent sidebar/header shell */}
+          <Route element={<PrivateRoute />}>
+            <Route element={<MainLayout />}>
+              {/* Root redirects to the dashboard as the default landing page */}
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/analytics" element={<Analytics />} />
+              <Route path="/history" element={<History />} />
+              <Route path="/alerts" element={<Alerts />} />
+              <Route path="/device" element={<Device />} />
+              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/profile" element={<Profile />} />
+            </Route>
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }

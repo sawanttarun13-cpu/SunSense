@@ -10,6 +10,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Eye, EyeOff, ArrowRight, Loader } from 'lucide-react';
 import { AuthLayout } from '../components/layout/AuthLayout';
+import { useAuth } from '../context/AuthContext';
 
 function inputBorder(focused: string | null, field: string) {
   return { border: `1.5px solid ${focused === field ? '#2563EB' : '#E2E8F0'}`, outline: 'none', transition: 'border-color 0.15s' };
@@ -17,7 +18,7 @@ function inputBorder(focused: string | null, field: string) {
 
 // Login page shown to the user.
 export function Login() {
-  const navigate = useNavigate();
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [show, setShow] = useState(false);
@@ -25,11 +26,21 @@ export function Login() {
   const [error, setError] = useState('');
   const [focused, setFocused] = useState<string | null>(null);
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) { setError('Please fill in all fields.'); return; }
-    setError(''); setLoading(true);
-    setTimeout(() => { setLoading(false); navigate('/dashboard'); }, 1200);
+    setError(''); 
+    setLoading(true);
+    
+    try {
+      await login(email, password);
+      // Navigation to /dashboard is handled by PublicRoute redirecting automatically
+      // once isAuthenticated becomes true.
+    } catch (err: any) {
+      setError(err.message || 'Failed to sign in. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

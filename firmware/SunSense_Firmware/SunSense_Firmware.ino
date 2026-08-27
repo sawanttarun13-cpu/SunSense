@@ -231,6 +231,13 @@ void takeAndProcessReading(bool isOnline) {
     Logger::warn("SENSOR", "Time not synced — reading timestamp is epoch (invalid)");
   }
 
+  Logger::info("S12SD", 
+    "ADC=" + String(r.rawAdc) + 
+    " | V=" + String(r.voltageV, 3) + "V" + 
+    " | UVI=" + String(r.uvIndex, 2) + 
+    " | UV=" + String(r.uvIntensity, 3) + " mW/cm2"
+  );
+  
   Logger::info("SENSOR",
     "Reading | UVI: " + String(r.uvIndex, 1) +
     " | ts: " + String(r.recordedAt) +

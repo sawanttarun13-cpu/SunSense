@@ -5,7 +5,7 @@
 #include "../../config/firmware_config.h"
 #include "../../utils/Logger.h"
 
-#define ADC_SAMPLES 10
+#define ADC_SAMPLES 32
 
 class GUVAS12SD {
 public:

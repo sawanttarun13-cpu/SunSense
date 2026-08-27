@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router';
 import { Eye, EyeOff, ArrowRight, Loader, Check } from 'lucide-react';
 import { AuthLayout } from '../components/layout/AuthLayout';
 import { profileService } from '../services/profile.service';
+import { useAuth } from '../context/AuthContext';
 import type { SkinType } from '../types/profile';
 
 function inputBorder(focused: string | null, field: string) {
@@ -19,6 +20,7 @@ function inputBorder(focused: string | null, field: string) {
 
 // Register page shown to the user.
 export function Register() {
+  const { register, login, isAuthenticated, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState<1 | 2>(1);
   const [name, setName] = useState('');
@@ -36,23 +38,47 @@ export function Register() {
     profileService.getSkinTypes().then(setSkinTypes);
   }, []);
 
+  // Redirect to dashboard if already authenticated (and not in the middle of registration)
+  useEffect(() => {
+    if (!authLoading && isAuthenticated && step === 1) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isAuthenticated, authLoading, step, navigate]);
+
   const strength = password.length === 0 ? 0 : password.length < 6 ? 1 : password.length < 10 ? 2 : 3;
   const strengthColor = ['#E2E8F0', '#EF4444', '#F97316', '#22C55E'][strength];
   const strengthLabel = ['', 'Weak', 'Fair', 'Strong'][strength];
 
-  const step1 = (e: React.FormEvent) => {
+  const step1 = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !email || !password) { setError('Please fill in all fields.'); return; }
     if (password.length < 8) { setError('Password must be at least 8 characters.'); return; }
-    setError(''); setStep(2);
+    setError('');
+    
+    try {
+      await register(email, password, name);
+      setStep(2);
+    } catch (err: any) {
+      setError(err.message || 'Registration failed. Please try again.');
+    }
   };
 
-  const step2 = (e: React.FormEvent) => {
+  const step2 = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!skinType) { setError('Please select your skin type.'); return; }
     setError(''); setLoading(true);
-    profileService.updateProfile({ name, location, skinType });
-    setTimeout(() => { setLoading(false); navigate('/dashboard'); }, 1400);
+    
+    try {
+      // 1. Authenticate the newly registered user to get the JWT token
+      await login(email, password);
+      // 2. Update their profile using the real backend endpoint
+      await profileService.updateProfile({ name, location, skinType });
+      // 3. Navigation
+      navigate('/dashboard');
+    } catch (err: any) {
+      setError(err.message || 'Failed to setup profile. Please try again.');
+      setLoading(false);
+    }
   };
 
   return (
