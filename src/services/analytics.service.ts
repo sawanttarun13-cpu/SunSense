@@ -17,7 +17,7 @@ export const analyticsService = {
   // Wait, Analytics.tsx UI range 'week' shows 7 days! So we should use timeframe='daily' for the 'week' view and just take the last 7 items.)
   getWeeklyData: async () => {
     const res = await apiClient.get('/analytics', { params: { timeframe: 'daily', tzOffset: getTzOffset() } });
-    const data = res.data.data;
+    const data = res.data.data.data;
     // UI expects 'day' (e.g. 'Mon', 'Tue'). We take the last 7 days from the daily data.
     // If not enough data, we pad with empty days or just show what's available.
     const last7 = data.slice(-7);
@@ -36,7 +36,7 @@ export const analyticsService = {
   // Monthly Data (UI shows 6-week trend, so we use timeframe='weekly' and take last 6)
   getMonthlyData: async () => {
     const res = await apiClient.get('/analytics', { params: { timeframe: 'weekly', tzOffset: getTzOffset() } });
-    const data = res.data.data;
+    const data = res.data.data.data;
     const last6 = data.slice(-6);
     return last6.map((item: any) => ({
       week: item.period, // e.g. 2026-W32
@@ -48,7 +48,7 @@ export const analyticsService = {
   // Peak Hours (timeframe='hourly')
   getPeakHoursData: async () => {
     const res = await apiClient.get('/analytics', { params: { timeframe: 'hourly', tzOffset: getTzOffset() } });
-    return res.data.data.map((item: any) => ({
+    return res.data.data.data.map((item: any) => ({
       hour: `${item.period}h`,
       uv: item.averageUv,
     }));
@@ -58,7 +58,7 @@ export const analyticsService = {
   getHeatmapData: async () => {
     const res = await apiClient.get('/analytics', { params: { timeframe: 'daily', tzOffset: getTzOffset() } });
     const dataMap = new Map();
-    res.data.data.forEach((item: any) => {
+    res.data.data.data.forEach((item: any) => {
       dataMap.set(item.period, item.maxUv);
     });
 
@@ -81,6 +81,6 @@ export const analyticsService = {
   // Global Trend Data (To populate the StatBoxes in Analytics.tsx, though currently they are hardcoded. We can expose this if we decide to wire them up)
   getTrendData: async () => {
     const res = await apiClient.get('/analytics', { params: { timeframe: 'weekly', tzOffset: getTzOffset() } });
-    return res.data.trend;
+    return res.data.data.trend;
   }
 };

@@ -53,7 +53,7 @@ class DeviceIngestionService {
      * @param userId   - UUID of the user who owns the device.
      * @param deviceId - UUID of the sending device (from requireDeviceAuth).
      * @param readings - Array of reading payloads from the ESP8266.
-     * @param readings[].uvIndex     - UV Index measured by the ML8511 sensor.
+     * @param readings[].uvIndex     - UV Index measured by the S12SD sensor.
      * @param readings[].recordedAt  - ISO 8601 timestamp of when the reading was taken.
      * @returns        Object containing { inserted, duplicates } counts.
      */

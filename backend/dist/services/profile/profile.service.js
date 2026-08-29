@@ -61,7 +61,17 @@ class ProfileService {
      * @returns      Updated profile (same fields as getProfile).
      */
     async updateProfile(userId, data) {
-        return profileRepo.update(userId, data);
+        // Whitelist only the fields that exist in the Prisma User model.
+        // This prevents unknown fields (e.g. 'location' from the frontend)
+        // from being passed to Prisma and causing a runtime error.
+        const allowedFields = {};
+        if (data.name !== undefined)
+            allowedFields.name = data.name;
+        if (data.skinType !== undefined)
+            allowedFields.skinType = data.skinType;
+        if (data.preferredSpf !== undefined)
+            allowedFields.preferredSpf = data.preferredSpf;
+        return profileRepo.update(userId, allowedFields);
     }
 }
 exports.ProfileService = ProfileService;

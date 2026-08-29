@@ -42,6 +42,19 @@ class DashboardRepository {
         return prisma_1.prisma.device.findUnique({ where: { userId } });
     }
     /**
+     * DEV MODE ONLY: Returns the first device in the system regardless of owner.
+     *
+     * This supports single-device testing where a newly registered user
+     * should still see dashboard data from the shared physical device.
+     *
+     * TODO: Remove before production deployment.
+     *
+     * @returns The first Device record, or null if no devices exist.
+     */
+    async getAnyDevice() {
+        return prisma_1.prisma.device.findFirst();
+    }
+    /**
      * Retrieves the user record.
      *
      * Used to read skinType and preferredSpf, which are passed to
@@ -84,7 +97,13 @@ class DashboardRepository {
      */
     async getTodayReadings(deviceId, startOfDay) {
         return prisma_1.prisma.uVReading.findMany({
-            where: { deviceId, recordedAt: { gte: startOfDay } },
+            where: {
+                deviceId,
+                recordedAt: {
+                    gte: startOfDay,
+                    lte: new Date()
+                }
+            },
             orderBy: { recordedAt: 'desc' }
         });
     }

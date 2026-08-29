@@ -31,16 +31,13 @@ function StatCard({ icon: Icon, label, value, color, bg }: { icon: React.Element
 // Profile page shown to the user.
 export function Profile() {
   const [skinTypes, setSkinTypes] = useState<SkinType[]>([]);
-  const [sensitivityLevels, setSensitivityLevels] = useState<SensitivityLevel[]>([]);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   
   const [skinType, setSkinType] = useState(2);
-  const [sensitivity, setSensitivity] = useState(2);
   const [editing, setEditing] = useState(false);
   const [saved, setSaved] = useState(false);
   const [name, setName] = useState('');
-  const [location, setLocation] = useState('');
-  const [age, setAge] = useState('');
+  const [email, setEmail] = useState('');
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -49,17 +46,13 @@ export function Profile() {
     Promise.all([
       profileService.getProfile(),
       profileService.getSkinTypes(),
-      profileService.getSensitivityLevels(),
       profileService.getAchievements()
     ])
-      .then(([prof, skins, sens, achs]) => {
+      .then(([prof, skins, achs]) => {
         setName(prof.name);
-        setLocation(prof.location);
-        setAge(prof.age);
+        if(prof.email) setEmail(prof.email);
         setSkinType(prof.skinType);
-        setSensitivity(prof.sensitivity);
         setSkinTypes(skins);
-        setSensitivityLevels(sens);
         setAchievements(achs);
         setLoading(false);
       })
@@ -69,11 +62,10 @@ export function Profile() {
   if (loading) return <LoadingState />;
   if (error) return <ErrorState onRetry={() => window.location.reload()} />;
 
-  const selectedSkin = skinTypes.find(s => s.id === skinType)!;
-  const selectedSens = sensitivityLevels[sensitivity];
+  const selectedSkin = skinTypes.find(s => s.id === skinType) || skinTypes[0];
 
   const handleSave = () => {
-    profileService.updateProfile({ name, location, age, skinType, sensitivity });
+    profileService.updateProfile({ name, skinType });
     setEditing(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
@@ -117,21 +109,11 @@ export function Profile() {
             <div className="flex flex-wrap gap-4" style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem' }}>
               <div className="flex items-center gap-1.5">
                 <MapPin size={13} />
-                {editing ? (
-                  <input value={location} onChange={e => setLocation(e.target.value)}
-                    className="bg-white/15 text-white rounded-lg px-2 py-0.5 outline-none border border-white/25 text-sm w-40" />
-                ) : <span>{location}</span>}
-              </div>
-              <div className="flex items-center gap-1.5">
-                <Calendar size={13} />
-                {editing ? (
-                  <input value={age} onChange={e => setAge(e.target.value)}
-                    className="bg-white/15 text-white rounded-lg px-2 py-0.5 outline-none border border-white/25 text-sm w-16" />
-                ) : <span>Age {age}</span>}
+                <span>{email || 'No email provided'}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <Shield size={13} />
-                <span>Skin Type {skinType} · {selectedSens.label} Sensitivity</span>
+                <span>Skin Type {skinType}</span>
               </div>
             </div>
           </div>

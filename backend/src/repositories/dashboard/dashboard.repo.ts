@@ -100,7 +100,13 @@ export class DashboardRepository {
    */
   async getTodayReadings(deviceId: string, startOfDay: Date) {
     return prisma.uVReading.findMany({
-      where: { deviceId, recordedAt: { gte: startOfDay } },
+      where: { 
+        deviceId, 
+        recordedAt: { 
+          gte: startOfDay,
+          lte: new Date()
+        } 
+      },
       orderBy: { recordedAt: 'desc' }
     });
   }

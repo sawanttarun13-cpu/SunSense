@@ -15,7 +15,7 @@ export const historyService = {
     
     // Map backend ExposureSession to UVLogEntry
     const mapped: UVLogEntry[] = res.data.data.map((session: any) => ({
-      id: session.id,
+      id: session.sessionId,
       date: new Date(session.startTime),
       uv: Number(session.averageUvIndex)
     }));

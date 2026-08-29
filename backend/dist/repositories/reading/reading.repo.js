@@ -39,7 +39,7 @@ class ReadingRepository {
      *
      * @param deviceId   - UUID of the device that recorded the reading.
      * @param uvIndex    - UV Index value (clamped to ≥ 0 before calling this).
-     * @param recordedAt - Exact timestamp when the ML8511 sensor took the reading.
+     * @param recordedAt - Exact timestamp when the S12SD sensor took the reading.
      * @returns          The newly created UVReading record.
      * @throws           Prisma P2002 if (deviceId, recordedAt) already exists.
      */

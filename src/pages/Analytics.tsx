@@ -72,25 +72,45 @@ export function Analytics() {
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    Promise.all([
-      analyticsService.getWeeklyData(),
-      analyticsService.getMonthlyData(),
-      analyticsService.getPeakHoursData(),
-      analyticsService.getHeatmapData(),
-      analyticsService.getTrendData()
-    ])
-      .then(([w, m, p, h, t]) => {
+    let mounted = true;
+
+    const fetchAnalytics = async (isBackground = false) => {
+      if (!isBackground) setLoading(true);
+      try {
+        const [w, m, p, h, t] = await Promise.all([
+          analyticsService.getWeeklyData(),
+          analyticsService.getMonthlyData(),
+          analyticsService.getPeakHoursData(),
+          analyticsService.getHeatmapData(),
+          analyticsService.getTrendData()
+        ]);
+        
+        if (!mounted) return;
         setWeekly(w);
         setMonthly(m);
         setPeakHours(p);
         setHeatmap(h);
         setTrendData(t);
-        setLoading(false);
-      })
-      .catch(() => {
-        setError(true);
-        setLoading(false);
-      });
+        if (!isBackground) setLoading(false);
+      } catch (err) {
+        if (!mounted) return;
+        if (!isBackground) {
+          setError(true);
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchAnalytics(false);
+
+    const intervalId = setInterval(() => {
+      fetchAnalytics(true);
+    }, 30000);
+
+    return () => {
+      mounted = false;
+      clearInterval(intervalId);
+    };
   }, []);
 
   // Compute dynamic stats

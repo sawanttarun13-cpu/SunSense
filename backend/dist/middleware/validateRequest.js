@@ -30,7 +30,7 @@ const validateRequest = (schema) => {
         }
         catch (error) {
             if (error instanceof zod_1.ZodError) {
-                // Return all field-level validation issues in the details array
+                console.error("[VALIDATION ERROR]", JSON.stringify(error.issues));
                 return (0, apiResponse_1.sendError)(res, 'Validation Error', 400, error.issues);
             }
             // Unexpected error (not a validation failure)

@@ -31,8 +31,11 @@ const requireDeviceAuth = async (req, res, next) => {
         if (!deviceId || !apiKey) {
             return (0, apiResponse_1.sendError)(res, 'Unauthorized - Missing device credentials', 401);
         }
-        // Fetch the stored bcrypt hash for this device
-        const tokenRecord = await prisma_1.prisma.deviceToken.findUnique({ where: { deviceId } });
+        // Fetch the stored bcrypt hash for this device, along with the device record to get the userId
+        const tokenRecord = await prisma_1.prisma.deviceToken.findUnique({
+            where: { deviceId },
+            include: { device: true }
+        });
         if (!tokenRecord) {
             return (0, apiResponse_1.sendError)(res, 'Unauthorized - Invalid device', 401);
         }
@@ -48,6 +51,7 @@ const requireDeviceAuth = async (req, res, next) => {
             data: { lastUsedAt: new Date() }
         });
         req.deviceId = deviceId;
+        req.userId = tokenRecord.device.userId;
         next();
     }
     catch {

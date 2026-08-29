@@ -16,8 +16,6 @@ import { StatCard } from '../components/common/StatCard';
 import { UVGauge } from '../components/common/UVGauge';
 import { MiniMetric } from '../components/common/MiniMetric';
 import { UV_ZONES } from '../constants/uv';
-import { useUVData } from '../hooks/useUVData';
-import { useSunscreen } from '../hooks/useSunscreen';
 import { ChartTooltip } from '../components/charts/ChartTooltip';
 import { SunscreenTracker } from '../components/dashboard/SunscreenTracker';
 import { ApplySunscreenModal } from '../components/dashboard/ApplySunscreenModal';
@@ -27,21 +25,27 @@ import { LoadingState } from '../components/common/LoadingState';
 import { ErrorState } from '../components/common/ErrorState';
 import { Battery, Wifi, Clock, Shield, PlusCircle } from 'lucide-react';
 import { getUVZone } from '../constants/uv';
-
+import { sunscreenService } from '../services/sunscreen.service';
 import { useNavigate } from 'react-router';
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 // Dashboard page shown to the user.
 export function Dashboard() {
   const navigate = useNavigate();
-  // Keep useUVData temporarily to supply the mock hourly chart data, 
-  // lowUV, peakTime, and burnTime left, as the backend does not yet provide these.
-  const { hourlyData, lowUV, peakTime } = useUVData(); 
   const { data, loading, error, refetch } = useDashboardData();
-  const sunscreen = useSunscreen();
   const now = new Date();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleApplySunscreen = async (spf: number, time: Date) => {
+    try {
+      await sunscreenService.applySunscreen(spf, time);
+      await refetch();
+      setIsModalOpen(false);
+    } catch (e) {
+      console.error('Failed to apply sunscreen', e);
+    }
+  };
 
   if (loading) return <LoadingState />;
   if (error || !data) return <ErrorState onRetry={refetch} />;
@@ -187,12 +191,11 @@ export function Dashboard() {
             <UVGauge value={currentUvValue} />
           </div>
 
-          {/* Professional Metric Grid */}
           <div className="mt-8 grid grid-cols-3 gap-4 relative z-10">
             {[
-              { label: 'Low', val: lowUV.toFixed(1), color: '#22C55E', sub: 'Today\'s low (Mock)' },
+              { label: 'Low', val: data.lowUv !== null && data.lowUv !== undefined ? data.lowUv.toFixed(1) : 'N/A', color: '#22C55E', sub: data.lowTime ? new Date(data.lowTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'No data' },
               { label: 'Live', val: currentUvValue.toFixed(1), color: zone.color, sub: 'Current', active: true },
-              { label: 'Peak', val: (data.peakUv || 0).toFixed(1), color: '#EF4444', sub: peakTime + ' (Mock Time)' },
+              { label: 'Peak', val: (data.peakUv || 0).toFixed(1), color: '#EF4444', sub: data.peakTime ? new Date(data.peakTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'No data' },
             ].map(({ label, val, color, sub, active }) => (
               <div
                 key={label}
@@ -221,14 +224,10 @@ export function Dashboard() {
               </div>
               <div className="flex-1">
                 <div className="font-semibold" style={{ fontSize: '0.85rem', color: zone.text }}>
-                  {sunscreen.status === 'unprotected' ? "You haven't applied sunscreen." :
-                    sunscreen.status === 'protected' ? "Protection Active" :
-                      "Protection Expired"}
+                  {data.activeProtection ? "Protection Active" : "No Active Protection"}
                 </div>
                 <div className="text-slate-500 mt-0.5" style={{ fontSize: '0.72rem' }}>
-                  {sunscreen.status === 'unprotected' ? "Apply SPF before prolonged UV exposure." :
-                    sunscreen.status === 'protected' ? `Next reapplication at ${sunscreen.expiresAt?.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}` :
-                      "Please reapply sunscreen."}
+                  {data.activeProtection ? "Reapply sunscreen when timer runs out." : "Apply SPF before prolonged UV exposure."}
                 </div>
               </div>
               <div className="text-right flex-shrink-0">
@@ -242,12 +241,16 @@ export function Dashboard() {
           <div className="grid grid-cols-2 gap-3">
             <MiniMetric label="Peak UV Today" value={(data.peakUv || 0).toFixed(1)} bar={((data.peakUv || 0) / 12) * 100} barColor="#EF4444" />
             <MiniMetric label="UV Dose (SED)" value={(data.todayDose || 0).toFixed(1)} bar={Math.min(((data.todayDose || 0) / 30) * 100, 100)} barColor="#F97316" />
-            <MiniMetric label="Burn Time (Mock)" value="24 min" bar={35} barColor="#9333EA" />
+            <MiniMetric label="Burn Time" value={data.burnTimeRemaining !== null && data.burnTimeRemaining !== undefined ? `${data.burnTimeRemaining} min` : 'Safe'} bar={data.burnTimeRemaining ? Math.min((data.burnTimeRemaining / 120) * 100, 100) : 0} barColor="#9333EA" />
             <MiniMetric label="Active Alerts" value="3" bar={60} barColor="#EF4444" onClick={() => navigate('/alerts')} />
           </div>
 
           {/* Sunscreen Tracker */}
-          <SunscreenTracker onApplyClick={() => setIsModalOpen(true)} />
+          <SunscreenTracker 
+            onApplyClick={() => setIsModalOpen(true)} 
+            activeProtection={data.activeProtection}
+            protectionRemaining={data.protectionRemaining}
+          />
         </div>
       </div>
 
@@ -256,7 +259,7 @@ export function Dashboard() {
         <div className="flex items-center justify-between mb-5">
           <div>
             <h3 className="text-slate-700 font-semibold" style={{ fontSize: '0.85rem' }}>Today's UV Timeline</h3>
-            <p className="text-slate-400 mt-0.5" style={{ fontSize: '0.72rem' }}>Hourly readings (Temporary Mock)</p>
+            <p className="text-slate-400 mt-0.5" style={{ fontSize: '0.72rem' }}>Hourly readings</p>
           </div>
           <div className="flex items-center gap-3">
             {[
@@ -279,7 +282,7 @@ export function Dashboard() {
         </div>
 
         <ResponsiveContainer width="100%" height={170}>
-          <AreaChart data={hourlyData} margin={{ top: 5, right: 8, left: -24, bottom: 0 }}>
+          <AreaChart data={data.hourlyData || []} margin={{ top: 5, right: 8, left: -24, bottom: 0 }}>
             <defs>
               <linearGradient id="uvFill" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#3B82F6" stopOpacity={0.22} />

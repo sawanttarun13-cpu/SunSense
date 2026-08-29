@@ -21,7 +21,7 @@ class CalculationService {
      *   the session ended and the device reconnected — accumulating SED across
      *   this gap would produce an inaccurate dose estimate.
      *
-     * @param uvIndex           - Current UV Index reading from the ML8511 sensor (≥ 0).
+     * @param uvIndex           - Current UV Index reading from the S12SD sensor (≥ 0).
      * @param timeIntervalSeconds - Elapsed seconds between the previous and current reading.
      * @returns                 SED increment to be added to the session's running total.
      *

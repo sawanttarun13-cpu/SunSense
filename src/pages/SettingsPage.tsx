@@ -7,8 +7,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Bell, Sun, Smartphone, Shield, ChevronRight, Check, Sliders, Wifi, Volume2 } from 'lucide-react';
-import { SPF_OPTS } from '../constants/settings';
+import { ChevronRight, Check, Sliders, Volume2, Mail, Smartphone as SmartphoneIcon } from 'lucide-react';
 import { settingsService } from '../services/settings.service';
 import { LoadingState } from '../components/common/LoadingState';
 import { ErrorState } from '../components/common/ErrorState';
@@ -92,12 +91,11 @@ function NotifRow({
 
 // SettingsPage page shown to the user.
 export function SettingsPage() {
-  const [spf, setSpf] = useState(30);
   const [threshold, setThreshold] = useState(6);
   const [saved, setSaved] = useState(false);
   const [notifs, setNotifs] = useState({
-    extreme: true, high: true, spfReminder: true,
-    dailySummary: false, batteryLow: true, disconnect: true, sound: true,
+    emailNotifications: true,
+    pushNotifications: true,
   });
   const [about, setAbout] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -109,9 +107,11 @@ export function SettingsPage() {
       settingsService.getAbout()
     ])
       .then(([settingsData, aboutData]) => {
-        setSpf(settingsData.spfLevel);
-        setThreshold(settingsData.uvThreshold);
-        setNotifs(settingsData.notifications);
+        if (settingsData.alertThreshold != null) setThreshold(settingsData.alertThreshold);
+        setNotifs({
+          emailNotifications: settingsData.emailNotifications ?? true,
+          pushNotifications: settingsData.pushNotifications ?? true
+        });
         setAbout(aboutData);
         setLoading(false);
       })
@@ -121,8 +121,13 @@ export function SettingsPage() {
   const toggle = (key: keyof typeof notifs) => setNotifs(n => ({ ...n, [key]: !n[key] }));
 
   const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
+    settingsService.updateSettings({
+      alertThreshold: threshold,
+      ...notifs
+    }).then(() => {
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    }).catch(() => setError(true));
   };
 
   const thresholdZone = threshold <= 2 ? { color: '#16A34A', bg: '#F0FDF4' }
@@ -157,35 +162,6 @@ export function SettingsPage() {
       {/* UV Protection */}
       <Section title="UV Protection Thresholds" subtitle="Control when alerts are triggered">
         <div className="px-5 py-5 space-y-5">
-          {/* SPF selector */}
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <Sun size={14} style={{ color: '#EA580C' }} />
-              <span className="font-medium text-slate-700" style={{ fontSize: '0.82rem' }}>Preferred SPF Recommendation</span>
-            </div>
-            <div className="flex gap-2">
-              {SPF_OPTS.map(v => (
-                <button
-                  key={v}
-                  onClick={() => setSpf(v)}
-                  className="flex-1 py-2.5 rounded-xl font-semibold transition-all"
-                  style={{
-                    fontSize: '0.82rem',
-                    background: spf === v ? '#2563EB' : '#F8FAFF',
-                    color: spf === v ? '#fff' : '#94A3B8',
-                    border: `1.5px solid ${spf === v ? '#2563EB' : '#E2E8F0'}`,
-                    boxShadow: spf === v ? '0 2px 8px rgba(37,99,235,0.25)' : 'none',
-                  }}
-                >
-                  SPF {v}
-                </button>
-              ))}
-            </div>
-            <p className="text-slate-400 mt-2" style={{ fontSize: '0.72rem' }}>
-              Choose your preferred minimum SPF recommendation. The application will use this preference together with your current UV Index and skin type to provide personalized sunscreen recommendations.
-            </p>
-          </div>
-
           {/* UV Threshold slider */}
           <div>
             <div className="flex items-center justify-between mb-2">
@@ -243,23 +219,9 @@ export function SettingsPage() {
       </Section>
 
       {/* Notifications */}
-      <Section title="Notification Preferences" subtitle="Choose what alerts you receive">
-        <NotifRow icon={Sun} iconBg="#FAF5FF" iconColor="#9333EA" label="Extreme UV Events" sub="Alert when UV index exceeds 11" on={notifs.extreme} onChange={() => toggle('extreme')} />
-        <NotifRow icon={Shield} iconBg="#FFF7ED" iconColor="#EA580C" label="High UV Warnings" sub={`Alert when UV exceeds your threshold (UV ${threshold})`} on={notifs.high} onChange={() => toggle('high')} />
-        <NotifRow icon={Bell} iconBg="#FEF2F2" iconColor="#DC2626" label="SPF Reapplication" sub="Reminder every 2 hours during high UV" on={notifs.spfReminder} onChange={() => toggle('spfReminder')} />
-        <NotifRow icon={Sun} iconBg="#EFF6FF" iconColor="#2563EB" label="Daily UV Summary" sub="Evening report of today's UV data" on={notifs.dailySummary} onChange={() => toggle('dailySummary')} />
-        <NotifRow icon={Smartphone} iconBg="#F0FDF4" iconColor="#16A34A" label="Battery Low Alert" sub="When device battery drops below 20%" on={notifs.batteryLow} onChange={() => toggle('batteryLow')} />
-        <NotifRow icon={Wifi} iconBg="#FFFBEB" iconColor="#D97706" label="Disconnect Alert" sub="When device loses Wi-Fi connection" on={notifs.disconnect} onChange={() => toggle('disconnect')} />
-        <div className="flex items-center gap-3 px-5 py-4">
-          <div className="rounded-xl p-2.5 flex-shrink-0" style={{ background: '#F8FAFF' }}>
-            <Volume2 size={14} style={{ color: '#64748B' }} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-slate-700 font-medium" style={{ fontSize: '0.82rem' }}>Sound & Vibration</div>
-            <div className="text-slate-400 mt-0.5" style={{ fontSize: '0.7rem' }}>Play alert sounds on device</div>
-          </div>
-          <Toggle on={notifs.sound} onChange={() => toggle('sound')} />
-        </div>
+      <Section title="Notification Delivery" subtitle="Choose how you receive alerts">
+        <NotifRow icon={Mail} iconBg="#EFF6FF" iconColor="#2563EB" label="Email Notifications" sub="Receive critical alerts via email" on={notifs.emailNotifications} onChange={() => toggle('emailNotifications')} />
+        <NotifRow icon={SmartphoneIcon} iconBg="#F0FDF4" iconColor="#16A34A" label="Push Notifications" sub="Receive real-time alerts on your device" on={notifs.pushNotifications} onChange={() => toggle('pushNotifications')} />
       </Section>
 
       {/* About */}

@@ -93,7 +93,7 @@ export class ExposureLogicService {
         inserted++;
       } catch { continue; } // Duplicate reading — DB unique constraint thrown; skip silently
       
-      const lastSession = await this.exposureRepo.getLastSession(deviceId);
+      const lastSession = await this.exposureRepo.getLastSession(deviceId, recDate);
       
       if (!lastSession) {
         // Case a: No session exists yet — start one if this reading has UV activity

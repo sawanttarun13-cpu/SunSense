@@ -29,11 +29,11 @@
 | Phase 4C | Database Validation & Cleanup | ✅ COMPLETE |
 | Phase 5A | Firmware Foundation (Hardware-Independent) | ✅ COMPLETE |
 | Phase 5A | Backend Integration Gaps | ✅ COMPLETE |
-| **Phase 5B** | **PHYSICAL HARDWARE INTEGRATION** | 🔄 **CURRENT / READY TO START** |
-| Phase 6 | Frontend ↔ Backend Integration | ⏳ PENDING |
-| Phase 7 | Real-time Communication | ⏳ PENDING |
-| Phase 8 | Production Firmware ↔ Backend Synchronization | ⏳ PENDING |
-| Phase 9 | Backend Analytics | ⏳ PENDING |
+| Phase 5B | Physical Hardware Integration | ✅ COMPLETE (Battery Deferred) |
+| Phase 6A-6F | Frontend ↔ Backend API Integration | ✅ COMPLETE |
+| **Phase 7** | **Real-time Communication (WebSockets)** | 🔄 **CURRENT / READY TO START** |
+| Phase 8 | Production Firmware ↔ Backend Sync | ⏳ PENDING |
+| Phase 9 | Backend Analytics | ⏳ PENDING (Partially implemented in 6E) |
 | Phase 10 | Alerts | ⏳ PENDING |
 | Phase 11 | Full System Testing | ⏳ PENDING |
 | Phase 12 | Production Deployment | ⏳ PENDING |

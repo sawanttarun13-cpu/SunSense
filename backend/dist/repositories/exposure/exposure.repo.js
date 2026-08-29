@@ -42,9 +42,21 @@ class ExposureRepository {
      * @param deviceId - UUID of the device whose sessions to query.
      * @returns        The most recent ExposureSession, or null if none exists.
      */
-    async getLastSession(deviceId) {
+    /**
+     * Retrieves the most recently ended exposure session for a device
+     * that started BEFORE or exactly ON the provided reading timestamp.
+     *
+     * @param deviceId - UUID of the device whose sessions to query.
+     * @param recordedAt - Timestamp of the incoming reading (optional).
+     * @returns        The most recent valid ExposureSession, or null if none exists.
+     */
+    async getLastSession(deviceId, recordedAt) {
+        const whereClause = { deviceId };
+        if (recordedAt) {
+            whereClause.startTime = { lte: recordedAt };
+        }
         return prisma_1.prisma.exposureSession.findFirst({
-            where: { deviceId },
+            where: whereClause,
             orderBy: { endTime: 'desc' }
         });
     }

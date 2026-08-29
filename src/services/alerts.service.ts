@@ -1,14 +1,47 @@
-/**
- * ---------------------------------------------------------
- * File: alerts.service.ts
- * Purpose:
- * Frontend API service for alerts.service.
- * ---------------------------------------------------------
- */
+import apiClient, { normalizeError } from '../lib/apiClient';
 
-import { ALERT_DATA } from '../mockData/alerts';
+export interface AlertData {
+  id: string;
+  userId: string;
+  type: string;
+  severity: 'info' | 'warning' | 'critical' | 'extreme' | 'resolved';
+  title: string;
+  message: string;
+  uvValue?: number;
+  batteryValue?: number;
+  isRead: boolean;
+  createdAt: string;
+}
 
-// Handles API communication with the backend.
+export interface PaginatedAlerts {
+  data: AlertData[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrevious: boolean;
+  };
+}
+
 export const alertsService = {
-  getAlerts: () => Promise.resolve(ALERT_DATA),
+  getAlerts: async (page = 1, limit = 20, status = 'all'): Promise<PaginatedAlerts> => {
+    try {
+      const { data } = await apiClient.get('/alerts', {
+        params: { page, limit, status }
+      });
+      return data;
+    } catch (err) {
+      throw normalizeError(err);
+    }
+  },
+
+  markRead: async (id: string): Promise<void> => {
+    try {
+      await apiClient.patch(`/alerts/${id}/read`);
+    } catch (err) {
+      throw normalizeError(err);
+    }
+  }
 };

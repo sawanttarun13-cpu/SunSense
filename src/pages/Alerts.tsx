@@ -7,43 +7,72 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Bell, X } from 'lucide-react';
-import type { AlertSeverity, AlertItem } from '../types/alert';
-import { SEVERITY_STYLES, FILTER_TABS } from '../mockData/alerts';
-import { alertsService } from '../services/alerts.service';
+import { Bell, X, AlertTriangle, Zap, Shield, Info, CheckCircle } from 'lucide-react';
+import type { AlertSeverity } from '../types/alert';
+import { SEVERITY_STYLES, FILTER_TABS } from '../constants/alerts';
+import { alertsService, PaginatedAlerts } from '../services/alerts.service';
 import { LoadingState } from '../components/common/LoadingState';
 import { ErrorState } from '../components/common/ErrorState';
+
+const getAlertIcon = (severity: string) => {
+  switch (severity) {
+    case 'extreme': return Zap;
+    case 'critical': return AlertTriangle;
+    case 'warning': return Shield;
+    case 'resolved': return CheckCircle;
+    case 'info':
+    default: return Info;
+  }
+};
+
+const formatTime = (isoString: string) => {
+  const date = new Date(isoString);
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+};
 
 // Alerts page shown to the user.
 export function Alerts() {
   const [activeFilter, setActiveFilter] = useState<AlertSeverity | 'all'>('all');
-  const [dismissed, setDismissed] = useState<Set<number>>(new Set());
-  const [alerts, setAlerts] = useState<AlertItem[]>([]);
+  const [alertsData, setAlertsData] = useState<PaginatedAlerts | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
-  useEffect(() => {
-    alertsService.getAlerts()
+  const fetchAlerts = (status = 'all') => {
+    setLoading(true);
+    alertsService.getAlerts(1, 100, status)
       .then(data => {
-        setAlerts(data);
+        setAlertsData(data);
         setLoading(false);
       })
       .catch(() => setError(true));
-  }, []);
-
-  const visible = alerts.filter(a => !dismissed.has(a.id) && (activeFilter === 'all' || a.severity === activeFilter));
-
-  const counts: Record<AlertSeverity, number> = {
-    extreme: alerts.filter(a => a.severity === 'extreme').length,
-    critical: alerts.filter(a => a.severity === 'critical').length,
-    warning: alerts.filter(a => a.severity === 'warning').length,
-    info: alerts.filter(a => a.severity === 'info').length,
-    resolved: alerts.filter(a => a.severity === 'resolved').length,
   };
-  const activeCount = counts.extreme + counts.critical + counts.warning;
 
-  if (loading) return <LoadingState />;
-  if (error) return <ErrorState onRetry={() => window.location.reload()} />;
+  useEffect(() => {
+    fetchAlerts(activeFilter);
+  }, [activeFilter]);
+
+  const handleDismiss = async (id: string) => {
+    try {
+      await alertsService.markRead(id);
+      // Optimistically update UI by marking read
+      setAlertsData(prev => prev ? {
+        ...prev,
+        data: prev.data.map(a => a.id === id ? { ...a, isRead: true } : a)
+      } : null);
+    } catch (e) {
+      console.error('Failed to mark read', e);
+    }
+  };
+
+  if (loading && !alertsData) return <LoadingState />;
+  if (error) return <ErrorState onRetry={() => fetchAlerts(activeFilter)} />;
+
+  const alerts = alertsData?.data || [];
+  
+  // Just derive counts from visible if API filtering is applied, or if API doesn't return total breakdown
+  // Note: Since we fetch based on filter, we only have counts for the currently fetched alerts.
+  // To keep it simple, we just show the total we got from pagination.
+  const activeCount = alerts.filter(a => !a.isRead).length;
 
   return (
     <div className="p-5 md:p-6 max-w-4xl mx-auto">
@@ -55,29 +84,8 @@ export function Alerts() {
         </div>
         <div className="flex items-center gap-2 rounded-xl px-3 py-2" style={{ background: '#FEF2F2', border: '1px solid #FECACA' }}>
           <Bell size={14} style={{ color: '#EF4444' }} />
-          <span className="font-semibold" style={{ fontSize: '0.78rem', color: '#DC2626' }}>{activeCount} active alerts</span>
+          <span className="font-semibold" style={{ fontSize: '0.78rem', color: '#DC2626' }}>{activeCount} unread alerts</span>
         </div>
-      </div>
-
-      {/* Summary tiles */}
-      <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 mb-5">
-        {(Object.entries(counts) as [AlertSeverity, number][]).map(([sev, count]) => {
-          const s = SEVERITY_STYLES[sev];
-          return (
-            <button
-              key={sev}
-              onClick={() => setActiveFilter(activeFilter === sev ? 'all' : sev)}
-              className="rounded-2xl p-3 text-center transition-all shadow-sm"
-              style={{
-                background: activeFilter === sev ? s.iconBg : '#fff',
-                border: `1.5px solid ${activeFilter === sev ? s.dotColor : '#E8F0FE'}`,
-              }}
-            >
-              <div className="font-bold" style={{ fontSize: '1.4rem', color: s.iconColor }}>{count}</div>
-              <div className="font-medium" style={{ fontSize: '0.65rem', color: s.iconColor }}>{s.label}</div>
-            </button>
-          );
-        })}
       </div>
 
       {/* Filter tabs */}
@@ -95,29 +103,25 @@ export function Alerts() {
             }}
           >
             {label}
-            {key !== 'all' && (
-              <span className="ml-1.5 opacity-70">
-                ({counts[key as AlertSeverity]})
-              </span>
-            )}
           </button>
         ))}
       </div>
 
       {/* Timeline */}
       <div className="relative">
-        <div className="absolute left-6 top-2 bottom-2 w-px" style={{ background: 'linear-gradient(to bottom, #BFDBFE, #E2E8F0)' }} />
+        {alerts.length > 0 && <div className="absolute left-6 top-2 bottom-2 w-px" style={{ background: 'linear-gradient(to bottom, #BFDBFE, #E2E8F0)' }} />}
 
         <div className="space-y-3">
-          {visible.length === 0 ? (
+          {alerts.length === 0 ? (
             <div className="text-center py-12 text-slate-400 bg-white rounded-2xl" style={{ border: '1px solid #E8F0FE', fontSize: '0.85rem' }}>
-              No alerts match this filter
+              No alerts match this filter. You're all caught up!
             </div>
-          ) : visible.map((alert) => {
-            const s = SEVERITY_STYLES[alert.severity];
-            const Icon = alert.icon;
+          ) : alerts.map((alert) => {
+            const severityKey = alert.severity as AlertSeverity;
+            const s = SEVERITY_STYLES[severityKey] || SEVERITY_STYLES['info'];
+            const Icon = getAlertIcon(alert.severity);
             return (
-              <div key={alert.id} className="relative flex gap-4" style={{ paddingLeft: 48 }}>
+              <div key={alert.id} className={`relative flex gap-4 ${alert.isRead ? 'opacity-70' : ''}`} style={{ paddingLeft: 48 }}>
                 {/* Timeline dot */}
                 <div
                   className="absolute flex items-center justify-center rounded-full"
@@ -148,7 +152,7 @@ export function Alerts() {
                         >
                           {s.label}
                         </span>
-                        {alert.isNew && (
+                        {!alert.isRead && (
                           <span
                             className="rounded-full px-2 py-0.5 font-bold animate-pulse"
                             style={{ fontSize: '0.6rem', background: '#EF4444', color: '#fff' }}
@@ -159,27 +163,29 @@ export function Alerts() {
                       </div>
                       <p className="text-slate-500 leading-relaxed" style={{ fontSize: '0.78rem' }}>{alert.message}</p>
                       <div className="flex items-center gap-3 mt-2">
-                        <span className="text-slate-400" style={{ fontSize: '0.7rem' }}>{alert.time}</span>
-                        {alert.uvValue !== undefined && (
+                        <span className="text-slate-400" style={{ fontSize: '0.7rem' }}>{formatTime(alert.createdAt)}</span>
+                        {alert.uvValue !== undefined && alert.uvValue !== null && (
                           <span
                             className="rounded-full px-2 py-0.5 font-bold"
                             style={{ fontSize: '0.68rem', background: s.iconBg, color: s.iconColor }}
                           >
-                            UV {alert.uvValue}
+                            UV {alert.uvValue.toFixed(1)}
                           </span>
                         )}
                       </div>
                     </div>
-                    <button
-                      onClick={() => setDismissed(d => new Set([...d, alert.id]))}
-                      className="flex-shrink-0 rounded-lg p-1 transition-colors"
-                      style={{ color: '#94A3B8' }}
-                      onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,0,0,0.06)')}
-                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                      title="Dismiss"
-                    >
-                      <X size={14} />
-                    </button>
+                    {!alert.isRead && (
+                      <button
+                        onClick={() => handleDismiss(alert.id)}
+                        className="flex-shrink-0 rounded-lg p-1 transition-colors"
+                        style={{ color: '#94A3B8' }}
+                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,0,0,0.06)')}
+                        onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                        title="Mark Read"
+                      >
+                        <X size={14} />
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -187,15 +193,17 @@ export function Alerts() {
           })}
 
           {/* Timeline end */}
-          <div className="relative flex gap-4" style={{ paddingLeft: 48 }}>
-            <div
-              className="absolute flex items-center justify-center rounded-full"
-              style={{ left: 14, top: 12, width: 24, height: 24, background: '#E2E8F0', zIndex: 10 }}
-            >
-              <div className="w-2 h-2 rounded-full" style={{ background: '#94A3B8' }} />
+          {alerts.length > 0 && (
+            <div className="relative flex gap-4" style={{ paddingLeft: 48 }}>
+              <div
+                className="absolute flex items-center justify-center rounded-full"
+                style={{ left: 14, top: 12, width: 24, height: 24, background: '#E2E8F0', zIndex: 10 }}
+              >
+                <div className="w-2 h-2 rounded-full" style={{ background: '#94A3B8' }} />
+              </div>
+              <p className="py-3 text-slate-400" style={{ fontSize: '0.78rem' }}>Start of alert history</p>
             </div>
-            <p className="py-3 text-slate-400" style={{ fontSize: '0.78rem' }}>Start of alert history</p>
-          </div>
+          )}
         </div>
       </div>
     </div>

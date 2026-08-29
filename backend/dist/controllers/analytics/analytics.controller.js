@@ -17,7 +17,9 @@ class AnalyticsController {
     async get(req, res) {
         try {
             const timeframe = req.query.timeframe || 'daily';
-            const result = await analyticsService.getAnalytics(req.userId, timeframe);
+            // tzOffset is in minutes (e.g., new Date().getTimezoneOffset()). Default to 0 (UTC).
+            const tzOffset = req.query.tzOffset ? parseInt(req.query.tzOffset, 10) : 0;
+            const result = await analyticsService.getAnalytics(req.userId, timeframe, tzOffset);
             return (0, apiResponse_1.sendSuccess)(res, result);
         }
         catch (error) {

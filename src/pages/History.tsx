@@ -11,7 +11,7 @@ import { Download, ChevronLeft, ChevronRight, ArrowUpDown } from 'lucide-react';
 import {
   PAGE_SIZE,
   fmtDate, fmtTime, exportCSV,
-} from '../mockData/history';
+} from '../utils/history';
 import type { UVLogEntry } from '../types/history';
 import { getUVZone } from '../constants/uv';
 import { historyService } from '../services/history.service';
@@ -29,23 +29,41 @@ export function History() {
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
   useEffect(() => {
-    setLoading(true);
-    historyService.getLogs(page, PAGE_SIZE)
-      .then(res => {
+    let mounted = true;
+    
+    const fetchHistory = async (isBackground = false) => {
+      if (!isBackground) setLoading(true);
+      try {
+        const res = await historyService.getLogs(page, PAGE_SIZE);
+        if (!mounted) return;
+        
         let rows = [...res.data];
-        // Sort locally in case backend doesn't sort the way user requested
         rows.sort((a, b) => sortDir === 'desc'
           ? b.date.getTime() - a.date.getTime()
           : a.date.getTime() - b.date.getTime());
         
         setLogs(rows);
         setPaginationMeta(res.pagination);
-        setLoading(false);
-      })
-      .catch(() => {
-        setError(true);
-        setLoading(false);
-      });
+        if (!isBackground) setLoading(false);
+      } catch (err) {
+        if (!mounted) return;
+        if (!isBackground) {
+          setError(true);
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchHistory(false);
+    
+    const intervalId = setInterval(() => {
+      fetchHistory(true);
+    }, 30000);
+
+    return () => {
+      mounted = false;
+      clearInterval(intervalId);
+    };
   }, [page, sortDir]);
 
   const totalPages = paginationMeta?.totalPages || 1;

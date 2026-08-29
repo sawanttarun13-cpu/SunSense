@@ -5,7 +5,7 @@
  *
  * Purpose:
  * Defines the TypeScript type for a single stat card on the Dashboard.
- * Used by the DashboardStats component and the mockData/dashboard.ts file.
+ * Used by the DashboardStats component.
  * ─────────────────────────────────────────────────────────────────────────────
  */
 import type { ForwardRefExoticComponent, RefAttributes } from 'react';
@@ -52,11 +52,20 @@ export interface DashboardResponse {
   todayExposure?: number;
   todayDose?: number;
   peakUv?: number;
+  peakTime?: string | null;
   averageUv?: number;
   currentUv?: number;
+  lowUv?: number | null;
+  lowTime?: string | null;
   currentRisk?: string;
   currentSpfRecommendation?: number;
   activeProtection?: boolean;
   protectionRemaining?: number;
+  burnTimeRemaining?: number | null;
+  hourlyData?: Array<{
+    hour: string;
+    uv: number | null;
+    isCurrent: boolean;
+  }>;
   error?: string;
 }

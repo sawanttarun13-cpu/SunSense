@@ -7,35 +7,28 @@
  */
 
 import { Shield, Clock, Plus } from 'lucide-react';
-import { useSunscreen } from '../../hooks/useSunscreen';
 
 interface Props {
   onApplyClick: () => void;
+  activeProtection: boolean;
+  protectionRemaining: number;
 }
 
 // Reusable SunscreenTracker component.
-export function SunscreenTracker({ onApplyClick }: Props) {
-  const { status, appliedSPF, appliedAt, expiresAt, remainingMs } = useSunscreen();
-
-  const isProtected = status === 'protected';
-  const isExpired = status === 'expired';
-  const isUnprotected = status === 'unprotected';
-
-  // Format times
-  const fmtTime = (d: Date | null) => 
-    d ? d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : 'Not Applied';
+export function SunscreenTracker({ onApplyClick, activeProtection, protectionRemaining }: Props) {
+  const isProtected = activeProtection;
+  const isExpired = !activeProtection;
 
   // Format remaining time
-  const formatRemaining = (ms: number) => {
-    const totalMins = Math.floor(ms / 60000);
-    const h = Math.floor(totalMins / 60);
-    const m = totalMins % 60;
+  const formatRemaining = (mins: number) => {
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
     return `${h}h ${String(m).padStart(2, '0')}m remaining`;
   };
 
-  // Calculate progress (assuming 2h max)
-  const MAX_MS = 2 * 60 * 60 * 1000;
-  const progress = isProtected ? (remainingMs / MAX_MS) * 100 : 0;
+  // Calculate progress (assuming 2h max = 120 mins)
+  const MAX_MINS = 120;
+  const progress = isProtected ? (protectionRemaining / MAX_MINS) * 100 : 0;
 
   // Determine UI colors based on status
   let statusColor = '#94A3B8'; // default grey
@@ -53,7 +46,7 @@ export function SunscreenTracker({ onApplyClick }: Props) {
   } else if (isExpired) {
     statusColor = '#EF4444';
     statusBg = '#FEF2F2';
-    statusText = 'Protection Expired';
+    statusText = 'Protection Expired or None';
     statusIconColor = '#DC2626';
   }
 
@@ -82,34 +75,12 @@ export function SunscreenTracker({ onApplyClick }: Props) {
         Track your sunscreen application and protection status.
       </p>
 
-      {/* Grid Stats */}
-      <div className="grid grid-cols-2 gap-3 mb-5">
-        <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
-          <div className="flex items-center gap-1.5 mb-1 text-slate-500">
-            <Shield size={12} />
-            <span style={{ fontSize: '0.65rem', fontWeight: 600, textTransform: 'uppercase' }}>Applied SPF</span>
-          </div>
-          <div className="font-bold text-slate-800" style={{ fontSize: '1.1rem' }}>
-            {appliedSPF ? `SPF ${appliedSPF}` : '—'}
-          </div>
-        </div>
-        <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
-          <div className="flex items-center gap-1.5 mb-1 text-slate-500">
-            <Clock size={12} />
-            <span style={{ fontSize: '0.65rem', fontWeight: 600, textTransform: 'uppercase' }}>Last Applied</span>
-          </div>
-          <div className="font-bold text-slate-800" style={{ fontSize: '1.1rem' }}>
-            {fmtTime(appliedAt)}
-          </div>
-        </div>
-      </div>
-
       {/* Progress Bar Area */}
       <div className="mb-5">
         <div className="flex justify-between text-slate-600 mb-2 font-medium" style={{ fontSize: '0.75rem' }}>
           <span>Time Remaining</span>
           <span>
-            {isProtected ? formatRemaining(remainingMs) : (isExpired ? 'Expired' : 'Not Started')}
+            {isProtected ? formatRemaining(protectionRemaining) : 'Not Active'}
           </span>
         </div>
         <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
@@ -119,7 +90,7 @@ export function SunscreenTracker({ onApplyClick }: Props) {
           />
         </div>
         <div className="mt-2 text-slate-400 font-medium" style={{ fontSize: '0.7rem' }}>
-          Next Reapplication: {isProtected ? fmtTime(expiresAt) : 'Waiting for first application'}
+          {isProtected ? 'Reapply when timer runs out.' : 'Apply sunscreen for protection.'}
         </div>
       </div>
 

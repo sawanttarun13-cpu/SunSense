@@ -16,7 +16,8 @@ const dashboardService = new dashboard_service_1.DashboardService();
 class DashboardController {
     async get(req, res) {
         try {
-            const result = await dashboardService.getDashboard(req.userId);
+            const tzOffset = req.query.tzOffset ? parseInt(req.query.tzOffset, 10) : 0;
+            const result = await dashboardService.getDashboard(req.userId, tzOffset);
             return (0, apiResponse_1.sendSuccess)(res, result);
         }
         catch (error) {

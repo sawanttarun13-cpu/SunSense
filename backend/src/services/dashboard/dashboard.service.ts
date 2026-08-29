@@ -47,80 +47,120 @@ export class DashboardService {
   /**
    * Builds the complete dashboard metrics payload for the authenticated user.
    *
-   * If the user has no registered device, returns a minimal payload with
-   * `deviceConnected: false` so the frontend can show the pairing screen.
-   *
-   * Calculation Notes:
-   * - "Today" is defined as midnight UTC to now UTC (to avoid timezone
-   *   ambiguity in a globally-deployable system).
-   * - Peak UV is the maximum UV reading recorded today.
-   * - Average UV is the mean across all today's readings.
-   * - Current UV is the most recent reading (ordered desc).
-   * - Device is ONLINE if its lastPing is within the past 5 minutes (300,000ms).
-   * - Protection is ACTIVE if the latest sunscreen application has not expired.
-   *
-   * @param userId - UUID of the authenticated user.
-   * @returns      Complete dashboard payload or { deviceConnected: false } if no device.
+   * @param userId   - UUID of the authenticated user.
+   * @param tzOffset - Client's timezone offset in minutes.
+   * @returns        Complete dashboard payload or { deviceConnected: false } if no device.
    */
-  async getDashboard(userId: string) {
+  async getDashboard(userId: string, tzOffset: number = 0) {
     let device = await dashboardRepo.getDevice(userId);
     const user = await dashboardRepo.getUser(userId);
     
     // DEV MODE: If the current user has no device, fall back to the first
-    // available device in the system. This supports single-device testing
-    // where multiple user accounts share one physical ESP8266.
-    // TODO: Remove this fallback before production deployment.
+    // available device in the system.
     if (!device) {
       device = await dashboardRepo.getAnyDevice();
     }
 
     if (!device) {
-      // Truly no devices registered at all — show the pairing flow
       return { deviceConnected: false, error: 'No device found' };
     }
 
-    // Define "today" as the start of the current UTC day
-    const startOfDay = new Date();
-    startOfDay.setUTCHours(0, 0, 0, 0);
+    // Define "today" based on the user's local timezone
+    const now = new Date();
+    const localNow = new Date(now.getTime() - (tzOffset * 60000));
+    
+    // Get the start of the local day (midnight) in local time, then convert back to UTC
+    const localStartOfDay = new Date(Date.UTC(localNow.getUTCFullYear(), localNow.getUTCMonth(), localNow.getUTCDate()));
+    const startOfDay = new Date(localStartOfDay.getTime() + (tzOffset * 60000));
 
     const sessions = await dashboardRepo.getTodaySessions(device.id, startOfDay);
     const readings = await dashboardRepo.getTodayReadings(device.id, startOfDay);
     const sunscreen = await dashboardRepo.getLatestSunscreen(userId);
 
-    // Sum all today's sessions for total exposure time and UV dose
     const todayExposure = sessions.reduce((sum, s) => sum + s.durationSeconds, 0);
     const todayDose = sessions.reduce((sum, s) => sum + Number(s.accumulatedSed), 0);
 
-    // Compute peak and average UV from today's raw readings
+    // Compute metrics from today's raw readings
     let peakUv = 0;
+    let peakTime: string | null = null;
     let sumUv = 0;
+    let lowUv: number | null = null;
+    let lowTime: string | null = null;
+    
+    const hourlyAggregation: Record<string, number> = {};
+    const currentLocalHour = localNow.getUTCHours();
+
     for (const r of readings) {
       const val = Number(r.uvIndex);
-      if (val > peakUv) peakUv = val;
+      const timestamp = r.recordedAt;
+      
+      if (val > peakUv) {
+        peakUv = val;
+        peakTime = timestamp.toISOString();
+      }
+      
+      if (lowUv === null || val < lowUv) {
+        lowUv = val;
+        lowTime = timestamp.toISOString();
+      }
+      
       sumUv += val;
-    }
-    const averageUv = readings.length > 0 ? sumUv / readings.length : 0;
 
-    // Most recent reading (getTodayReadings returns ordered desc)
+      // Group into local hours for the chart
+      const localReadingTime = new Date(timestamp.getTime() - (tzOffset * 60000));
+      const hourStr = String(localReadingTime.getUTCHours());
+      
+      if (hourlyAggregation[hourStr] === undefined) {
+        hourlyAggregation[hourStr] = val;
+      } else {
+        if (val > hourlyAggregation[hourStr]) {
+          hourlyAggregation[hourStr] = val;
+        }
+      }
+    }
+    
+    // Build hourly data array (24 slots)
+    const hourlyData = [];
+    for (let i = 0; i < 24; i++) {
+      const hourStr = String(i);
+      const uvVal = hourlyAggregation[hourStr] !== undefined ? hourlyAggregation[hourStr] : null;
+      hourlyData.push({
+        hour: `${i.toString().padStart(2, '0')}:00`,
+        uv: uvVal,
+        isCurrent: i === currentLocalHour
+      });
+    }
+
+    const averageUv = readings.length > 0 ? sumUv / readings.length : 0;
     const currentUv = readings.length > 0 ? Number(readings[0].uvIndex) : 0;
 
-    // Run CalculationService formulas on the current UV reading
     const currentRisk = calcService.calculateRisk(currentUv);
-    const skinType = user?.skinType || 3; // Default to Type 3 if user profile is missing
+    const skinType = user?.skinType || 3;
     const currentSpfRecommendation = calcService.recommendSpf(currentUv, skinType);
 
-    // Determine if the device is online (last heartbeat within 5 minutes)
     const lastPing = device.lastPing;
     const isOnline = lastPing ? (new Date().getTime() - lastPing.getTime()) < 300000 : false;
 
-    // Determine sunscreen protection status
     let activeProtection = false;
     let protectionRemaining = 0;
+    let activeSpf = 0;
     if (sunscreen) {
       const remaining = sunscreenService.calculateRemainingMinutes(sunscreen.expiresAt);
       if (remaining > 0) {
         activeProtection = true;
         protectionRemaining = remaining;
+        activeSpf = sunscreen.appliedSpf;
+      }
+    }
+
+    // Calculate burn time
+    let burnTimeRemaining: number | null = null;
+    if (readings.length > 0) {
+      const unprotected = calcService.calculateUnprotectedBurnTime(currentUv, skinType);
+      if (activeProtection) {
+        burnTimeRemaining = calcService.calculateProtectedBurnTime(unprotected, activeSpf);
+      } else {
+        burnTimeRemaining = unprotected;
       }
     }
 
@@ -132,12 +172,17 @@ export class DashboardService {
       todayExposure,
       todayDose,
       peakUv,
+      peakTime,
       averageUv,
       currentUv,
+      lowUv,
+      lowTime,
       currentRisk,
       currentSpfRecommendation,
       activeProtection,
-      protectionRemaining
+      protectionRemaining,
+      burnTimeRemaining,
+      hourlyData
     };
   }
 }

@@ -37,7 +37,8 @@ export function useDashboardData() {
         setLoading(true);
       }
       setError(null);
-      const dashboardData = await dashboardService.getDashboard();
+      const tzOffset = new Date().getTimezoneOffset();
+      const dashboardData = await dashboardService.getDashboard(tzOffset);
       if (isMounted.current) {
         setData(dashboardData);
       }

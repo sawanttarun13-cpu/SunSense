@@ -11,6 +11,7 @@ import {
   ChevronLeft, ChevronRight, Sun, Wifi, Battery, Menu, X, LogOut,
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router';
+import { useAuth } from '../../context/AuthContext';
 import { navItems } from '../../constants/navigation';
 import { settingsService } from '../../services/settings.service';
 import { useDashboardData } from '../../hooks/useDashboardData';
@@ -40,7 +41,10 @@ function SidebarContent({
     settingsService.getAbout().then(setAboutData);
   }, []);
 
-  const handleLogout = () => {
+  const { logout } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
     navigate('/login');
   };
   return (

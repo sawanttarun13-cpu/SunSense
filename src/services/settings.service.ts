@@ -6,10 +6,31 @@
  * ---------------------------------------------------------
  */
 
-import { MOCK_SETTINGS, MOCK_ABOUT } from '../mockData/settings';
+import { ABOUT } from '../constants/settings';
+import apiClient, { normalizeError } from '../lib/apiClient';
 
-// Handles API communication with the backend.
+export interface SettingsData {
+  alertThreshold: number;
+  emailNotifications: boolean;
+  pushNotifications: boolean;
+}
+
 export const settingsService = {
-  getSettings: () => Promise.resolve(MOCK_SETTINGS),
-  getAbout: () => Promise.resolve(MOCK_ABOUT)
+  getSettings: async (): Promise<SettingsData> => {
+    try {
+      const res = await apiClient.get('/settings');
+      return res.data.data;
+    } catch (err) {
+      throw normalizeError(err);
+    }
+  },
+  updateSettings: async (data: Partial<SettingsData>): Promise<SettingsData> => {
+    try {
+      const res = await apiClient.put('/settings', data);
+      return res.data.data;
+    } catch (err) {
+      throw normalizeError(err);
+    }
+  },
+  getAbout: () => Promise.resolve(ABOUT)
 };

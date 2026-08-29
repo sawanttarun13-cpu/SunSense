@@ -11,13 +11,19 @@ import {
   Battery, Wifi, Cpu, Clock, Zap, Activity, RefreshCw,
   CheckCircle, AlertCircle, Smartphone, AlertTriangle, CheckCircle2,
 } from 'lucide-react';
-import { deviceService } from '../services/device.service';
-import type { DeviceInfo, BatteryInfo, WifiInfo, SystemInfo, SensorHealth } from '../types/device';
+import { deviceService, DeviceData } from '../services/device.service';
 import { LoadingState } from '../components/common/LoadingState';
 import { ErrorState } from '../components/common/ErrorState';
 
 // ─── Battery visual ───────────────────────────────────────────────────────────
-function BatteryVisual({ pct }: { pct: number }) {
+function BatteryVisual({ pct }: { pct: number | null }) {
+  if (pct === null) {
+    return (
+      <div className="flex items-center gap-3 mt-3">
+        <div className="font-bold text-slate-400" style={{ fontSize: '1.2rem' }}>Not Available</div>
+      </div>
+    );
+  }
   const color = pct > 50 ? '#22C55E' : pct > 20 ? '#EAB308' : '#EF4444';
   return (
     <div className="flex items-center gap-3 mt-3">
@@ -34,7 +40,7 @@ function BatteryVisual({ pct }: { pct: number }) {
       <div>
         <span className="font-bold" style={{ color, fontSize: '1.5rem' }}>{pct}%</span>
         <div className="text-slate-400" style={{ fontSize: '0.7rem' }}>
-          {pct > 50 ? '~' + Math.round(pct / 6) + 'h remaining' : pct > 20 ? 'Low — consider charging' : 'Critical!'}
+          {pct > 50 ? 'Healthy' : pct > 20 ? 'Low — consider charging' : 'Critical!'}
         </div>
       </div>
     </div>
@@ -42,8 +48,16 @@ function BatteryVisual({ pct }: { pct: number }) {
 }
 
 // ─── Wi-Fi bars ───────────────────────────────────────────────────────────────
-function WifiStrength({ bars }: { bars: 1 | 2 | 3 | 4 }) {
-  const labels = ['', 'Weak', 'Fair', 'Good', 'Excellent'];
+function WifiStrength({ ssid }: { ssid: string | null }) {
+  if (!ssid) {
+    return (
+      <div className="flex items-end gap-1 mt-3">
+        <div>
+          <span className="font-bold text-slate-800" style={{ fontSize: '1.3rem' }}>Offline</span>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="flex items-end gap-1 mt-3">
       <div className="flex items-end gap-0.5 mr-2">
@@ -53,14 +67,13 @@ function WifiStrength({ bars }: { bars: 1 | 2 | 3 | 4 }) {
             className="w-3 rounded-sm transition-all"
             style={{
               height: b * 6,
-              background: b <= bars ? '#3B82F6' : '#E2E8F0',
+              background: '#3B82F6',
             }}
           />
         ))}
       </div>
       <div>
-        <span className="font-bold text-slate-800" style={{ fontSize: '1.3rem' }}>{labels[bars]}</span>
-        <div className="text-slate-400" style={{ fontSize: '0.7rem' }}>-65 dBm · 2.4 GHz</div>
+        <span className="font-bold text-slate-800" style={{ fontSize: '1.3rem' }}>Connected</span>
       </div>
     </div>
   );
@@ -108,8 +121,9 @@ function ResourceBar({ label, pct, color }: { label: string; pct: number; color:
 // ─── Device page ──────────────────────────────────────────────────────────────
 // Device page shown to the user.
 export function Device() {
-  const [deviceData, setDeviceData] = useState<any>(null);
+  const [deviceData, setDeviceData] = useState<DeviceData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string>('');
   const [error, setError] = useState(false);
   const [syncing, setSyncing] = useState(false);
 
@@ -119,7 +133,11 @@ export function Device() {
         setDeviceData(data);
         setLoading(false);
       })
-      .catch(() => setError(true));
+      .catch((err) => {
+        setErrorMsg(err.message || 'Unknown error');
+        setError(true);
+        setLoading(false);
+      });
   }, []);
 
   const handleSync = async () => {
@@ -129,8 +147,26 @@ export function Device() {
   };
 
   if (loading) return <LoadingState />;
-  if (error) return <ErrorState onRetry={() => window.location.reload()} />;
-  if (!deviceData) return null;
+  if (error) return (
+    <div className="flex flex-col items-center justify-center min-h-[400px] w-full text-slate-500">
+      <AlertTriangle size={48} className="mb-4 text-red-400" />
+      <h2 className="text-xl font-semibold text-slate-700">Failed to load</h2>
+      <p className="mt-2 text-sm text-center max-w-sm mb-6 text-red-500">{errorMsg}</p>
+      <button onClick={() => window.location.reload()} className="px-4 py-2 bg-blue-500 text-white rounded">Try Again</button>
+    </div>
+  );
+  if (!deviceData) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] w-full text-slate-500">
+        <Smartphone size={48} className="mb-4 text-slate-300" />
+        <h2 className="text-xl font-semibold text-slate-700">No Device Paired</h2>
+        <p className="mt-2 text-sm text-center max-w-sm">
+          You haven't paired a SunSense device with your account yet. 
+          Please pair a device to view its status.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="p-5 md:p-6 max-w-5xl mx-auto">
@@ -138,7 +174,7 @@ export function Device() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-slate-800 font-semibold" style={{ fontSize: '1.2rem' }}>Device</h1>
-          <p className="text-slate-400 mt-0.5" style={{ fontSize: '0.8rem' }}>SunSense-101</p>
+          <p className="text-slate-400 mt-0.5" style={{ fontSize: '0.8rem' }}>SunSense S12SD</p>
         </div>
         <button
           onClick={handleSync}
@@ -168,8 +204,8 @@ export function Device() {
                 <Cpu size={22} />
               </div>
               <div>
-                <div className="font-bold" style={{ fontSize: '1.05rem' }}>{deviceData.info.model.split(' (')[0]}</div>
-                <div style={{ color: '#93C5FD', fontSize: '0.75rem' }}>Model {deviceData.info.model.match(/\(([^)]+)\)/)?.[1]} · S/N: {deviceData.info.serialNumber}</div>
+                <div className="font-bold" style={{ fontSize: '1.05rem' }}>{deviceData.name}</div>
+                <div style={{ color: '#93C5FD', fontSize: '0.75rem' }}>SunSense S12SD</div>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -177,15 +213,13 @@ export function Device() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-green-400" />
               </span>
-              <span style={{ color: '#4ADE80', fontSize: '0.8rem', fontWeight: 600 }}>Connected & Recording</span>
+              <span style={{ color: '#4ADE80', fontSize: '0.8rem', fontWeight: 600 }}>Connected</span>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-x-8 gap-y-2">
             {[
-              { label: 'Uptime', value: deviceData.info.uptime },
-              { label: 'Readings Today', value: deviceData.info.readingsToday },
-              { label: 'Accuracy', value: deviceData.info.accuracy },
-              { label: 'Range', value: deviceData.info.range },
+              { label: 'Accuracy', value: '±0.1 UVI' },
+              { label: 'Range', value: '0–15 UVI' },
             ].map(({ label, value }) => (
               <div key={label}>
                 <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.68rem' }}>{label}</div>
@@ -206,11 +240,7 @@ export function Device() {
             </div>
             <span className="font-semibold text-slate-600" style={{ fontSize: '0.8rem' }}>Battery Level</span>
           </div>
-          <BatteryVisual pct={deviceData.battery.level} />
-          <div className="mt-3 pt-3" style={{ borderTop: '1px solid #F1F5F9' }}>
-            <InfoRow label="Type" value={deviceData.battery.type} />
-            <InfoRow label="Charging" value={deviceData.battery.charging} />
-          </div>
+          <BatteryVisual pct={deviceData.batteryLevel} />
         </div>
 
         {/* Wi-Fi */}
@@ -219,13 +249,12 @@ export function Device() {
             <div className="rounded-xl p-2.5" style={{ background: '#EFF6FF' }}>
               <Wifi size={15} style={{ color: '#2563EB' }} />
             </div>
-            <span className="font-semibold text-slate-600" style={{ fontSize: '0.8rem' }}>Wi-Fi Signal</span>
+            <span className="font-semibold text-slate-600" style={{ fontSize: '0.8rem' }}>Wi-Fi Status</span>
           </div>
-          <WifiStrength bars={deviceData.wifi.bars} />
+          <WifiStrength ssid={deviceData.wifiSsid} />
           <div className="mt-3 pt-3" style={{ borderTop: '1px solid #F1F5F9' }}>
-            <InfoRow label="SSID" value={deviceData.wifi.ssid} />
-            <InfoRow label="IP Address" value={deviceData.wifi.ip} />
-            <InfoRow label="MAC Address" value={deviceData.wifi.mac} />
+            <InfoRow label="SSID" value={deviceData.wifiSsid || 'N/A'} />
+            <InfoRow label="IP Address" value={deviceData.ipAddress || 'N/A'} />
           </div>
         </div>
 
@@ -235,16 +264,15 @@ export function Device() {
             <div className="rounded-xl p-2.5" style={{ background: '#FFFBEB' }}>
               <Clock size={15} style={{ color: '#D97706' }} />
             </div>
-            <span className="font-semibold text-slate-600" style={{ fontSize: '0.8rem' }}>Last Sync</span>
+            <span className="font-semibold text-slate-600" style={{ fontSize: '0.8rem' }}>Last Ping</span>
           </div>
           <div className="mt-3">
-            <div className="font-bold text-slate-800" style={{ fontSize: '1.3rem' }}>2 min ago</div>
-            <div className="text-slate-400" style={{ fontSize: '0.72rem' }}>Jul 13, 2026 · 3:48 PM</div>
-          </div>
-          <div className="mt-3 pt-3" style={{ borderTop: '1px solid #F1F5F9' }}>
-            <InfoRow label="Sync interval" value="Every 60 sec" />
-            <InfoRow label="Data transferred" value="2.4 KB" />
-            <InfoRow label="Readings synced" value="1,440 today" />
+            <div className="font-bold text-slate-800" style={{ fontSize: '1.3rem' }}>
+              {deviceData.lastPing ? new Date(deviceData.lastPing).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Unknown'}
+            </div>
+            <div className="text-slate-400" style={{ fontSize: '0.72rem' }}>
+              {deviceData.lastPing ? new Date(deviceData.lastPing).toLocaleDateString() : 'No recent sync'}
+            </div>
           </div>
         </div>
       </div>
@@ -261,10 +289,10 @@ export function Device() {
             <span className="font-semibold text-slate-600" style={{ fontSize: '0.8rem' }}>Sensor Health</span>
             <span className="ml-auto rounded-full px-2.5 py-1 font-semibold" style={{ background: '#DCFCE7', color: '#16A34A', fontSize: '0.68rem' }}>Excellent</span>
           </div>
-          <SensorRow name="UV Sensor (S12SD)" ok={deviceData.sensors.s12sd.ok} value={deviceData.sensors.s12sd.val} />
+          <SensorRow name="UV Sensor (S12SD)" ok={true} value="Operational" />
           <div className="flex items-center justify-between pt-2.5 mt-2" style={{ borderTop: '1px solid #F1F5F9', fontSize: '0.78rem' }}>
             <span className="text-slate-400">Firmware</span>
-            <span className="text-slate-700 font-medium">{deviceData.system.firmware}</span>
+            <span className="text-slate-700 font-medium">{deviceData.firmwareVersion || 'Unknown'}</span>
           </div>
         </div>
       </div>

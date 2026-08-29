@@ -32,10 +32,10 @@ exports.HeartbeatSchema = void 0;
 const zod_1 = require("zod");
 /** Zod schema for POST /api/v1/device/heartbeat request body. */
 exports.HeartbeatSchema = zod_1.z.object({
-    batteryPercentage: zod_1.z.number().int().min(0).max(100),
+    batteryPercentage: zod_1.z.number().int().min(-1).max(100),
     chargingState: zod_1.z.boolean(),
     wifiRssi: zod_1.z.number().int().min(-150).max(0),
     firmwareVersion: zod_1.z.string().min(1).max(50),
     deviceUptimeSeconds: zod_1.z.number().int().min(0),
-    sensorHealth: zod_1.z.enum(['OK', 'ERROR']),
+    sensorHealth: zod_1.z.enum(['OK', 'ERROR', 'SATURATED']),
 });
