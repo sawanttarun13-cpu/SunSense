@@ -7,7 +7,7 @@
  */
 
 export interface UVLogEntry {
-  id: number;
+  id: string | number;
   date: Date;
   uv: number;
 }

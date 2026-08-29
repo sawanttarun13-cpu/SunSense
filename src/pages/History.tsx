@@ -6,10 +6,10 @@
  * ---------------------------------------------------------
  */
 
-import { useState, useMemo, useEffect } from 'react';
-import { Search, Download, SlidersHorizontal, ChevronLeft, ChevronRight, MapPin, ArrowUpDown } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Download, ChevronLeft, ChevronRight, ArrowUpDown } from 'lucide-react';
 import {
-  PAGE_SIZE, LEVEL_OPTS,
+  PAGE_SIZE,
   fmtDate, fmtTime, exportCSV,
 } from '../mockData/history';
 import type { UVLogEntry } from '../types/history';
@@ -24,46 +24,38 @@ export function History() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
-  useEffect(() => {
-    historyService.getLogs()
-      .then(data => {
-        setLogs(data);
-        setLoading(false);
-      })
-      .catch(() => setError(true));
-  }, []);
-
-  const [search, setSearch] = useState('');
-  const [level, setLevel] = useState('All');
   const [page, setPage] = useState(1);
+  const [paginationMeta, setPaginationMeta] = useState<any>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
-  const filtered = useMemo(() => {
-    let rows = logs.filter(r => {
-      const z = getUVZone(r.uv);
-      const matchLevel = level === 'All' || z.label === level;
-      const q = search.toLowerCase();
-      const matchSearch = !q || fmtDate(r.date).toLowerCase().includes(q) ||
-        fmtTime(r.date).toLowerCase().includes(q) || r.uv.toString().includes(q);
-      return matchLevel && matchSearch;
-    });
-    rows = [...rows].sort((a, b) => sortDir === 'desc'
-      ? b.date.getTime() - a.date.getTime()
-      : a.date.getTime() - b.date.getTime());
-    return rows;
-  }, [search, level, sortDir, logs]);
+  useEffect(() => {
+    setLoading(true);
+    historyService.getLogs(page, PAGE_SIZE)
+      .then(res => {
+        let rows = [...res.data];
+        // Sort locally in case backend doesn't sort the way user requested
+        rows.sort((a, b) => sortDir === 'desc'
+          ? b.date.getTime() - a.date.getTime()
+          : a.date.getTime() - b.date.getTime());
+        
+        setLogs(rows);
+        setPaginationMeta(res.pagination);
+        setLoading(false);
+      })
+      .catch(() => {
+        setError(true);
+        setLoading(false);
+      });
+  }, [page, sortDir]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const totalPages = paginationMeta?.totalPages || 1;
+  const totalEntries = paginationMeta?.total || 0;
 
-  const handleFilter = (v: string) => { setLevel(v); setPage(1); };
-  const handleSearch = (v: string) => { setSearch(v); setPage(1); };
-
-  // Summary counts
+  // Summary counts for current page (no global aggregates on backend yet)
   const highCount = logs.filter(r => r.uv > 6).length;
   const avgUV = logs.length > 0 ? (logs.reduce((s, r) => s + r.uv, 0) / logs.length).toFixed(1) : '0.0';
 
-  if (loading) return <LoadingState />;
+  if (loading && logs.length === 0) return <LoadingState />;
   if (error) return <ErrorState onRetry={() => window.location.reload()} />;
 
   return (
@@ -72,10 +64,10 @@ export function History() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-slate-800 font-semibold" style={{ fontSize: '1.2rem' }}>History</h1>
-          <p className="text-slate-400 mt-0.5" style={{ fontSize: '0.8rem' }}>{logs.length} UV log entries recorded</p>
+          <p className="text-slate-400 mt-0.5" style={{ fontSize: '0.8rem' }}>{totalEntries} UV log entries recorded</p>
         </div>
         <button
-          onClick={() => exportCSV(filtered)}
+          onClick={() => exportCSV(logs)}
           className="flex items-center gap-2 rounded-xl px-4 py-2 text-white shadow-sm transition-colors"
           style={{ background: '#2563EB', fontSize: '0.8rem', fontWeight: 500 }}
           onMouseEnter={e => (e.currentTarget.style.background = '#1D4ED8')}
@@ -89,9 +81,9 @@ export function History() {
       {/* Summary cards */}
       <div className="grid grid-cols-2 xl:grid-cols-3 gap-3 mb-5">
         {[
-          { label: 'Total Logs', value: logs.length, color: '#2563EB' },
-          { label: 'High UV Events', value: highCount, color: '#EF4444' },
-          { label: 'Average UV', value: avgUV, color: '#F97316' },
+          { label: 'Total Logs', value: totalEntries, color: '#2563EB' },
+          { label: 'Page High UV Events', value: highCount, color: '#EF4444' },
+          { label: 'Page Average UV', value: avgUV, color: '#F97316' },
         ].map(({ label, value, color }) => (
           <div key={label} className="bg-white rounded-2xl p-4 shadow-sm" style={{ border: '1px solid #E8F0FE' }}>
             <div className="text-slate-400 mb-1" style={{ fontSize: '0.7rem', textTransform: 'uppercase', fontWeight: 500, letterSpacing: '0.04em' }}>{label}</div>
@@ -100,49 +92,14 @@ export function History() {
         ))}
       </div>
 
-      {/* Filters */}
+      {/* Note on filters */}
       <div className="bg-white rounded-2xl p-4 shadow-sm mb-4" style={{ border: '1px solid #E8F0FE' }}>
         <div className="flex flex-col sm:flex-row gap-3">
-          {/* Search */}
-          <div className="relative flex-1">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              value={search}
-              onChange={e => handleSearch(e.target.value)}
-              placeholder="Search by date, time or UV Index..."
-              className="w-full pl-9 pr-4 py-2.5 rounded-xl outline-none transition-all"
-              style={{
-                background: '#F8FAFF', border: '1.5px solid #E2E8F0', fontSize: '0.8rem', color: '#1E293B',
-              }}
-              onFocus={e => (e.currentTarget.style.border = '1.5px solid #3B82F6')}
-              onBlur={e => (e.currentTarget.style.border = '1.5px solid #E2E8F0')}
-            />
+          <div className="text-slate-400" style={{ fontSize: '0.8rem' }}>
+            Search and Filtering are disabled while we transition to server-side paginated queries.
+            <br/>
+            Showing page <strong className="text-slate-600">{page}</strong> of <strong className="text-slate-600">{totalPages}</strong>.
           </div>
-          {/* Level filter */}
-          <div className="relative">
-            <SlidersHorizontal size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <select
-              value={level}
-              onChange={e => handleFilter(e.target.value)}
-              className="pl-8 pr-8 py-2.5 rounded-xl appearance-none cursor-pointer outline-none"
-              style={{ background: '#F8FAFF', border: '1.5px solid #E2E8F0', fontSize: '0.8rem', color: '#1E293B' }}
-            >
-              {LEVEL_OPTS.map(o => <option key={o}>{o}</option>)}
-            </select>
-          </div>
-          {(search || level !== 'All') && (
-            <button
-              onClick={() => { setSearch(''); setLevel('All'); setPage(1); }}
-              className="px-4 py-2.5 rounded-xl transition-colors"
-              style={{ border: '1.5px solid #E2E8F0', fontSize: '0.8rem', color: '#64748B', background: '#fff' }}
-            >
-              Clear
-            </button>
-          )}
-        </div>
-        <div className="mt-2 text-slate-400" style={{ fontSize: '0.7rem' }}>
-          Showing <strong className="text-slate-600">{filtered.length}</strong> results
-          {level !== 'All' && <> · Level: <strong className="text-slate-600">{level}</strong></>}
         </div>
       </div>
 
@@ -152,7 +109,7 @@ export function History() {
           <table className="w-full">
             <thead>
               <tr style={{ borderBottom: '1px solid #F1F5F9', background: '#FAFBFF' }}>
-                {['Date', 'Time', 'UV Index', 'Level'].map((col, ci) => (
+                {['Date', 'Time', 'UV Index', 'Level'].map((col) => (
                   <th
                     key={col}
                     className="text-left px-4 py-3"
@@ -170,14 +127,19 @@ export function History() {
                 ))}
               </tr>
             </thead>
-            <tbody>
-              {paginated.length === 0 ? (
+            <tbody className="relative">
+              {loading && logs.length > 0 && (
+                <tr className="absolute inset-0 bg-white/50 z-10 flex items-center justify-center">
+                  <td>Loading...</td>
+                </tr>
+              )}
+              {logs.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-12 text-slate-400" style={{ fontSize: '0.85rem' }}>
+                  <td colSpan={4} className="text-center py-12 text-slate-400" style={{ fontSize: '0.85rem' }}>
                     No results found
                   </td>
                 </tr>
-              ) : paginated.map((log, i) => {
+              ) : logs.map((log, i) => {
                 const z = getUVZone(log.uv);
                 return (
                   <tr
@@ -216,7 +178,7 @@ export function History() {
         {/* Pagination */}
         <div className="flex items-center justify-between px-5 py-3.5" style={{ borderTop: '1px solid #F1F5F9' }}>
           <span className="text-slate-400" style={{ fontSize: '0.75rem' }}>
-            Page {page} of {totalPages} · {filtered.length} entries
+            Page {page} of {totalPages} · {totalEntries} total entries
           </span>
           <div className="flex items-center gap-1.5">
             <button

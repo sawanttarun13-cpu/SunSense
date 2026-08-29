@@ -12,9 +12,9 @@ import {
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router';
 import { navItems } from '../../constants/navigation';
-import { deviceService } from '../../services/device.service';
 import { settingsService } from '../../services/settings.service';
-import { useUVData } from '../../hooks/useUVData';
+import { useDashboardData } from '../../hooks/useDashboardData';
+import { getUVZone } from '../../constants/uv';
 
 interface SidebarProps {
   collapsed: boolean;
@@ -29,18 +29,15 @@ function SidebarContent({
   const location = useLocation();
   const navigate = useNavigate();
   
-  const [deviceData, setDeviceData] = useState<any>(null);
   const [aboutData, setAboutData] = useState<any>(null);
-  const { uvValue, zone } = useUVData();
+  
+  // Use real backend data for the sidebar pill
+  const { data: dashboardData } = useDashboardData();
+  const uvValue = dashboardData?.currentUv || 0;
+  const zone = getUVZone(uvValue);
 
   useEffect(() => {
-    Promise.all([
-      deviceService.getDeviceData(),
-      settingsService.getAbout()
-    ]).then(([d, a]) => {
-      setDeviceData(d);
-      setAboutData(a);
-    });
+    settingsService.getAbout().then(setAboutData);
   }, []);
 
   const handleLogout = () => {
@@ -91,34 +88,38 @@ function SidebarContent({
       </div>
 
       {/* Live status pill */}
-      {!collapsed && deviceData && (
+      {!collapsed && dashboardData && (
         <div className="mx-3 mt-3 rounded-2xl p-3.5" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
           <div className="flex items-center justify-between mb-2.5">
             <div className="flex items-center gap-2">
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ background: '#4ADE80' }} />
-                <span className="relative inline-flex rounded-full h-2 w-2" style={{ background: '#22C55E' }} />
+                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${dashboardData.deviceStatus === 'ONLINE' ? 'bg-green-400' : 'bg-slate-400'}`} />
+                <span className={`relative inline-flex rounded-full h-2 w-2 ${dashboardData.deviceStatus === 'ONLINE' ? 'bg-green-500' : 'bg-slate-500'}`} />
               </span>
-              <span style={{ color: '#4ADE80', fontSize: '0.7rem', fontWeight: 600 }}>LIVE · Connected</span>
+              <span style={{ color: dashboardData.deviceStatus === 'ONLINE' ? '#4ADE80' : '#94A3B8', fontSize: '0.7rem', fontWeight: 600 }}>
+                {dashboardData.deviceStatus === 'ONLINE' ? 'LIVE · Connected' : 'OFFLINE'}
+              </span>
             </div>
             <div className="flex items-center gap-2">
-              <Wifi size={11} style={{ color: '#7EB3FF' }} />
-              <Battery size={13} style={{ color: '#7EB3FF' }} />
+              <Wifi size={11} style={{ color: dashboardData.deviceStatus === 'ONLINE' ? '#7EB3FF' : '#475569' }} />
+              <Battery size={13} style={{ color: dashboardData.batteryStatus !== null ? '#7EB3FF' : '#475569' }} />
             </div>
           </div>
           <div className="flex items-center justify-between">
             <div>
               <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.65rem' }}>Current UV</div>
-              <div style={{ color: '#FDA974', fontWeight: 700, fontSize: '0.9rem' }}>{uvValue.toFixed(1)} — {zone.label}</div>
+              <div style={{ color: zone.color, fontWeight: 700, fontSize: '0.9rem' }}>{uvValue.toFixed(1)} — {zone.label}</div>
             </div>
             <div className="text-right">
               <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.65rem' }}>Battery</div>
-              <div style={{ color: '#7EB3FF', fontWeight: 600, fontSize: '0.85rem' }}>{deviceData.battery.level}%</div>
+              <div style={{ color: '#7EB3FF', fontWeight: 600, fontSize: '0.85rem' }}>
+                {dashboardData.batteryStatus !== null ? `${dashboardData.batteryStatus}%` : '--'}
+              </div>
             </div>
           </div>
           {/* Battery bar */}
           <div className="mt-2.5 h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.1)' }}>
-            <div className="h-1 rounded-full" style={{ width: `${deviceData.battery.level}%`, background: 'linear-gradient(90deg, #3B82F6, #22C55E)' }} />
+            <div className="h-1 rounded-full" style={{ width: `${dashboardData.batteryStatus || 0}%`, background: 'linear-gradient(90deg, #3B82F6, #22C55E)' }} />
           </div>
         </div>
       )}
@@ -202,10 +203,12 @@ function SidebarContent({
             <LogOut size={15} />
             <span style={{ fontSize: '0.8rem', fontWeight: 500 }}>Log out</span>
           </button>
-          {deviceData && aboutData && (
+          {aboutData && (
             <div className="flex items-center justify-between">
               <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.65rem' }}>{aboutData.appVersion} · Firmware {aboutData.firmware}</span>
-              <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.65rem' }}>Sync {deviceData.system.lastUpdate}</span>
+              <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.65rem' }}>
+                {dashboardData?.lastSync ? `Sync ${new Date(dashboardData.lastSync).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}` : 'No sync'}
+              </span>
             </div>
           )}
         </div>

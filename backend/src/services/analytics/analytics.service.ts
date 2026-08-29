@@ -54,10 +54,11 @@ export class AnalyticsService {
    *   dosePercentageChange = (doseDifference / previous.totalDose) × 100
    *
    * @param userId    - UUID of the authenticated user.
-   * @param timeframe - Grouping resolution: 'daily' | 'weekly' | 'monthly'.
+   * @param timeframe - Grouping resolution: 'hourly' | 'daily' | 'weekly' | 'monthly'.
+   * @param tzOffset  - Timezone offset in minutes (e.g. from new Date().getTimezoneOffset()). Defaults to 0 (UTC).
    * @returns         { timeframe, data: AnalyticsPeriod[], trend: TrendData | null }
    */
-  async getAnalytics(userId: string, timeframe: string) {
+  async getAnalytics(userId: string, timeframe: string, tzOffset: number = 0) {
     const sessions = await analyticsRepo.getSessions(userId);
 
     // Build a grouped map keyed by the period string
@@ -67,25 +68,33 @@ export class AnalyticsService {
       let key: string;
       const date = new Date(session.startTime);
 
-      if (timeframe === 'daily') {
-        // Simple YYYY-MM-DD key
-        key = date.toISOString().split('T')[0];
+      if (timeframe === 'hourly') {
+        // Adjust UTC time by tzOffset to get the user's local time hour
+        // tzOffset is the difference, in minutes, from local time to UTC. 
+        // e.g., EST is UTC-5 (300 minutes). local = UTC - 300 mins
+        const localDate = new Date(date.getTime() - (tzOffset * 60000));
+        // Group by hour of day (0-23)
+        key = String(localDate.getUTCHours());
+
+      } else if (timeframe === 'daily') {
+        // Simple YYYY-MM-DD key (Adjusted for local timezone for correct day boundaries)
+        const localDate = new Date(date.getTime() - (tzOffset * 60000));
+        key = localDate.toISOString().split('T')[0];
 
       } else if (timeframe === 'weekly') {
-        // ISO 8601 week number calculation:
-        // 1. Find the nearest Thursday to the date (ISO weeks are Thursday-anchored)
-        // 2. Get the UTC year-start for that Thursday's year
-        // 3. Calculate which week number the Thursday falls in
-        const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+        // ISO 8601 week number calculation (Adjusted for local timezone)
+        const localDate = new Date(date.getTime() - (tzOffset * 60000));
+        const d = new Date(Date.UTC(localDate.getUTCFullYear(), localDate.getUTCMonth(), localDate.getUTCDate()));
         const dayNum = d.getUTCDay() || 7; // Convert Sunday (0) to 7 for ISO compliance
         d.setUTCDate(d.getUTCDate() + 4 - dayNum); // Move to Thursday
         const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
         const weekNo = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1)/7);
-        key = `${d.getUTCFullYear()}-W${weekNo}`;
+        key = `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
 
       } else {
-        // Monthly: YYYY-MM
-        key = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
+        // Monthly: YYYY-MM (Adjusted for local timezone)
+        const localDate = new Date(date.getTime() - (tzOffset * 60000));
+        key = `${localDate.getUTCFullYear()}-${String(localDate.getUTCMonth() + 1).padStart(2, '0')}`;
       }
 
       if (!grouped[key]) {
@@ -103,14 +112,29 @@ export class AnalyticsService {
       grouped[key].count += 1;
     });
 
+    // For hourly, we want all 24 hours to exist even if there's no data
+    if (timeframe === 'hourly') {
+      for (let i = 0; i < 24; i++) {
+        const key = String(i);
+        if (!grouped[key]) {
+          grouped[key] = { totalTime: 0, totalDose: 0, maxUv: 0, sumAvgUv: 0, count: 0 };
+        }
+      }
+    }
+
     // Sort periods chronologically and compute the averageUv for each
-    const data = Object.keys(grouped).sort().map(key => ({
-      period: key,
-      totalTime: grouped[key].totalTime,
-      totalDose: grouped[key].totalDose,
-      maxUv: grouped[key].maxUv,
-      averageUv: grouped[key].sumAvgUv / grouped[key].count
-    }));
+    const data = Object.keys(grouped)
+      .sort((a, b) => {
+        if (timeframe === 'hourly') return parseInt(a, 10) - parseInt(b, 10);
+        return a.localeCompare(b);
+      })
+      .map(key => ({
+        period: key,
+        totalTime: grouped[key].totalTime,
+        totalDose: grouped[key].totalDose,
+        maxUv: grouped[key].maxUv,
+        averageUv: grouped[key].count > 0 ? grouped[key].sumAvgUv / grouped[key].count : 0
+      }));
 
     // Compare the two most recent periods to show a trend arrow on the frontend
     let trend = null;

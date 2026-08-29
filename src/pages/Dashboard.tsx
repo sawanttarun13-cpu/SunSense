@@ -21,10 +21,12 @@ import { useSunscreen } from '../hooks/useSunscreen';
 import { ChartTooltip } from '../components/charts/ChartTooltip';
 import { SunscreenTracker } from '../components/dashboard/SunscreenTracker';
 import { ApplySunscreenModal } from '../components/dashboard/ApplySunscreenModal';
-import { dashboardService } from '../services/dashboard.service';
+import { useDashboardData } from '../hooks/useDashboardData';
 import type { DashboardStat } from '../types/dashboard';
 import { LoadingState } from '../components/common/LoadingState';
 import { ErrorState } from '../components/common/ErrorState';
+import { Battery, Wifi, Clock, Shield, PlusCircle } from 'lucide-react';
+import { getUVZone } from '../constants/uv';
 
 import { useNavigate } from 'react-router';
 
@@ -32,26 +34,88 @@ import { useNavigate } from 'react-router';
 // Dashboard page shown to the user.
 export function Dashboard() {
   const navigate = useNavigate();
-  const { uvValue, hourlyData, zone, peakUV, lowUV, peakTime } = useUVData();
+  // Keep useUVData temporarily to supply the mock hourly chart data, 
+  // lowUV, peakTime, and burnTime left, as the backend does not yet provide these.
+  const { hourlyData, lowUV, peakTime } = useUVData(); 
+  const { data, loading, error, refetch } = useDashboardData();
   const sunscreen = useSunscreen();
   const now = new Date();
 
-  const [stats, setStats] = useState<DashboardStat[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  useEffect(() => {
-    dashboardService.getStats()
-      .then(statsData => {
-        setStats(statsData);
-        setLoading(false);
-      })
-      .catch(() => setError(true));
-  }, []);
-
   if (loading) return <LoadingState />;
-  if (error) return <ErrorState onRetry={() => window.location.reload()} />;
+  if (error || !data) return <ErrorState onRetry={refetch} />;
+
+  // Empty state: User has not registered a device
+  if (!data.deviceConnected) {
+    return (
+      <div className="p-5 md:p-6 max-w-7xl mx-auto h-[80vh] flex flex-col items-center justify-center text-center">
+        <div className="bg-blue-50 text-blue-500 rounded-full p-6 mb-4">
+          <Wifi size={48} />
+        </div>
+        <h2 className="text-2xl font-bold text-slate-800 mb-2">No Device Connected</h2>
+        <p className="text-slate-500 max-w-md mx-auto mb-6">
+          You haven't paired a SunSense device yet. Pair your device to start tracking live UV exposure.
+        </p>
+        <button 
+          onClick={() => navigate('/device')}
+          className="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-medium shadow-sm hover:bg-blue-700 transition-colors flex items-center gap-2"
+        >
+          <PlusCircle size={18} />
+          Pair Device
+        </button>
+      </div>
+    );
+  }
+
+  // Format exposure time (seconds to Xh Ym)
+  const exposureHours = Math.floor((data.todayExposure || 0) / 3600);
+  const exposureMins = Math.floor(((data.todayExposure || 0) % 3600) / 60);
+  const formattedExposure = exposureHours > 0 ? `${exposureHours}h ${exposureMins}m` : `${exposureMins}m`;
+
+  // Construct dynamic stat cards from real API data
+  const stats: DashboardStat[] = [
+    { 
+      id: 'battery', 
+      icon: Battery, 
+      label: 'Battery', 
+      value: data.batteryStatus !== null && data.batteryStatus !== undefined ? `${data.batteryStatus}%` : 'Unknown', 
+      sub: data.batteryStatus !== null && data.batteryStatus !== undefined ? (data.batteryStatus > 20 ? 'Good condition' : 'Needs charge soon') : 'No reading yet', 
+      iconColor: '#2563EB', 
+      iconBg: '#EFF6FF' 
+    },
+    { 
+      id: 'status', 
+      icon: Wifi, 
+      label: 'Status', 
+      value: data.deviceStatus === 'ONLINE' ? 'Connected' : 'Offline', 
+      sub: data.lastSync ? `Last sync: ${new Date(data.lastSync).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}` : 'Never synced', 
+      iconColor: data.deviceStatus === 'ONLINE' ? '#22C55E' : '#94A3B8', 
+      iconBg: data.deviceStatus === 'ONLINE' ? '#F0FDF4' : '#F1F5F9' 
+    },
+    { 
+      id: 'exposure', 
+      icon: Clock, 
+      label: 'UV Exposure', 
+      value: formattedExposure, 
+      sub: 'Total time today', 
+      iconColor: '#F97316', 
+      iconBg: '#FFF7ED' 
+    },
+    { 
+      id: 'spf', 
+      icon: Shield, 
+      label: 'SPF Status', 
+      value: `SPF ${data.currentSpfRecommendation || 30}`, 
+      sub: 'Recommended now', 
+      iconColor: '#9333EA', 
+      iconBg: '#FAF5FF' 
+    }
+  ];
+
+  // Derive zone for current UV
+  const currentUvValue = data.currentUv || 0;
+  const zone = getUVZone(currentUvValue);
 
   return (
     <div className="p-5 md:p-6 max-w-7xl mx-auto">
@@ -120,15 +184,15 @@ export function Dashboard() {
           </div>
 
           <div className="flex justify-center my-4 relative z-10">
-            <UVGauge value={uvValue} />
+            <UVGauge value={currentUvValue} />
           </div>
 
           {/* Professional Metric Grid */}
           <div className="mt-8 grid grid-cols-3 gap-4 relative z-10">
             {[
-              { label: 'Low', val: lowUV.toFixed(1), color: '#22C55E', sub: 'Today\'s low' },
-              { label: 'Live', val: uvValue.toFixed(1), color: zone.color, sub: 'Current', active: true },
-              { label: 'Peak', val: peakUV.toFixed(1), color: '#EF4444', sub: peakTime },
+              { label: 'Low', val: lowUV.toFixed(1), color: '#22C55E', sub: 'Today\'s low (Mock)' },
+              { label: 'Live', val: currentUvValue.toFixed(1), color: zone.color, sub: 'Current', active: true },
+              { label: 'Peak', val: (data.peakUv || 0).toFixed(1), color: '#EF4444', sub: peakTime + ' (Mock Time)' },
             ].map(({ label, val, color, sub, active }) => (
               <div
                 key={label}
@@ -168,7 +232,7 @@ export function Dashboard() {
                 </div>
               </div>
               <div className="text-right flex-shrink-0">
-                <div className="font-bold" style={{ fontSize: '2rem', color: zone.text, lineHeight: 1 }}>{uvValue.toFixed(1)}</div>
+                <div className="font-bold" style={{ fontSize: '2rem', color: zone.text, lineHeight: 1 }}>{currentUvValue.toFixed(1)}</div>
                 <div className="text-slate-400" style={{ fontSize: '0.65rem' }}>UV now</div>
               </div>
             </div>
@@ -176,9 +240,9 @@ export function Dashboard() {
 
           {/* 4-box mini metrics */}
           <div className="grid grid-cols-2 gap-3">
-            <MiniMetric label="Peak UV Today" value={peakUV.toFixed(1)} bar={(peakUV / 12) * 100} barColor="#EF4444" />
-            <MiniMetric label="UV Dose (SED)" value="18.4" bar={70} barColor="#F97316" />
-            <MiniMetric label="Burn Time Left" value="24 min" bar={35} barColor="#9333EA" />
+            <MiniMetric label="Peak UV Today" value={(data.peakUv || 0).toFixed(1)} bar={((data.peakUv || 0) / 12) * 100} barColor="#EF4444" />
+            <MiniMetric label="UV Dose (SED)" value={(data.todayDose || 0).toFixed(1)} bar={Math.min(((data.todayDose || 0) / 30) * 100, 100)} barColor="#F97316" />
+            <MiniMetric label="Burn Time (Mock)" value="24 min" bar={35} barColor="#9333EA" />
             <MiniMetric label="Active Alerts" value="3" bar={60} barColor="#EF4444" onClick={() => navigate('/alerts')} />
           </div>
 
@@ -192,7 +256,7 @@ export function Dashboard() {
         <div className="flex items-center justify-between mb-5">
           <div>
             <h3 className="text-slate-700 font-semibold" style={{ fontSize: '0.85rem' }}>Today's UV Timeline</h3>
-            <p className="text-slate-400 mt-0.5" style={{ fontSize: '0.72rem' }}>Hourly readings — auto-refreshes every 4s</p>
+            <p className="text-slate-400 mt-0.5" style={{ fontSize: '0.72rem' }}>Hourly readings (Temporary Mock)</p>
           </div>
           <div className="flex items-center gap-3">
             {[

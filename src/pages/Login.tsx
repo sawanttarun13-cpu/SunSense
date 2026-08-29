@@ -19,6 +19,7 @@ function inputBorder(focused: string | null, field: string) {
 // Login page shown to the user.
 export function Login() {
   const { login } = useAuth();
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [show, setShow] = useState(false);
@@ -101,7 +102,7 @@ export function Login() {
       </div>
       <p className="text-center text-slate-400 mt-8" style={{ fontSize: '0.75rem' }}>
         {"Don't have an account? "}
-        <button onClick={() => navigate('/register')} className="text-blue-500 font-medium hover:underline">Create one</button>
+        <button type="button" onClick={() => navigate('/register')} className="text-blue-500 font-medium hover:underline">Create one</button>
       </p>
     </AuthLayout>
   );

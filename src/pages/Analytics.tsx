@@ -6,18 +6,22 @@
  * ---------------------------------------------------------
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   LineChart, Line, Cell, Legend, AreaChart, Area, ComposedChart,
 } from 'recharts';
 import { TrendingUp, TrendingDown, Sun, Clock, Calendar } from 'lucide-react';
 import { getUVZone } from '../constants/uv';
-import { heatFillColor } from '../mockData/analytics';
 import { analyticsService } from '../services/analytics.service';
 import { LoadingState } from '../components/common/LoadingState';
 import { ErrorState } from '../components/common/ErrorState';
 
+// Heatmap colors
+function heatFillColor(uv: number): string {
+  if (uv <= 0) return '#F1F5F9';
+  return getUVZone(uv).color;
+}
 
 // ─── Custom tooltip ───────────────────────────────────────────────────────────
 function BarTip({ active, payload, label }: any) {
@@ -37,16 +41,15 @@ function BarTip({ active, payload, label }: any) {
 }
 
 // ─── Stat box ─────────────────────────────────────────────────────────────────
-function StatBox({ label, value, sub, color, trend }: { label: string; value: string; sub: string; color: string; trend?: 'up' | 'down' }) {
+function StatBox({ label, value, sub, color, trend }: { label: string; value: string; sub: string; color: string; trend?: 'up' | 'down' | 'neutral' }) {
   return (
     <div className="bg-white rounded-2xl p-4 shadow-sm" style={{ border: '1px solid #E8F0FE' }}>
       <div className="text-slate-400 mb-1" style={{ fontSize: '0.7rem', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</div>
       <div className="flex items-end gap-2">
         <div className="font-bold" style={{ fontSize: '1.7rem', color, lineHeight: 1 }}>{value}</div>
-        {trend && (
+        {trend && trend !== 'neutral' && (
           <div className={`flex items-center gap-0.5 pb-0.5 text-xs font-semibold ${trend === 'up' ? 'text-red-500' : 'text-green-500'}`}>
             {trend === 'up' ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-            {trend === 'up' ? '+12%' : '-8%'}
           </div>
         )}
       </div>
@@ -64,6 +67,7 @@ export function Analytics() {
   const [monthly, setMonthly] = useState<any[]>([]);
   const [peakHours, setPeakHours] = useState<any[]>([]);
   const [heatmap, setHeatmap] = useState<any[]>([]);
+  const [trendData, setTrendData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
@@ -72,17 +76,51 @@ export function Analytics() {
       analyticsService.getWeeklyData(),
       analyticsService.getMonthlyData(),
       analyticsService.getPeakHoursData(),
-      analyticsService.getHeatmapData()
+      analyticsService.getHeatmapData(),
+      analyticsService.getTrendData()
     ])
-      .then(([w, m, p, h]) => {
+      .then(([w, m, p, h, t]) => {
         setWeekly(w);
         setMonthly(m);
         setPeakHours(p);
         setHeatmap(h);
+        setTrendData(t);
         setLoading(false);
       })
-      .catch(() => setError(true));
+      .catch(() => {
+        setError(true);
+        setLoading(false);
+      });
   }, []);
+
+  // Compute dynamic stats
+  const { weeklyAvgUV, weeklyMaxUV, highUVDays } = useMemo(() => {
+    if (!weekly.length) return { weeklyAvgUV: '0.0', weeklyMaxUV: '0.0', highUVDays: 0 };
+    let sum = 0;
+    let max = 0;
+    let highDays = 0;
+    weekly.forEach(w => {
+      sum += w.avg;
+      if (w.max > max) max = w.max;
+      if (w.max >= 6) highDays++;
+    });
+    return {
+      weeklyAvgUV: (sum / weekly.length).toFixed(1),
+      weeklyMaxUV: max.toFixed(1),
+      highUVDays: highDays
+    };
+  }, [weekly]);
+
+  // Heatmap stats
+  const { totalHeatmapDays, safeUVDays } = useMemo(() => {
+    if (!heatmap.length) return { totalHeatmapDays: 0, safeUVDays: 0 };
+    const daysWithData = heatmap.filter(h => h.uv > 0);
+    const safeDays = daysWithData.filter(h => h.uv < 6);
+    return {
+      totalHeatmapDays: daysWithData.length,
+      safeUVDays: safeDays.length
+    };
+  }, [heatmap]);
 
   if (loading) return <LoadingState />;
   if (error) return <ErrorState onRetry={() => window.location.reload()} />;
@@ -100,10 +138,16 @@ export function Analytics() {
 
       {/* Stats row */}
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 mb-5">
-        <StatBox label="Weekly Avg UV" value="5.8" sub="This week" color="#F97316" trend="up" />
-        <StatBox label="Weekly Max UV" value="11.4" sub="Sat 12:00 PM" color="#EF4444" trend="up" />
-        <StatBox label="Daily Avg Exposure" value="2h 40m" sub="This week" color="#3B82F6" />
-        <StatBox label="High UV Days" value="4 / 7" sub="This week" color="#9333EA" trend="down" />
+        <StatBox label="Weekly Avg UV" value={weeklyAvgUV} sub="Last 7 Days" color="#F97316" />
+        <StatBox label="Weekly Max UV" value={weeklyMaxUV} sub="Last 7 Days" color="#EF4444" />
+        <StatBox 
+          label="Dose Trend" 
+          value={trendData ? `${trendData.dosePercentageChange > 0 ? '+' : ''}${trendData.dosePercentageChange.toFixed(1)}%` : 'N/A'} 
+          sub="Week over Week" 
+          color="#3B82F6" 
+          trend={trendData ? (trendData.dosePercentageChange > 0 ? 'up' : 'down') : 'neutral'} 
+        />
+        <StatBox label="High UV Days" value={`${highUVDays} / ${weekly.length}`} sub="Last 7 Days" color="#9333EA" />
       </div>
 
       {/* UV Overview chart */}
@@ -246,10 +290,8 @@ export function Analytics() {
         </div>
         <div className="mt-4 pt-4 border-t border-slate-100 flex flex-wrap gap-5">
           {[
-            { icon: Sun, color: '#F97316', label: 'Peak recorded', value: '11.4 UV' },
-            { icon: Clock, color: '#3B82F6', label: 'Avg peak time', value: '12:30 PM' },
-            { icon: Calendar, color: '#9333EA', label: 'High UV days', value: '38 of 91' },
-            { icon: TrendingUp, color: '#22C55E', label: 'Safe UV days', value: '53 of 91' },
+            { icon: Calendar, color: '#9333EA', label: 'Active Days (Data)', value: `${totalHeatmapDays} of 91` },
+            { icon: TrendingUp, color: '#22C55E', label: 'Safe UV Days (< 6)', value: `${safeUVDays} of ${totalHeatmapDays}` },
           ].map(({ icon: Icon, color, label, value }) => (
             <div key={label} className="flex items-center gap-2">
               <Icon size={14} style={{ color }} />

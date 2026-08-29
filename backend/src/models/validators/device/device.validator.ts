@@ -36,5 +36,5 @@ export const HeartbeatSchema = z.object({
   wifiRssi:            z.number().int().min(-150).max(0),
   firmwareVersion:     z.string().min(1).max(50),
   deviceUptimeSeconds: z.number().int().min(0),
-  sensorHealth:        z.enum(['OK', 'ERROR']),
+  sensorHealth:        z.enum(['OK', 'ERROR', 'SATURATED']),
 });

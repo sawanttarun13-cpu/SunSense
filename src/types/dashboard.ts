@@ -39,3 +39,24 @@ export interface DashboardStat {
     val: string;
   };
 }
+
+/**
+ * Backend response structure for the Dashboard endpoint.
+ * (GET /api/v1/dashboard)
+ */
+export interface DashboardResponse {
+  deviceConnected: boolean;
+  deviceStatus?: 'ONLINE' | 'OFFLINE';
+  batteryStatus?: number | null;
+  lastSync?: string | Date;
+  todayExposure?: number;
+  todayDose?: number;
+  peakUv?: number;
+  averageUv?: number;
+  currentUv?: number;
+  currentRisk?: string;
+  currentSpfRecommendation?: number;
+  activeProtection?: boolean;
+  protectionRemaining?: number;
+  error?: string;
+}

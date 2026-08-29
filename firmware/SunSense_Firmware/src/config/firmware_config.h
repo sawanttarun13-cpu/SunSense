@@ -2,194 +2,288 @@
  * =============================================================================
  * File: firmware_config.h
  * Project: SunSense Firmware
- * Layer: Configuration
+ * Phase: 5B Hardware Calibration
  *
- * Purpose:
- * Central configuration header for the SunSense ESP8266 firmware.
- * All runtime-configurable values are defined here as constants or
- * preprocessor macros so they are easy to find and change.
+ * Hardware:
+ *   ESP8266 NodeMCU
+ *   CJMCU-GUVA-S12SD
+ *   1.3" I2C SH1106 OLED
+ *   TP4056 Li-Ion charger
  *
- * SECURITY NOTICE:
- * This file MUST NOT contain real Wi-Fi passwords, real Device IDs,
- * or real API keys. All secrets below are placeholder values only.
- * Real credentials are flashed onto the device during physical
- * deployment and are NEVER committed to the repository.
+ * SENSOR MODIFICATION:
+ *   GUVA-S12SD first-stage feedback resistor changed:
  *
- * How to configure before flashing:
- * 1. Copy this file.
- * 2. Replace PLACEHOLDER values with real credentials.
- * 3. Flash the firmware to the device.
- * 4. Do NOT commit the modified file.
+ *       OLD: 10 MΩ (106 / 01F)
+ *       NEW:  1 MΩ (01E)
+ *
+ *   The second amplifier stage remains enabled.
+ *
+ *   For this configuration, the approximate UVI conversion is:
+ *
+ *       UVI = Vout × (10 / 6.1)
+ *           ≈ Vout × 1.639
+ *
  * =============================================================================
  */
 
 #ifndef FIRMWARE_CONFIG_H
 #define FIRMWARE_CONFIG_H
 
-// -----------------------------------------------------------------------------
-// Firmware Version
-// Update this string whenever new firmware is compiled and flashed.
-// Sent in heartbeat payloads so the backend knows which firmware is running.
-// -----------------------------------------------------------------------------
-#define FIRMWARE_VERSION "1.0.0-phase5a"
 
-// -----------------------------------------------------------------------------
-// Backend API Configuration
-//
-// BASE_URL: The SunSense backend API base URL.
-//   - Development : "http://192.168.1.X:5000"  (local IP of dev machine)
-//   - Production  : "https://api.sunsense.io"  (not yet deployed)
-//
-// NOTE: The ESP8266 cannot resolve 'localhost' — use the machine's LAN IP
-// when connecting to a locally running backend during development.
-// -----------------------------------------------------------------------------
-#define BACKEND_BASE_URL     "http://10.111.164.104:5000"   // Automatically updated with local IP
+// =============================================================================
+// FIRMWARE
+// =============================================================================
+
+#define FIRMWARE_VERSION "1.0.0-phase5b-guva"
+
+
+// =============================================================================
+// BACKEND
+// =============================================================================
+
+#define BACKEND_BASE_URL     "http://10.111.164.104:5000"
+
 #define API_PREFIX           "/api/v1"
 
-// Assembled endpoint paths — constructed from BACKEND_BASE_URL + API_PREFIX
 #define ENDPOINT_READINGS    "/api/v1/readings"
-#define ENDPOINT_HEARTBEAT   "/api/v1/device/heartbeat"    // Backend implementation pending (Phase 5A gap)
-#define ENDPOINT_SERVER_TIME "/api/v1/server/time"         // Backend implementation pending (Phase 5A gap)
+#define ENDPOINT_HEARTBEAT   "/api/v1/device/heartbeat"
+#define ENDPOINT_SERVER_TIME "/api/v1/server/time"
 #define ENDPOINT_AUTH_CHECK  "/api/v1/device/authenticate"
 #define ENDPOINT_HEALTH      "/api/v1/health"
 
-// -----------------------------------------------------------------------------
-// Device Authentication Credentials
+
+// =============================================================================
+// DEVICE
+// =============================================================================
 //
-// These are obtained by calling POST /api/v1/device/register from the
-// SunSense React frontend after logging in with the user's account.
-// The returned Device ID and API Key must be pasted below before flashing.
-//
-// SECURITY:
-// - DEVICE_ID is a UUID (non-secret, identifies the device).
-// - DEVICE_API_KEY is a 64-char hex secret. DO NOT print to Serial.
-//   DO NOT commit the real value to Git.
-// -----------------------------------------------------------------------------
+// IMPORTANT:
+// Keep real credentials out of Git.
+// Put your actual values here only in the local copy that you flash.
+// =============================================================================
+
 #define DEVICE_ID       "cdea2948-f7c9-42ea-ab14-f050b4907849"
 #define DEVICE_API_KEY "cf917a342b54c44420eeb40181f056607a2b3dec7b2bc3d34c6a92b2e4f5652f"
+
+
+// =============================================================================
+// WIFI
+// =============================================================================
+
+#define WIFI_SSID     "OnePlus Nord CE 3 Lite 5G 1c15"
+#define WIFI_PASSWORD "244466666"
+
+#define WIFI_CONNECT_TIMEOUT_MS   15000
+#define WIFI_RECONNECT_DELAY_MS    5000
+#define WIFI_MAX_RETRIES              5
+
+
+// =============================================================================
+// TIMING
+// =============================================================================
+
+// Read UV every 10 seconds during hardware testing.
+// HARDWARE TEST MODE — final production interval TBD after validation.
+#define READING_INTERVAL_MS       10000UL
+
+// Send heartbeat every 2 minutes.
+#define HEARTBEAT_INTERVAL_MS    120000UL
+
+// Retry queued readings every 30 seconds.
+#define QUEUE_FLUSH_INTERVAL_MS   30000UL
+
+// Re-sync server time every hour.
+#define TIME_SYNC_INTERVAL_MS  3600000UL
+
+
+// =============================================================================
+// OFFLINE QUEUE
+// =============================================================================
+
+#define QUEUE_MAX_SIZE          200
+#define QUEUE_BATCH_SIZE         50
+
+
+// =============================================================================
+// GUVA-S12SD
+// =============================================================================
+
+#define GUVAS12SD_OUT_PIN A0
+
+
 // -----------------------------------------------------------------------------
-// Wi-Fi Configuration
+// ADC CONFIGURATION
+// -----------------------------------------------------------------------------
 //
-// SECURITY: DO NOT commit real credentials.
-// The firmware uses WPA2 personal (PSK) mode.
-// The Wi-Fi manager will attempt reconnection automatically.
-// -----------------------------------------------------------------------------
-#define WIFI_SSID     "OnePlus Nord CE 3 Lite 5G 1c15"       
-#define WIFI_PASSWORD "244466666"   
-// Wi-Fi connection parameters
-#define WIFI_CONNECT_TIMEOUT_MS  15000   // Maximum time to wait for initial connection (15 seconds)
-#define WIFI_RECONNECT_DELAY_MS   5000   // Delay between reconnection attempts (5 seconds)
-#define WIFI_MAX_RETRIES             5   // Maximum reconnection attempts before giving up for one cycle
-
-// -----------------------------------------------------------------------------
-// Timing Configuration
-// All values are in milliseconds unless otherwise stated.
-// -----------------------------------------------------------------------------
-
-// How often the S12SD sensor is read and a Reading is generated.
-#define READING_INTERVAL_MS       10000   // TEMPORARY: 10s for Phase 5B testing (restore to 60000 for production)
-
-// How often the device sends the heartbeat payload to the backend.
-// The heartbeat keeps the device ONLINE status alive on the dashboard.
-// Backend marks device OFFLINE if lastPing > 5 minutes old.
-#define HEARTBEAT_INTERVAL_MS    120000   // 2 minutes between heartbeats
-
-// How often the firmware checks for an offline queue to upload.
-// This triggers after Wi-Fi reconnects — not on a fixed schedule.
-#define QUEUE_FLUSH_INTERVAL_MS   30000   // 30 seconds after reconnection before flushing
-
-// How often the firmware syncs time with the backend server.
-// Server time is used for accurate timestamps on readings.
-#define TIME_SYNC_INTERVAL_MS  3600000   // Re-sync once per hour
-
-// -----------------------------------------------------------------------------
-// Offline Queue Configuration
-// The in-memory queue stores readings while the device is offline.
-// These are uploaded in chronological order upon Wi-Fi reconnection.
-// NOTE: SPIFFS/LittleFS persistent storage is hardware-pending.
-// -----------------------------------------------------------------------------
-#define QUEUE_MAX_SIZE          200   // Maximum readings stored in RAM when offline
-#define QUEUE_BATCH_SIZE         50   // Readings sent per HTTP POST to /api/v1/readings
-
-// -----------------------------------------------------------------------------
-// Hardware Pin Configuration (ESP8266 NodeMCU)
+// PROVISIONAL — validated against physical measurements:
 //
-// These pin assignments are FOR REFERENCE ONLY.
-// Physical wiring has NOT been validated in Phase 5A.
-// Pin assignments will be confirmed during hardware integration.
+//   ADC 0    -> 0.0 V
+//   ADC 1023 -> ~3.3 V
+//
+// Previous saturated reading confirmed:
+//
+//   ADC=1024, V=3.303 V
+//
+// The code clamps ADC values to 0..1023.
+//
 // -----------------------------------------------------------------------------
 
-// GUVA-S12SD UV Sensor
-// The GUVA-S12SD generally does not have an enable pin, it is always on.
-// SIG/OUT pin carries the analog voltage proportional to UV Index.
-#define GUVAS12SD_OUT_PIN       A0   // Analog: UV voltage output (0–3.3V)
+#define GUVAS12SD_ADC_RESOLUTION 1023.0f
+#define GUVAS12SD_ADC_REF_V       3.30f
+
+
+// =============================================================================
+// SENSOR FILTERING
+// =============================================================================
+
+// Number of analog samples averaged for each reading.
+#define GUVAS12SD_ADC_SAMPLES 64
+
+// Delay between ADC samples (ms).
+#define GUVAS12SD_SAMPLE_DELAY_MS 3
+
 
 // =============================================================================
 // GUVA-S12SD CALIBRATION
 // =============================================================================
 //
-// The GUVA-S12SD module provides an analog output.
-// Typical module documentation specifies approximately:
-//   0.0 V -> UVI 0
-//   0.1 V -> UVI 1
-//   0.5 V -> UVI 5
-//   1.0 V -> UVI 10
+// PROVISIONAL — subject to physical validation.
 //
-// IMPORTANT:
-// The ESP8266 NodeMCU A0 connector commonly uses an onboard divider,
-// so analogRead() represents the external A0 voltage over the board's
-// usable range.
+// Hardware configuration:
 //
-// These values are INITIAL calibration values.
-// Final calibration should be compared with a reference UV meter.
+//   1 MΩ feedback resistor
+//   + second amplifier stage gain ≈ 6.1
 //
-#define GUVAS12SD_VOLTS_PER_UVI   0.100f
-
-// Expected maximum sensor output.
-// The GUVA-S12SD itself is approximately 1.17 V maximum according
-// to its device characteristics.
-#define GUVAS12SD_MAX_OUTPUT_V    1.20f
-
-// NodeMCU A0 external input scaling.
-// This is for a typical NodeMCU development board with its onboard
-// A0 divider.
+// Therefore:
 //
-// If your specific board gives incorrect voltage readings, this value
-// must be calibrated experimentally.
-#define GUVAS12SD_ADC_REF_V       3.30f
-#define GUVAS12SD_ADC_RESOLUTION  1023.0f
+//   UVI ≈ VOUT × (10 / 6.1)
+//   UVI ≈ VOUT × 1.639
+//
+// This is an approximation and should ultimately be calibrated against
+// a reliable UV Index reference.
+//
+// OLD formula (10 MΩ resistor):  UVI = VOUT × 10
+// NEW formula (1 MΩ resistor):   UVI = VOUT × 1.639
+//
+// -----------------------------------------------------------------------------
 
-// Do not use an artificial UVI=30 display limit.
-// Earth's environmental UV Index is normally represented in the
-// standard 0–11+ scale.
-#define GUVAS12SD_MAX_UVI         15.0f
+#define GUVAS12SD_UVI_PER_VOLT 1.639f
 
-// NOTE: ESP8266 has only ONE analog input (A0).
-// Battery voltage measurement must share this pin via a multiplexer,
-// or battery will be estimated from a separate digital/analog source.
-// This will be resolved during hardware integration.
-
-// I2C OLED Display (SSD1306 or SH1106, 1.3-inch, 128x64)
-#define OLED_SDA_PIN    D2   // I2C Data
-#define OLED_SCL_PIN    D1   // I2C Clock
-#define OLED_I2C_ADDR 0x3C   // Standard SSD1306/SH1106 I2C address (try 0x3D if 0x3C fails)
-#define OLED_WIDTH      128
-#define OLED_HEIGHT      64
-
-// TP4056 Battery Monitoring
-// HARDWARE PENDING: Exact ADC divider circuit values unknown until hardware test.
-// These are structural placeholders only.
-#define BATTERY_ADC_PIN       A0   // Same as S12SD — requires hardware multiplexing (no EN pin)
-#define BATTERY_MAX_VOLTAGE  4.20  // Full charge (Li-Ion) — HARDWARE PENDING VALIDATION
-#define BATTERY_MIN_VOLTAGE  3.00  // Cutoff voltage — HARDWARE PENDING VALIDATION
 
 // -----------------------------------------------------------------------------
-// Serial Debug Configuration
-// Set to 1 to enable verbose Serial output during development.
-// Set to 0 before a production flash to disable all Serial output.
-// NEVER print API keys or passwords regardless of this setting.
+// Calibration fine adjustment
+//
+// Formula:
+//
+//   UVI = ((voltage - offset_V) × UVI_PER_VOLT × gain) + offset_UVI
+//
+// Start with neutral values:
+//   gain       = 1.0
+//   offset_V   = 0.0
+//   offset_UVI = 0.0
+//
+// After comparing against a trusted reference, adjust gain.
+//
+// Example:
+// If sensor reads 1.4 UVI but reference says 2.0:
+// correction gain ≈ 2.0 / 1.4 = 1.429
 // -----------------------------------------------------------------------------
-#define DEBUG_ENABLED  1
-#define SERIAL_BAUD    115200
+
+#define GUVAS12SD_CALIBRATION_GAIN 1.000f
+#define GUVAS12SD_CALIBRATION_OFFSET_V 0.000f
+#define GUVAS12SD_CALIBRATION_OFFSET_UVI 0.000f
+
+
+// =============================================================================
+// OUTPUT LIMITS
+// =============================================================================
+
+// Software display/data limit.
+// This is NOT the physical sensor range.
+#define GUVAS12SD_MAX_UVI 15.0f
+
+
+// =============================================================================
+// SATURATION DETECTION
+// =============================================================================
+//
+// PROVISIONAL thresholds.
+//
+// When the output gets close to the NodeMCU A0 rail, the sensor/amplifier
+// may be saturated and the exact environmental UVI can no longer be inferred.
+//
+// We flag the reading as SATURATED instead of pretending it is accurate.
+//
+// A0 reaching approximately 3.3 V is still a diagnostic condition even
+// after changing the UVI conversion factor. Do not treat the new formula
+// as proof that the electrical problem is solved.
+//
+// -----------------------------------------------------------------------------
+
+#define GUVAS12SD_SATURATION_ADC 1000
+#define GUVAS12SD_SATURATION_V   3.20f
+
+
+// =============================================================================
+// UV INTENSITY
+// =============================================================================
+//
+// EPA defines:
+//
+//   1 UV Index = 25 mW/m²
+//
+// Conversion:
+//
+//   25 mW/m² = 0.0025 mW/cm²
+//
+// Therefore:
+//
+//   intensity(mW/cm²) = UVI × 0.0025
+//
+// This is erythemally weighted UV intensity represented by the UV Index;
+// it is NOT the raw optical power output of the GUVA photodiode.
+//
+// CORRECTION: Previous firmware used 0.025 mW/cm² per UVI (off by 10×).
+// =============================================================================
+
+#define GUVAS12SD_MWCM2_PER_UVI 0.0025f
+
+
+// =============================================================================
+// OLED
+// =============================================================================
+
+#define OLED_SDA_PIN  D2
+#define OLED_SCL_PIN  D1
+
+#define OLED_I2C_ADDR 0x3C
+
+#define OLED_WIDTH  128
+#define OLED_HEIGHT 64
+
+
+// =============================================================================
+// BATTERY
+// =============================================================================
+//
+// Battery measurement remains disabled because A0 is occupied by the
+// GUVA sensor.
+//
+// A separate ADC/multiplexer/external battery monitor is required.
+// Do NOT connect battery voltage to A0.
+// =============================================================================
+
+#define BATTERY_ADC_PIN A0
+
+#define BATTERY_MAX_VOLTAGE 4.20f
+#define BATTERY_MIN_VOLTAGE 3.00f
+
+
+// =============================================================================
+// SERIAL DEBUG
+// =============================================================================
+
+#define DEBUG_ENABLED 1
+#define SERIAL_BAUD 115200
+
 
 #endif // FIRMWARE_CONFIG_H

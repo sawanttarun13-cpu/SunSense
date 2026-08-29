@@ -6,9 +6,23 @@
  * ---------------------------------------------------------
  */
 
-import { ALL_LOGS } from '../mockData/history';
+import apiClient from '../lib/apiClient';
+import type { UVLogEntry } from '../types/history';
 
-// Handles API communication with the backend.
 export const historyService = {
-  getLogs: () => Promise.resolve(ALL_LOGS),
+  getLogs: async (page = 1, limit = 14) => {
+    const res = await apiClient.get('/history', { params: { page, limit } });
+    
+    // Map backend ExposureSession to UVLogEntry
+    const mapped: UVLogEntry[] = res.data.data.map((session: any) => ({
+      id: session.id,
+      date: new Date(session.startTime),
+      uv: Number(session.averageUvIndex)
+    }));
+
+    return {
+      data: mapped,
+      pagination: res.data.pagination
+    };
+  },
 };

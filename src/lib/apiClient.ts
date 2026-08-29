@@ -179,9 +179,13 @@ apiClient.interceptors.response.use(
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
     // Only attempt refresh on 401 Unauthorized, and only once per request.
+    // Do NOT attempt refresh if the request was to /auth/login or /auth/register
     if (
       error.response?.status === 401 &&
-      !originalRequest._retry
+      !originalRequest._retry &&
+      originalRequest.url &&
+      !originalRequest.url.includes('/auth/login') &&
+      !originalRequest.url.includes('/auth/register')
     ) {
       originalRequest._retry = true; // Guard against infinite loops
 
@@ -255,6 +259,11 @@ export interface AppError {
   validation?: unknown;
 }
 
+// Type guard to check if an object is already an AppError
+function isAppError(error: any): error is AppError {
+  return error && typeof error === 'object' && 'message' in error && 'isNetwork' in error;
+}
+
 /**
  * Converts any Axios error (or unknown thrown value) into an AppError.
  *
@@ -270,6 +279,11 @@ export interface AppError {
  * @returns     A structured AppError.
  */
 export function normalizeError(error: unknown): AppError {
+  // If it's already been normalized (e.g., from an interceptor), return it as-is.
+  if (isAppError(error)) {
+    return error;
+  }
+
   if (axios.isAxiosError(error)) {
     const status = error.response?.status ?? 0;
     const responseData = error.response?.data as ApiErrorResponse | undefined;

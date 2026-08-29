@@ -63,11 +63,19 @@ export class DashboardService {
    * @returns      Complete dashboard payload or { deviceConnected: false } if no device.
    */
   async getDashboard(userId: string) {
-    const device = await dashboardRepo.getDevice(userId);
+    let device = await dashboardRepo.getDevice(userId);
     const user = await dashboardRepo.getUser(userId);
     
+    // DEV MODE: If the current user has no device, fall back to the first
+    // available device in the system. This supports single-device testing
+    // where multiple user accounts share one physical ESP8266.
+    // TODO: Remove this fallback before production deployment.
     if (!device) {
-      // User has not yet registered an ESP8266 device — show the pairing flow
+      device = await dashboardRepo.getAnyDevice();
+    }
+
+    if (!device) {
+      // Truly no devices registered at all — show the pairing flow
       return { deviceConnected: false, error: 'No device found' };
     }
 
