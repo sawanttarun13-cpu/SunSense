@@ -134,6 +134,29 @@ const apiClient: AxiosInstance = axios.create({
   },
 });
 
+// ─── Token Refresh Helper ───────────────────────────────────────────────────────
+//
+// Shared by both the Axios interceptor and the Socket.IO client.
+// Deduplicates concurrent refresh attempts to avoid storming the backend.
+let refreshPromise: Promise<string> | null = null;
+
+export async function refreshAccessToken(): Promise<string> {
+  if (!refreshPromise) {
+    refreshPromise = axios.post<ApiResponse<{ token: string }>>(
+      `${BASE_URL}/auth/refresh`,
+      {},
+      { withCredentials: true }
+    ).then((res) => {
+      const newToken = res.data.data.token;
+      setAccessToken(newToken);
+      return newToken;
+    }).finally(() => {
+      refreshPromise = null;
+    });
+  }
+  return refreshPromise;
+}
+
 // ─── Request Interceptor ──────────────────────────────────────────────────────
 //
 // Runs before every outbound request.
@@ -190,17 +213,7 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true; // Guard against infinite loops
 
       try {
-        // POST /auth/refresh — browser sends HttpOnly refreshToken cookie automatically.
-        // Do NOT use apiClient here; that would trigger this interceptor recursively.
-        // Use a plain axios call to the refresh endpoint directly.
-        const refreshResponse = await axios.post<ApiResponse<{ token: string }>>(
-          `${BASE_URL}/auth/refresh`,
-          {},
-          { withCredentials: true }
-        );
-
-        const newToken = refreshResponse.data.data.token;
-        setAccessToken(newToken);
+        const newToken = await refreshAccessToken();
 
         // Attach the new token to the retried request.
         originalRequest.headers['Authorization'] = `Bearer ${newToken}`;

@@ -24,8 +24,10 @@
  * --------------------------------------------------------
  */
 import { DeviceRepository } from '../repositories/device.repo';
+import { RealtimeEventService } from './events/realtime.service';
 
 const deviceRepo = new DeviceRepository();
+const realtime = new RealtimeEventService();
 
 export class HeartbeatService {
 
@@ -47,7 +49,21 @@ export class HeartbeatService {
     batteryPercentage: number,
     firmwareVersion: string,
   ): Promise<{ success: true }> {
-    await deviceRepo.updateHeartbeat(deviceId, batteryPercentage, firmwareVersion, new Date());
+    const now = new Date();
+    const device = await deviceRepo.updateHeartbeat(deviceId, batteryPercentage, firmwareVersion, now);
+    
+    try {
+      realtime.emitDeviceStatus(device.userId, {
+        deviceId,
+        isOnline: true,
+        lastPing: now,
+        batteryLevel: batteryPercentage,
+        firmwareVersion
+      });
+    } catch (err) {
+      console.error(`[RealtimeEventService] Failed to emit device status for device ${deviceId}:`, err);
+    }
+    
     return { success: true };
   }
 }

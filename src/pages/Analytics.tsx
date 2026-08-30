@@ -6,7 +6,9 @@
  * ---------------------------------------------------------
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { useSocketEvent } from '../hooks/useSocketEvent';
+import { socket } from '../lib/socketClient';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   LineChart, Line, Cell, Legend, AreaChart, Area, ComposedChart,
@@ -71,47 +73,64 @@ export function Analytics() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
-  useEffect(() => {
-    let mounted = true;
+  const isMounted = useRef(true);
+  const fetchTimeout = useRef<NodeJS.Timeout | null>(null);
 
-    const fetchAnalytics = async (isBackground = false) => {
-      if (!isBackground) setLoading(true);
-      try {
-        const [w, m, p, h, t] = await Promise.all([
-          analyticsService.getWeeklyData(),
-          analyticsService.getMonthlyData(),
-          analyticsService.getPeakHoursData(),
-          analyticsService.getHeatmapData(),
-          analyticsService.getTrendData()
-        ]);
-        
-        if (!mounted) return;
-        setWeekly(w);
-        setMonthly(m);
-        setPeakHours(p);
-        setHeatmap(h);
-        setTrendData(t);
-        if (!isBackground) setLoading(false);
-      } catch (err) {
-        if (!mounted) return;
-        if (!isBackground) {
-          setError(true);
-          setLoading(false);
-        }
+  const fetchAnalytics = useCallback(async (isBackground = false) => {
+    if (!isBackground) setLoading(true);
+    try {
+      const [w, m, p, h, t] = await Promise.all([
+        analyticsService.getWeeklyData(),
+        analyticsService.getMonthlyData(),
+        analyticsService.getPeakHoursData(),
+        analyticsService.getHeatmapData(),
+        analyticsService.getTrendData()
+      ]);
+      
+      if (!isMounted.current) return;
+      setWeekly(w);
+      setMonthly(m);
+      setPeakHours(p);
+      setHeatmap(h);
+      setTrendData(t);
+      if (!isBackground) setLoading(false);
+    } catch (err) {
+      if (!isMounted.current) return;
+      if (!isBackground) {
+        setError(true);
+        setLoading(false);
       }
-    };
+    }
+  }, []);
 
+  const debouncedRefetch = useCallback(() => {
+    if (fetchTimeout.current) clearTimeout(fetchTimeout.current);
+    fetchTimeout.current = setTimeout(() => {
+      if (isMounted.current) fetchAnalytics(true);
+    }, 500);
+  }, [fetchAnalytics]);
+
+  useSocketEvent('exposure:updated', () => {
+    debouncedRefetch();
+  });
+
+  useEffect(() => {
+    isMounted.current = true;
     fetchAnalytics(false);
 
-    const intervalId = setInterval(() => {
-      fetchAnalytics(true);
-    }, 30000);
-
     return () => {
-      mounted = false;
-      clearInterval(intervalId);
+      isMounted.current = false;
+      if (fetchTimeout.current) clearTimeout(fetchTimeout.current);
     };
-  }, []);
+  }, [fetchAnalytics]);
+
+  useEffect(() => {
+    const handleReconnect = () => debouncedRefetch();
+    socket.io.on('reconnect', handleReconnect);
+    return () => {
+      socket.io.off('reconnect', handleReconnect);
+    };
+  }, [debouncedRefetch]);
 
   // Compute dynamic stats
   const { weeklyAvgUV, weeklyMaxUV, highUVDays } = useMemo(() => {

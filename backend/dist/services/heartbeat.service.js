@@ -27,7 +27,9 @@ exports.HeartbeatService = void 0;
  * --------------------------------------------------------
  */
 const device_repo_1 = require("../repositories/device.repo");
+const realtime_service_1 = require("./events/realtime.service");
 const deviceRepo = new device_repo_1.DeviceRepository();
+const realtime = new realtime_service_1.RealtimeEventService();
 class HeartbeatService {
     /**
      * Processes a heartbeat payload from the ESP8266 device.
@@ -43,7 +45,20 @@ class HeartbeatService {
      * @returns                 Object with success flag confirming acknowledgement.
      */
     async processHeartbeat(deviceId, batteryPercentage, firmwareVersion) {
-        await deviceRepo.updateHeartbeat(deviceId, batteryPercentage, firmwareVersion, new Date());
+        const now = new Date();
+        const device = await deviceRepo.updateHeartbeat(deviceId, batteryPercentage, firmwareVersion, now);
+        try {
+            realtime.emitDeviceStatus(device.userId, {
+                deviceId,
+                isOnline: true,
+                lastPing: now,
+                batteryLevel: batteryPercentage,
+                firmwareVersion
+            });
+        }
+        catch (err) {
+            console.error(`[RealtimeEventService] Failed to emit device status for device ${deviceId}:`, err);
+        }
         return { success: true };
     }
 }

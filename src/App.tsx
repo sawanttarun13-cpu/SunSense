@@ -48,6 +48,8 @@ import { AuthProvider } from './context/AuthContext';
 import { PrivateRoute } from './components/PrivateRoute';
 import { PublicRoute } from './components/PublicRoute';
 
+import { SocketProvider } from './context/SocketContext';
+
 /**
  * Root application component.
  *
@@ -58,9 +60,10 @@ import { PublicRoute } from './components/PublicRoute';
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          {/* Public auth pages (no sidebar/header layout) */}
+      <SocketProvider>
+        <BrowserRouter>
+          <Routes>
+            {/* Public auth pages (no sidebar/header layout) */}
           <Route element={<PublicRoute />}>
             <Route path="/login" element={<Login />} />
           </Route>
@@ -82,6 +85,7 @@ export default function App() {
           </Route>
         </Routes>
       </BrowserRouter>
+      </SocketProvider>
     </AuthProvider>
   );
 }

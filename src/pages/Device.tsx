@@ -6,7 +6,9 @@
  * ---------------------------------------------------------
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useSocketEvent } from '../hooks/useSocketEvent';
+import { socket } from '../lib/socketClient';
 import {
   Battery, Wifi, Cpu, Clock, Zap, Activity, RefreshCw,
   CheckCircle, AlertCircle, Smartphone, AlertTriangle, CheckCircle2,
@@ -48,8 +50,8 @@ function BatteryVisual({ pct }: { pct: number | null }) {
 }
 
 // ─── Wi-Fi bars ───────────────────────────────────────────────────────────────
-function WifiStrength({ ssid }: { ssid: string | null }) {
-  if (!ssid) {
+function WifiStrength({ isOnline }: { isOnline: boolean }) {
+  if (!isOnline) {
     return (
       <div className="flex items-end gap-1 mt-3">
         <div>
@@ -127,18 +129,54 @@ export function Device() {
   const [error, setError] = useState(false);
   const [syncing, setSyncing] = useState(false);
 
-  useEffect(() => {
-    deviceService.getDeviceData()
-      .then(data => {
-        setDeviceData(data);
-        setLoading(false);
-      })
-      .catch((err) => {
+  const isMounted = useRef(true);
+  const fetchTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  const fetchDevice = useCallback(async (isBackground = false) => {
+    if (!isBackground) setLoading(true);
+    try {
+      const data = await deviceService.getDeviceData();
+      if (!isMounted.current) return;
+      setDeviceData(data);
+      if (!isBackground) setLoading(false);
+    } catch (err: any) {
+      if (!isMounted.current) return;
+      if (!isBackground) {
         setErrorMsg(err.message || 'Unknown error');
         setError(true);
         setLoading(false);
-      });
+      }
+    }
   }, []);
+
+  const debouncedRefetch = useCallback(() => {
+    if (fetchTimeout.current) clearTimeout(fetchTimeout.current);
+    fetchTimeout.current = setTimeout(() => {
+      if (isMounted.current) fetchDevice(true);
+    }, 500);
+  }, [fetchDevice]);
+
+  useSocketEvent('device:status', () => {
+    debouncedRefetch();
+  });
+
+  useEffect(() => {
+    isMounted.current = true;
+    fetchDevice(false);
+    
+    return () => {
+      isMounted.current = false;
+      if (fetchTimeout.current) clearTimeout(fetchTimeout.current);
+    };
+  }, [fetchDevice]);
+
+  useEffect(() => {
+    const handleReconnect = () => debouncedRefetch();
+    socket.io.on('reconnect', handleReconnect);
+    return () => {
+      socket.io.off('reconnect', handleReconnect);
+    };
+  }, [debouncedRefetch]);
 
   const handleSync = async () => {
     setSyncing(true);
@@ -167,6 +205,8 @@ export function Device() {
       </div>
     );
   }
+
+  const isOnline = deviceData.lastPing ? (new Date().getTime() - new Date(deviceData.lastPing).getTime()) < 300000 : false;
 
   return (
     <div className="p-5 md:p-6 max-w-5xl mx-auto">
@@ -209,11 +249,22 @@ export function Device() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-green-400" />
-              </span>
-              <span style={{ color: '#4ADE80', fontSize: '0.8rem', fontWeight: 600 }}>Connected</span>
+              {isOnline ? (
+                <>
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-green-400" />
+                  </span>
+                  <span style={{ color: '#4ADE80', fontSize: '0.8rem', fontWeight: 600 }}>Connected</span>
+                </>
+              ) : (
+                <>
+                  <span className="relative flex h-2 w-2">
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-red-400" />
+                  </span>
+                  <span style={{ color: '#F87171', fontSize: '0.8rem', fontWeight: 600 }}>Offline</span>
+                </>
+              )}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-x-8 gap-y-2">
@@ -251,7 +302,7 @@ export function Device() {
             </div>
             <span className="font-semibold text-slate-600" style={{ fontSize: '0.8rem' }}>Wi-Fi Status</span>
           </div>
-          <WifiStrength ssid={deviceData.wifiSsid} />
+          <WifiStrength isOnline={isOnline} />
           <div className="mt-3 pt-3" style={{ borderTop: '1px solid #F1F5F9' }}>
             <InfoRow label="SSID" value={deviceData.wifiSsid || 'N/A'} />
             <InfoRow label="IP Address" value={deviceData.ipAddress || 'N/A'} />

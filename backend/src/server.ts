@@ -17,12 +17,14 @@
  * 5. Exit the process if startup fails
  * --------------------------------------------------------
  */
+import { createServer } from 'node:http';
 import app from './app';
 import { config } from './config/env';
 import { logger } from './utils/logger';
+import { initSocketServer } from './realtime/socket.server';
 
 /**
- * Starts the HTTP server.
+ * Starts the HTTP server and Socket.IO realtime server.
  *
  * Wrapped in a try/catch so that any fatal startup errors
  * (e.g., port already in use) are logged clearly before
@@ -30,7 +32,12 @@ import { logger } from './utils/logger';
  */
 const startServer = () => {
   try {
-    app.listen(config.port, () => {
+    const httpServer = createServer(app);
+    
+    // Initialize realtime WebSockets on the same HTTP server
+    initSocketServer(httpServer);
+
+    httpServer.listen(config.port, () => {
       logger.info(`Server is running in ${config.nodeEnv} mode on port ${config.port}`);
     });
   } catch (error) {

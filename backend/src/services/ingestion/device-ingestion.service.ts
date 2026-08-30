@@ -33,9 +33,12 @@
 import { ExposureLogicService } from '../exposure/exposure-logic.service';
 import { DeviceRepository } from '../../repositories/device/device.repo';
 
+import { RealtimeEventService } from '../events/realtime.service';
+
 export class DeviceIngestionService {
   private exposureLogic = new ExposureLogicService();
   private deviceRepo = new DeviceRepository();
+  private realtime = new RealtimeEventService();
 
   /**
    * Processes a batch of UV readings submitted by the ESP8266 device.
@@ -45,16 +48,15 @@ export class DeviceIngestionService {
    *    through each reading, persists it, and updates the exposure session.
    * 2. After all readings are processed, update the device's lastPing
    *    timestamp so the dashboard can display 'Device Online' status.
-   * 3. Return a summary of how many readings were inserted vs. ignored
-   *    (duplicates are silently skipped due to the unique constraint on
-   *    device_id + recorded_at).
+   * 3. Emit dashboard:update and exposure:updated to the user's room.
+   * 4. Return a summary of how many readings were inserted vs. ignored.
    *
    * @param userId   - UUID of the user who owns the device.
    * @param deviceId - UUID of the sending device (from requireDeviceAuth).
    * @param readings - Array of reading payloads from the ESP8266.
    * @param readings[].uvIndex     - UV Index measured by the S12SD sensor.
    * @param readings[].recordedAt  - ISO 8601 timestamp of when the reading was taken.
-   * @returns        Object containing { inserted, duplicates } counts.
+   * @returns        Object containing { inserted, duplicates, latestProcessedAt } counts.
    */
   async processPayload(userId: string, deviceId: string, readings: {uvIndex: number, recordedAt: string}[]) {
     const result = await this.exposureLogic.processReadings(userId, deviceId, readings);
@@ -62,6 +64,16 @@ export class DeviceIngestionService {
     // Update the lastPing timestamp so the dashboard knows the device is online.
     // A device is considered ONLINE if lastPing is within the past 5 minutes.
     await this.deviceRepo.updateLastPing(deviceId, new Date());
+    
+    // Realtime notification emission
+    try {
+      if (result.inserted > 0 && result.latestProcessedAt) {
+        this.realtime.emitDashboardUpdate(userId, { timestamp: result.latestProcessedAt });
+        this.realtime.emitExposureUpdated(userId, { timestamp: result.latestProcessedAt });
+      }
+    } catch (err) {
+      console.error(`[RealtimeEventService] Failed to emit ingestion events for user ${userId}:`, err);
+    }
     
     return result;
   }

@@ -6,7 +6,9 @@
  * ---------------------------------------------------------
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useSocketEvent } from '../hooks/useSocketEvent';
+import { socket } from '../lib/socketClient';
 import { Download, ChevronLeft, ChevronRight, ArrowUpDown } from 'lucide-react';
 import {
   PAGE_SIZE,
@@ -28,43 +30,60 @@ export function History() {
   const [paginationMeta, setPaginationMeta] = useState<any>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
-  useEffect(() => {
-    let mounted = true;
-    
-    const fetchHistory = async (isBackground = false) => {
-      if (!isBackground) setLoading(true);
-      try {
-        const res = await historyService.getLogs(page, PAGE_SIZE);
-        if (!mounted) return;
-        
-        let rows = [...res.data];
-        rows.sort((a, b) => sortDir === 'desc'
-          ? b.date.getTime() - a.date.getTime()
-          : a.date.getTime() - b.date.getTime());
-        
-        setLogs(rows);
-        setPaginationMeta(res.pagination);
-        if (!isBackground) setLoading(false);
-      } catch (err) {
-        if (!mounted) return;
-        if (!isBackground) {
-          setError(true);
-          setLoading(false);
-        }
-      }
-    };
+  const isMounted = useRef(true);
+  const fetchTimeout = useRef<NodeJS.Timeout | null>(null);
 
+  const fetchHistory = useCallback(async (isBackground = false) => {
+    if (!isBackground) setLoading(true);
+    try {
+      const res = await historyService.getLogs(page, PAGE_SIZE);
+      if (!isMounted.current) return;
+      
+      let rows = [...res.data];
+      rows.sort((a, b) => sortDir === 'desc'
+        ? b.date.getTime() - a.date.getTime()
+        : a.date.getTime() - b.date.getTime());
+      
+      setLogs(rows);
+      setPaginationMeta(res.pagination);
+      if (!isBackground) setLoading(false);
+    } catch (err) {
+      if (!isMounted.current) return;
+      if (!isBackground) {
+        setError(true);
+        setLoading(false);
+      }
+    }
+  }, [page, sortDir]);
+
+  const debouncedRefetch = useCallback(() => {
+    if (fetchTimeout.current) clearTimeout(fetchTimeout.current);
+    fetchTimeout.current = setTimeout(() => {
+      if (isMounted.current) fetchHistory(true);
+    }, 500);
+  }, [fetchHistory]);
+
+  useSocketEvent('exposure:updated', () => {
+    debouncedRefetch();
+  });
+
+  useEffect(() => {
+    isMounted.current = true;
     fetchHistory(false);
     
-    const intervalId = setInterval(() => {
-      fetchHistory(true);
-    }, 30000);
-
     return () => {
-      mounted = false;
-      clearInterval(intervalId);
+      isMounted.current = false;
+      if (fetchTimeout.current) clearTimeout(fetchTimeout.current);
     };
-  }, [page, sortDir]);
+  }, [fetchHistory]);
+
+  useEffect(() => {
+    const handleReconnect = () => debouncedRefetch();
+    socket.io.on('reconnect', handleReconnect);
+    return () => {
+      socket.io.off('reconnect', handleReconnect);
+    };
+  }, [debouncedRefetch]);
 
   const totalPages = paginationMeta?.totalPages || 1;
   const totalEntries = paginationMeta?.total || 0;

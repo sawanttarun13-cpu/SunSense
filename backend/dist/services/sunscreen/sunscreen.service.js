@@ -29,8 +29,10 @@ exports.SunscreenService = void 0;
  * --------------------------------------------------------
  */
 const sunscreen_repo_1 = require("../../repositories/sunscreen/sunscreen.repo");
+const realtime_service_1 = require("../events/realtime.service");
 class SunscreenService {
     repo = new sunscreen_repo_1.SunscreenRepository();
+    realtime = new realtime_service_1.RealtimeEventService();
     /**
      * Records a new sunscreen application and calculates when it will expire.
      *
@@ -48,7 +50,14 @@ class SunscreenService {
     async applySunscreen(userId, appliedSpf, appliedAt) {
         // 2-hour expiry window: 120 minutes × 60,000 milliseconds/minute
         const expiresAt = new Date(appliedAt.getTime() + 120 * 60000);
-        return this.repo.createApplication(userId, appliedSpf, appliedAt, expiresAt);
+        const application = await this.repo.createApplication(userId, appliedSpf, appliedAt, expiresAt);
+        try {
+            this.realtime.emitDashboardUpdate(userId, { timestamp: appliedAt.toISOString() });
+        }
+        catch (err) {
+            console.error(`[RealtimeEventService] Failed to emit sunscreen dashboard update for user ${userId}:`, err);
+        }
+        return application;
     }
     /**
      * Retrieves the most recent sunscreen application if it has not expired.

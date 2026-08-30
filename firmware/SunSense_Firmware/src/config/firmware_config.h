@@ -41,7 +41,7 @@
 // BACKEND
 // =============================================================================
 
-#define BACKEND_BASE_URL     "http://10.111.164.104:5000"
+#define BACKEND_BASE_URL     "http://10.234.30.104:5000"
 
 #define API_PREFIX           "/api/v1"
 

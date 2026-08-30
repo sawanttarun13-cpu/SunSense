@@ -163,6 +163,11 @@ export class ExposureLogicService {
       }
     }
     
-    return { inserted, duplicates: readings.length - inserted };
+    let latestProcessedAt: string | null = null;
+    if (sorted.length > 0) {
+      latestProcessedAt = sorted[sorted.length - 1].recordedAt;
+    }
+    
+    return { inserted, duplicates: readings.length - inserted, latestProcessedAt };
   }
 }

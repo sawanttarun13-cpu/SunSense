@@ -20,25 +20,25 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { dashboardService } from '../services/dashboard.service';
 import type { DashboardResponse } from '../types/dashboard';
-
-/** How often (ms) to poll the backend for fresh dashboard data. */
-const POLL_INTERVAL_MS = 10_000; // 10 seconds — matches firmware reading interval
+import { useSocketEvent } from './useSocketEvent';
+import { socket } from '../lib/socketClient';
 
 export function useDashboardData() {
   const [data, setData] = useState<DashboardResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const isMounted = useRef(true);
+  const fetchTimeout = useRef<NodeJS.Timeout | null>(null);
 
   const fetchDashboard = useCallback(async (isInitial = false) => {
     try {
       // Only show loading spinner on the very first fetch
-      if (isInitial) {
-        setLoading(true);
-      }
+      if (isInitial) setLoading(true);
       setError(null);
+      
       const tzOffset = new Date().getTimezoneOffset();
       const dashboardData = await dashboardService.getDashboard(tzOffset);
+      
       if (isMounted.current) {
         setData(dashboardData);
       }
@@ -53,22 +53,50 @@ export function useDashboardData() {
     }
   }, []);
 
+  // Request coalescing to avoid fetch storms when multiple events arrive quickly
+  const debouncedRefetch = useCallback(() => {
+    if (fetchTimeout.current) clearTimeout(fetchTimeout.current);
+    fetchTimeout.current = setTimeout(() => {
+      if (isMounted.current) {
+        fetchDashboard(false);
+      }
+    }, 500); // 500ms debounce window
+  }, [fetchDashboard]);
+
+  // Listen to realtime invalidation events
+  const handleDashboardUpdate = useCallback(() => {
+    debouncedRefetch();
+  }, [debouncedRefetch]);
+
+  useSocketEvent('dashboard:update', handleDashboardUpdate);
+
+  // Initial fetch on mount
   useEffect(() => {
     isMounted.current = true;
-
+    
     // Initial fetch (shows loading spinner)
     fetchDashboard(true);
 
-    // Start polling every 10 seconds (silent background updates)
-    const intervalId = setInterval(() => {
-      fetchDashboard(false);
-    }, POLL_INTERVAL_MS);
-
     return () => {
       isMounted.current = false;
-      clearInterval(intervalId);
+      if (fetchTimeout.current) clearTimeout(fetchTimeout.current);
     };
   }, [fetchDashboard]);
+
+  // Listen for socket reconnection to resync missed events
+  useEffect(() => {
+    const handleReconnect = () => {
+      debouncedRefetch();
+    };
+    
+    // 'reconnect' is emitted by the manager only after a successful recovery, 
+    // not on the initial connection. This prevents a duplicate fetch on mount.
+    socket.io.on('reconnect', handleReconnect);
+    
+    return () => {
+      socket.io.off('reconnect', handleReconnect);
+    };
+  }, [debouncedRefetch]);
 
   return {
     data,
