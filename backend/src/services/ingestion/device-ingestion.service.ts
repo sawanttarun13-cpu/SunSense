@@ -65,11 +65,19 @@ export class DeviceIngestionService {
     // A device is considered ONLINE if lastPing is within the past 5 minutes.
     await this.deviceRepo.updateLastPing(deviceId, new Date());
     
-    // Realtime notification emission
+    // Realtime notification emission.
+    // Emit dashboard:update always (lastPing changed, device status is live).
+    // Emit exposure:updated only when new readings were actually inserted (session data changed).
     try {
-      if (result.inserted > 0 && result.latestProcessedAt) {
-        this.realtime.emitDashboardUpdate(userId, { timestamp: result.latestProcessedAt });
-        this.realtime.emitExposureUpdated(userId, { timestamp: result.latestProcessedAt });
+      // latestProcessedAt may be null if the batch was empty, use current time as fallback
+      const timestamp = result.latestProcessedAt || new Date().toISOString();
+      
+      // Always emit dashboard:update — device connectivity status just changed (lastPing)
+      this.realtime.emitDashboardUpdate(userId, { timestamp });
+
+      // Only emit exposure:updated when new UV data was actually inserted
+      if (result.inserted > 0) {
+        this.realtime.emitExposureUpdated(userId, { timestamp });
       }
     } catch (err) {
       console.error(`[RealtimeEventService] Failed to emit ingestion events for user ${userId}:`, err);

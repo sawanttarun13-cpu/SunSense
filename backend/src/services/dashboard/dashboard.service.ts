@@ -37,6 +37,7 @@
 import { DashboardRepository } from '../../repositories/dashboard/dashboard.repo';
 import { CalculationService } from '../calculation/calculation.service';
 import { SunscreenService } from '../sunscreen/sunscreen.service';
+import { AlertsRepository } from '../../repositories/alerts/alerts.repo';
 
 const dashboardRepo = new DashboardRepository();
 const calcService = new CalculationService();
@@ -164,10 +165,14 @@ export class DashboardService {
       }
     }
 
+    // Fetch active alerts count
+    const alertsRepo = new AlertsRepository();
+    const activeAlertsCount = await alertsRepo.countActiveAlerts(userId);
+
     return {
       deviceConnected: true,
       deviceStatus: isOnline ? 'ONLINE' : 'OFFLINE',
-      batteryStatus: device.batteryLevel || null,
+      batteryStatus: device.batteryLevel === -1 ? null : device.batteryLevel, // Ensure -1 is sent as null
       lastSync: lastPing,
       todayExposure,
       todayDose,
@@ -182,6 +187,7 @@ export class DashboardService {
       activeProtection,
       protectionRemaining,
       burnTimeRemaining,
+      activeAlertsCount,
       hourlyData
     };
   }

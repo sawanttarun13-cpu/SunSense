@@ -29,9 +29,35 @@ import { DeviceIngestionService } from '../../services/ingestion/device-ingestio
 import { sendError } from '../../utils/apiResponse';
 import { AuthRequest } from '../../middleware/requireAuth';
 
+import { ReadingsService } from '../../services/readings/readings.service';
+
 const ingestionService = new DeviceIngestionService();
+const readingsService = new ReadingsService();
 
 export class ReadingsController {
+
+  /**
+   * GET /api/v1/readings/history
+   * Protected (User JWT)
+   * Fetches paginated raw UV readings for devices owned by the user.
+   */
+  async getHistory(req: AuthRequest, res: Response) {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 50;
+      const deviceId = req.query.deviceId as string | undefined;
+
+      const boundedLimit = Math.max(1, Math.min(limit, 100)); // Cap limit between 1-100
+
+      const result = await readingsService.getHistory(req.userId!, page, boundedLimit, deviceId);
+      return res.status(200).json(result);
+    } catch (error: any) {
+      if (error.message.includes('not found')) {
+        return sendError(res, error.message, 404);
+      }
+      return sendError(res, error.message, 400);
+    }
+  }
 
   /**
    * POST /api/v1/readings

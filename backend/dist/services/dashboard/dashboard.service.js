@@ -40,6 +40,7 @@ exports.DashboardService = void 0;
 const dashboard_repo_1 = require("../../repositories/dashboard/dashboard.repo");
 const calculation_service_1 = require("../calculation/calculation.service");
 const sunscreen_service_1 = require("../sunscreen/sunscreen.service");
+const alerts_repo_1 = require("../../repositories/alerts/alerts.repo");
 const dashboardRepo = new dashboard_repo_1.DashboardRepository();
 const calcService = new calculation_service_1.CalculationService();
 const sunscreenService = new sunscreen_service_1.SunscreenService();
@@ -145,10 +146,13 @@ class DashboardService {
                 burnTimeRemaining = unprotected;
             }
         }
+        // Fetch active alerts count
+        const alertsRepo = new alerts_repo_1.AlertsRepository();
+        const activeAlertsCount = await alertsRepo.countActiveAlerts(userId);
         return {
             deviceConnected: true,
             deviceStatus: isOnline ? 'ONLINE' : 'OFFLINE',
-            batteryStatus: device.batteryLevel || null,
+            batteryStatus: device.batteryLevel === -1 ? null : device.batteryLevel, // Ensure -1 is sent as null
             lastSync: lastPing,
             todayExposure,
             todayDose,
@@ -163,6 +167,7 @@ class DashboardService {
             activeProtection,
             protectionRemaining,
             burnTimeRemaining,
+            activeAlertsCount,
             hourlyData
         };
     }

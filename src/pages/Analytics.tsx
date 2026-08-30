@@ -110,9 +110,11 @@ export function Analytics() {
     }, 500);
   }, [fetchAnalytics]);
 
-  useSocketEvent('exposure:updated', () => {
+  const handleExposureUpdated = useCallback(() => {
     debouncedRefetch();
-  });
+  }, [debouncedRefetch]);
+
+  useSocketEvent('exposure:updated', handleExposureUpdated);
 
   useEffect(() => {
     isMounted.current = true;

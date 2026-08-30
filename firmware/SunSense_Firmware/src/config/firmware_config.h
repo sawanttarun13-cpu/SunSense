@@ -34,7 +34,7 @@
 // FIRMWARE
 // =============================================================================
 
-#define FIRMWARE_VERSION "1.0.0-phase5b-guva"
+#define FIRMWARE_VERSION "1.1.0-phase8"
 
 
 // =============================================================================
@@ -50,6 +50,7 @@
 #define ENDPOINT_SERVER_TIME "/api/v1/server/time"
 #define ENDPOINT_AUTH_CHECK  "/api/v1/device/authenticate"
 #define ENDPOINT_HEALTH      "/api/v1/health"
+#define ENDPOINT_OTA         "/api/v1/device/firmware"
 
 
 // =============================================================================
@@ -94,6 +95,9 @@
 // Re-sync server time every hour.
 #define TIME_SYNC_INTERVAL_MS  3600000UL
 
+// Check for OTA updates once every 24 hours.
+#define OTA_CHECK_INTERVAL_MS 86400000UL
+
 
 // =============================================================================
 // OFFLINE QUEUE
@@ -135,6 +139,10 @@
 // SENSOR FILTERING
 // =============================================================================
 
+// Exponential Moving Average filter alpha.
+// Lower = smoother but slower. Higher = faster but noisier.
+#define UVI_FILTER_ALPHA 0.20f
+
 // Number of analog samples averaged for each reading.
 #define GUVAS12SD_ADC_SAMPLES 64
 
@@ -166,7 +174,9 @@
 //
 // -----------------------------------------------------------------------------
 
-#define GUVAS12SD_UVI_PER_VOLT 1.639f
+// Theoretical hardware conversion based on resistor values.
+// Not a final calibrated value.
+#define GUVAS12SD_BASE_UVI_PER_VOLT 1.639f
 
 
 // -----------------------------------------------------------------------------
@@ -174,13 +184,14 @@
 //
 // Formula:
 //
-//   UVI = ((voltage - offset_V) × UVI_PER_VOLT × gain) + offset_UVI
+//   UVI = ((voltage - offset_V) × BASE_UVI_PER_VOLT × gain) + offset_UVI
 //
 // Start with neutral values:
-//   gain       = 1.0
-//   offset_V   = 0.0
+//   gain       = 1.0 (PROVISIONAL until after reference test)
+//   offset_V   = 0.0 (PROVISIONAL - waiting for physical measurement)
 //   offset_UVI = 0.0
 //
+// NOTE: Final values require covered + outdoor shade + direct sun + UV reference testing.
 // After comparing against a trusted reference, adjust gain.
 //
 // Example:
@@ -188,8 +199,13 @@
 // correction gain ≈ 2.0 / 1.4 = 1.429
 // -----------------------------------------------------------------------------
 
+// Empirical calibration multiplier (PROVISIONAL)
 #define GUVAS12SD_CALIBRATION_GAIN 1.000f
-#define GUVAS12SD_CALIBRATION_OFFSET_V 0.000f
+
+// Sensor dark baseline voltage (PROVISIONAL)
+#define GUVAS12SD_DARK_OFFSET_V 0.000f
+
+// UVI constant offset adjustment (PROVISIONAL)
 #define GUVAS12SD_CALIBRATION_OFFSET_UVI 0.000f
 
 

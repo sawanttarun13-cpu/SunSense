@@ -33,7 +33,13 @@ import { useNavigate } from 'react-router';
 export function Dashboard() {
   const navigate = useNavigate();
   const { data, loading, error, refetch } = useDashboardData();
-  const now = new Date();
+  
+  // Live clock — ticks every second
+  const [now, setNow] = useState(new Date());
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -242,7 +248,7 @@ export function Dashboard() {
             <MiniMetric label="Peak UV Today" value={(data.peakUv || 0).toFixed(1)} bar={((data.peakUv || 0) / 12) * 100} barColor="#EF4444" />
             <MiniMetric label="UV Dose (SED)" value={(data.todayDose || 0).toFixed(1)} bar={Math.min(((data.todayDose || 0) / 30) * 100, 100)} barColor="#F97316" />
             <MiniMetric label="Burn Time" value={data.burnTimeRemaining !== null && data.burnTimeRemaining !== undefined ? `${data.burnTimeRemaining} min` : 'Safe'} bar={data.burnTimeRemaining ? Math.min((data.burnTimeRemaining / 120) * 100, 100) : 0} barColor="#9333EA" />
-            <MiniMetric label="Active Alerts" value="3" bar={60} barColor="#EF4444" onClick={() => navigate('/alerts')} />
+            <MiniMetric label="Active Alerts" value={(data.activeAlertsCount || 0).toString()} bar={Math.min((data.activeAlertsCount || 0) * 20, 100)} barColor="#EF4444" onClick={() => navigate('/alerts')} />
           </div>
 
           {/* Sunscreen Tracker */}
@@ -320,7 +326,7 @@ export function Dashboard() {
       {isModalOpen && (
         <ApplySunscreenModal
           onClose={() => setIsModalOpen(false)}
-          onApply={sunscreen.applySunscreen}
+          onApply={handleApplySunscreen}
         />
       )}
     </div>

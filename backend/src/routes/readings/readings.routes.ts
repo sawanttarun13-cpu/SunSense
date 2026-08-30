@@ -11,10 +11,12 @@ import { ReadingsController } from '../../controllers/readings/readings.controll
 import { validateRequest } from '../../middleware/validateRequest';
 import { ReadingsPayloadSchema } from '../../models/validators/readings/readings.validator';
 import { requireDeviceAuth } from '../../middleware/requireDeviceAuth';
+import { requireAuth } from '../../middleware/requireAuth';
 
 const router = Router();
 const controller = new ReadingsController();
 
 router.post('/', requireDeviceAuth, validateRequest(ReadingsPayloadSchema), controller.process.bind(controller));
+router.get('/history', requireAuth, controller.getHistory.bind(controller));
 
 export default router;

@@ -44,6 +44,7 @@
 #include "src/api/ApiClient.h"
 #include "src/time/TimeSync.h"
 #include "src/storage/OfflineQueue.h"
+#include "src/network/OTAManager.h"
 
 
 // =============================================================================
@@ -68,6 +69,8 @@ static TimeSync timeSync;
 
 static OfflineQueue queue;
 
+static OTAManager otaManager;
+
 
 // =============================================================================
 // STATE
@@ -80,6 +83,9 @@ static uint32_t lastHeartbeatTime = 0;
 static uint32_t lastTimeSyncTime = 0;
 
 static uint32_t lastDisplayTime = 0;
+
+static uint32_t lastOtaCheckTime = 0;
+static bool otaCheckedSinceBoot = false;
 
 static uint32_t bootTime = 0;
 
@@ -104,8 +110,6 @@ static bool deviceAuthenticated = false;
 static bool uviFilterInitialized = false;
 
 static float filteredUVI = 0.0f;
-
-static constexpr float UVI_FILTER_ALPHA = 0.20f;
 
 
 // =============================================================================
@@ -426,7 +430,7 @@ void loop() {
         if (!isConnected) {
 
             display.showOffline(
-                sensor.getLastUVIndex(),
+                filteredUVI,
                 queue.size()
             );
 
@@ -434,7 +438,7 @@ void loop() {
 
             display.showReading(
 
-                sensor.getLastUVIndex(),
+                filteredUVI,
 
                 sensor.getLastVoltage(),
 
@@ -479,6 +483,37 @@ void loop() {
 
 
         flushOfflineQueue();
+    }
+
+
+    // =========================================================================
+    // OTA UPDATE CHECK
+    // =========================================================================
+
+    if (
+        isConnected
+        && deviceAuthenticated
+        && queue.isEmpty() // Queue MUST be empty to prioritize data safety
+    ) {
+        bool shouldCheckOta = false;
+        
+        if (!otaCheckedSinceBoot) {
+            shouldCheckOta = true;
+        } else if (now - lastOtaCheckTime >= OTA_CHECK_INTERVAL_MS) {
+            shouldCheckOta = true;
+        }
+
+        if (shouldCheckOta) {
+            lastOtaCheckTime = now;
+            otaCheckedSinceBoot = true;
+            
+            otaManager.checkAndUpdate(
+                BACKEND_BASE_URL,
+                DEVICE_ID,
+                DEVICE_API_KEY,
+                FIRMWARE_VERSION
+            );
+        }
     }
 
 
@@ -708,6 +743,10 @@ void takeAndProcessReading(
         + " | V="
         + String(r.voltageV, 3)
         + "V"
+        
+        + " | CorrectedV="
+        + String(sensor.getLastCorrectedVoltage(), 3)
+        + "V"
 
         + " | RawUVI="
         + String(rawUVI, 2)
@@ -895,6 +934,11 @@ void flushOfflineQueue() {
                 "Batch upload failed: "
                 + res.message
             );
+            
+            if (res.httpCode == 401 || res.httpCode == 403) {
+                Logger::error("QUEUE", "Authentication revoked, halting queue flush");
+                deviceAuthenticated = false;
+            }
 
 
             break;

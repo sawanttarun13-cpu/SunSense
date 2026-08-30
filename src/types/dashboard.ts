@@ -62,6 +62,7 @@ export interface DashboardResponse {
   activeProtection?: boolean;
   protectionRemaining?: number;
   burnTimeRemaining?: number | null;
+  activeAlertsCount?: number;
   hourlyData?: Array<{
     hour: string;
     uv: number | null;

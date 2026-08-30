@@ -43,6 +43,8 @@ public:
 
     float getLastVoltage() const;
 
+    float getLastCorrectedVoltage() const;
+
     float getLastUVIndex() const;
 
     float getLastUVIntensity() const;
@@ -60,6 +62,8 @@ private:
     int _lastRawADC;
 
     float _lastVoltage;
+    
+    float _lastCorrectedVoltage;
 
     float _lastUVIndex;
 

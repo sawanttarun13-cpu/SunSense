@@ -112,7 +112,7 @@ export class DeviceRepository {
     return prisma.device.update({
       where: { id: deviceId },
       data: {
-        batteryLevel,
+        batteryLevel: batteryLevel === -1 ? null : batteryLevel,
         firmwareVersion,
         lastPing: now,
       },

@@ -8,6 +8,7 @@
 
 export interface UVLogEntry {
   id: string | number;
-  date: Date;
-  uv: number;
+  deviceId: string;
+  recordedAt: string;
+  uvIndex: number;
 }

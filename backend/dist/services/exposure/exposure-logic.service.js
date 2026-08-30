@@ -46,6 +46,7 @@ exports.ExposureLogicService = void 0;
 const reading_repo_1 = require("../../repositories/reading/reading.repo");
 const exposure_repo_1 = require("../../repositories/exposure/exposure.repo");
 const calculation_service_1 = require("../calculation/calculation.service");
+const client_1 = require("@prisma/client");
 class ExposureLogicService {
     readingRepo = new reading_repo_1.ReadingRepository();
     exposureRepo = new exposure_repo_1.ExposureRepository();
@@ -91,9 +92,26 @@ class ExposureLogicService {
                 await this.readingRepo.createReading(deviceId, uvValue, recDate);
                 inserted++;
             }
-            catch {
-                continue;
-            } // Duplicate reading — DB unique constraint thrown; skip silently
+            catch (err) {
+                if (err instanceof client_1.Prisma.PrismaClientKnownRequestError) {
+                    if (err.code === 'P2002') {
+                        // Check if it's the specific unique constraint on (deviceId, recordedAt)
+                        // Note: Prisma meta.target usually contains the index name or fields
+                        const target = err.meta?.target || [];
+                        if (target.includes('deviceId') && target.includes('recordedAt')) {
+                            // Expected duplicate reading. Skip silently.
+                            continue;
+                        }
+                        else if (typeof err.meta?.target === 'string' && err.meta.target.includes('deviceId_recordedAt')) {
+                            // Prisma sometimes returns the index name as a string
+                            continue;
+                        }
+                    }
+                }
+                // Unexpected DB error — do not swallow. Throw so the batch fails 
+                // and the device does not remove the reading from its offline queue.
+                throw err;
+            }
             const lastSession = await this.exposureRepo.getLastSession(deviceId, recDate);
             if (!lastSession) {
                 // Case a: No session exists yet — start one if this reading has UV activity

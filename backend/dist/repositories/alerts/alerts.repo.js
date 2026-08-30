@@ -72,5 +72,13 @@ class AlertsRepository {
             data: { isRead: true }
         });
     }
+    /**
+     * Returns the total count of active (unread and non-dismissed) alerts.
+     */
+    async countActiveAlerts(userId) {
+        return prisma_1.prisma.alert.count({
+            where: { userId, isDismissed: false, isRead: false }
+        });
+    }
 }
 exports.AlertsRepository = AlertsRepository;

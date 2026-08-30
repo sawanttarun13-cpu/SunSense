@@ -10,6 +10,7 @@ GUVAS12SD::GUVAS12SD(int outPin)
     : _outPin(outPin),
       _lastRawADC(0),
       _lastVoltage(0.0f),
+      _lastCorrectedVoltage(0.0f),
       _lastUVIndex(0.0f),
       _lastUVIntensity(0.0f),
       _saturated(false) {
@@ -25,6 +26,7 @@ void GUVAS12SD::begin() {
 
     _lastRawADC      = 0;
     _lastVoltage     = 0.0f;
+    _lastCorrectedVoltage = 0.0f;
     _lastUVIndex     = 0.0f;
     _lastUVIntensity = 0.0f;
     _saturated       = false;
@@ -210,16 +212,18 @@ float GUVAS12SD::convertToUVIndex(
 
 
     // -------------------------------------------------------------------------
-    // Remove optional calibration voltage offset.
+    // Subtract physical dark offset
     // -------------------------------------------------------------------------
 
-    float calibratedVoltage =
+    float correctedVoltage =
         voltage -
-        GUVAS12SD_CALIBRATION_OFFSET_V;
+        GUVAS12SD_DARK_OFFSET_V;
 
 
-    if (calibratedVoltage < 0.0f)
-        calibratedVoltage = 0.0f;
+    if (correctedVoltage < 0.0f)
+        correctedVoltage = 0.0f;
+        
+    _lastCorrectedVoltage = correctedVoltage;
 
 
     // -------------------------------------------------------------------------
@@ -234,9 +238,9 @@ float GUVAS12SD::convertToUVIndex(
 
     float uvIndex =
 
-        calibratedVoltage
+        correctedVoltage
         *
-        GUVAS12SD_UVI_PER_VOLT;
+        GUVAS12SD_BASE_UVI_PER_VOLT;
 
 
     // -------------------------------------------------------------------------
@@ -335,9 +339,16 @@ float GUVAS12SD::readUVIndex() {
         + " | V="
         + String(voltage, 3)
         + "V"
+        
+        + " | CorrectedV="
+        + String(_lastCorrectedVoltage, 3)
+        + "V"
 
-        + " | UVI="
+        + " | RawUVI="
         + String(uvIndex, 2)
+
+        + " | FilteredUVI="
+        + String(uvIndex, 2) // Will be properly logged in main.cpp after EMA
 
         + " | UV="
         + String(intensity, 5)
@@ -369,6 +380,12 @@ int GUVAS12SD::getLastRawADC() const {
 float GUVAS12SD::getLastVoltage() const {
 
     return _lastVoltage;
+}
+
+
+float GUVAS12SD::getLastCorrectedVoltage() const {
+
+    return _lastCorrectedVoltage;
 }
 
 

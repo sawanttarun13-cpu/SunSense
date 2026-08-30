@@ -12,7 +12,7 @@ import { socket } from '../lib/socketClient';
 import { Download, ChevronLeft, ChevronRight, ArrowUpDown } from 'lucide-react';
 import {
   PAGE_SIZE,
-  fmtDate, fmtTime, exportCSV,
+  fmtDate, fmtTime, fmtDuration, exportCSV,
 } from '../utils/history';
 import type { UVLogEntry } from '../types/history';
 import { getUVZone } from '../constants/uv';
@@ -40,9 +40,11 @@ export function History() {
       if (!isMounted.current) return;
       
       let rows = [...res.data];
-      rows.sort((a, b) => sortDir === 'desc'
-        ? b.date.getTime() - a.date.getTime()
-        : a.date.getTime() - b.date.getTime());
+      rows.sort((a, b) => {
+        const timeA = new Date(a.recordedAt).getTime();
+        const timeB = new Date(b.recordedAt).getTime();
+        return sortDir === 'desc' ? timeB - timeA : timeA - timeB;
+      });
       
       setLogs(rows);
       setPaginationMeta(res.pagination);
@@ -63,9 +65,11 @@ export function History() {
     }, 500);
   }, [fetchHistory]);
 
-  useSocketEvent('exposure:updated', () => {
+  const handleExposureUpdated = useCallback(() => {
     debouncedRefetch();
-  });
+  }, [debouncedRefetch]);
+
+  useSocketEvent('exposure:updated', handleExposureUpdated);
 
   useEffect(() => {
     isMounted.current = true;
@@ -89,8 +93,8 @@ export function History() {
   const totalEntries = paginationMeta?.total || 0;
 
   // Summary counts for current page (no global aggregates on backend yet)
-  const highCount = logs.filter(r => r.uv > 6).length;
-  const avgUV = logs.length > 0 ? (logs.reduce((s, r) => s + r.uv, 0) / logs.length).toFixed(1) : '0.0';
+  const pageHighEvents = logs.filter(l => getUVZone(l.uvIndex).level >= 3).length; // High+ risk
+  const avgUv = logs.length > 0 ? (logs.reduce((sum, l) => sum + l.uvIndex, 0) / logs.length).toFixed(1) : '0.0';
 
   if (loading && logs.length === 0) return <LoadingState />;
   if (error) return <ErrorState onRetry={() => window.location.reload()} />;
@@ -119,8 +123,8 @@ export function History() {
       <div className="grid grid-cols-2 xl:grid-cols-3 gap-3 mb-5">
         {[
           { label: 'Total Logs', value: totalEntries, color: '#2563EB' },
-          { label: 'Page High UV Events', value: highCount, color: '#EF4444' },
-          { label: 'Page Average UV', value: avgUV, color: '#F97316' },
+          { label: 'Page High UV Events', value: pageHighEvents, color: '#EF4444' },
+          { label: 'Page Average UV', value: avgUv, color: '#F97316' },
         ].map(({ label, value, color }) => (
           <div key={label} className="bg-white rounded-2xl p-4 shadow-sm" style={{ border: '1px solid #E8F0FE' }}>
             <div className="text-slate-400 mb-1" style={{ fontSize: '0.7rem', textTransform: 'uppercase', fontWeight: 500, letterSpacing: '0.04em' }}>{label}</div>
@@ -129,16 +133,7 @@ export function History() {
         ))}
       </div>
 
-      {/* Note on filters */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm mb-4" style={{ border: '1px solid #E8F0FE' }}>
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="text-slate-400" style={{ fontSize: '0.8rem' }}>
-            Search and Filtering are disabled while we transition to server-side paginated queries.
-            <br/>
-            Showing page <strong className="text-slate-600">{page}</strong> of <strong className="text-slate-600">{totalPages}</strong>.
-          </div>
-        </div>
-      </div>
+      {/* Removed old filter note as pagination is now implemented natively */}
 
       {/* Table */}
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden" style={{ border: '1px solid #E8F0FE' }}>
@@ -172,12 +167,12 @@ export function History() {
               )}
               {logs.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="text-center py-12 text-slate-400" style={{ fontSize: '0.85rem' }}>
+                  <td colSpan={6} className="text-center py-12 text-slate-400" style={{ fontSize: '0.85rem' }}>
                     No results found
                   </td>
                 </tr>
               ) : logs.map((log, i) => {
-                const z = getUVZone(log.uv);
+                const z = getUVZone(log.uvIndex);
                 return (
                   <tr
                     key={log.id}
@@ -189,12 +184,12 @@ export function History() {
                     onMouseEnter={e => (e.currentTarget.style.background = '#EFF6FF')}
                     onMouseLeave={e => (e.currentTarget.style.background = i % 2 === 0 ? '#fff' : '#FAFCFF')}
                   >
-                    <td className="px-4 py-3 font-medium" style={{ fontSize: '0.8rem', color: '#1E293B' }}>{fmtDate(log.date)}</td>
-                    <td className="px-4 py-3" style={{ fontSize: '0.8rem', color: '#64748B' }}>{fmtTime(log.date)}</td>
+                    <td className="px-4 py-3 font-medium" style={{ fontSize: '0.8rem', color: '#1E293B' }}>{fmtDate(log.recordedAt)}</td>
+                    <td className="px-4 py-3" style={{ fontSize: '0.8rem', color: '#64748B' }}>{fmtTime(log.recordedAt)}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full" style={{ background: z.color }} />
-                        <span className="font-bold" style={{ fontSize: '0.88rem', color: '#1E293B' }}>{log.uv.toFixed(1)}</span>
+                        <span className="font-bold" style={{ fontSize: '0.88rem', color: '#1E293B' }}>{log.uvIndex.toFixed(1)}</span>
                       </div>
                     </td>
                     <td className="px-4 py-3">

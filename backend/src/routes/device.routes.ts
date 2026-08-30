@@ -30,5 +30,6 @@ router.get('/', requireAuth, deviceController.getDevice);
 // Device-facing APIs
 router.post('/authenticate', requireDeviceAuth, deviceController.authenticate);
 router.post('/heartbeat', requireDeviceAuth, validateRequest(HeartbeatSchema), deviceController.heartbeat.bind(deviceController));
+router.get('/firmware', requireDeviceAuth, deviceController.getFirmware.bind(deviceController));
 
 export default router;

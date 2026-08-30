@@ -99,9 +99,15 @@ ApiResult ApiClient::sendReadings(const Reading* readings, int count) {
       result.success = true; // HTTP 200 still counts as success
       result.message = "OK (response parse failed)";
     }
-  } else {
-    result.message = "HTTP " + String(result.httpCode);
+  } else if (result.httpCode == 401 || result.httpCode == 403) {
+    // Non-retryable configuration error
+    result.success = false;
+    result.message = "HTTP " + String(result.httpCode) + " (Credentials invalid/revoked)";
     Logger::error("API", "sendReadings failed — " + result.message);
+  } else {
+    // Retryable network/server error
+    result.message = "HTTP " + String(result.httpCode);
+    Logger::error("API", "sendReadings failed (Retryable) — " + result.message);
   }
 
   http.end();

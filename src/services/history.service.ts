@@ -11,13 +11,14 @@ import type { UVLogEntry } from '../types/history';
 
 export const historyService = {
   getLogs: async (page = 1, limit = 14) => {
-    const res = await apiClient.get('/history', { params: { page, limit } });
+    const res = await apiClient.get('/readings/history', { params: { page, limit } });
     
-    // Map backend ExposureSession to UVLogEntry
-    const mapped: UVLogEntry[] = res.data.data.map((session: any) => ({
-      id: session.sessionId,
-      date: new Date(session.startTime),
-      uv: Number(session.averageUvIndex)
+    // Map backend UVReading to UVLogEntry
+    const mapped: UVLogEntry[] = res.data.data.map((reading: any) => ({
+      id: reading.id,
+      deviceId: reading.deviceId,
+      recordedAt: reading.recordedAt,
+      uvIndex: Number(reading.uvIndex)
     }));
 
     return {

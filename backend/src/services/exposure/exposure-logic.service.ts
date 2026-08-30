@@ -43,6 +43,7 @@
 import { ReadingRepository } from '../../repositories/reading/reading.repo';
 import { ExposureRepository } from '../../repositories/exposure/exposure.repo';
 import { CalculationService } from '../calculation/calculation.service';
+import { Prisma } from '@prisma/client';
 
 export class ExposureLogicService {
   private readingRepo = new ReadingRepository();
@@ -91,7 +92,25 @@ export class ExposureLogicService {
       try {
         await this.readingRepo.createReading(deviceId, uvValue, recDate);
         inserted++;
-      } catch { continue; } // Duplicate reading — DB unique constraint thrown; skip silently
+      } catch (err) { 
+        if (err instanceof Prisma.PrismaClientKnownRequestError) {
+          if (err.code === 'P2002') {
+            // Check if it's the specific unique constraint on (deviceId, recordedAt)
+            // Note: Prisma meta.target usually contains the index name or fields
+            const target = (err.meta?.target as string[]) || [];
+            if (target.includes('deviceId') && target.includes('recordedAt')) {
+                // Expected duplicate reading. Skip silently.
+                continue;
+            } else if (typeof err.meta?.target === 'string' && err.meta.target.includes('deviceId_recordedAt')) {
+                // Prisma sometimes returns the index name as a string
+                continue;
+            }
+          }
+        }
+        // Unexpected DB error — do not swallow. Throw so the batch fails 
+        // and the device does not remove the reading from its offline queue.
+        throw err;
+      }
       
       const lastSession = await this.exposureRepo.getLastSession(deviceId, recDate);
       

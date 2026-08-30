@@ -112,5 +112,38 @@ class DeviceController {
             return (0, apiResponse_1.sendError)(res, error.message, 500);
         }
     }
+    /**
+     * GET /api/v1/device/firmware
+     *
+     * Device Auth Route | Requires: x-device-id + x-api-key headers
+     *
+     * Serves OTA firmware updates to the ESP8266 device.
+     * Compares the 'x-ESP8266-version' header with the configured latest version.
+     *
+     * Responses:
+     * 304 → Not Modified (Firmware up to date)
+     * 200 → binary stream (Update available)
+     */
+    async getFirmware(req, res) {
+        try {
+            const currentVersion = req.headers['x-esp8266-version'];
+            const latestVersion = process.env.LATEST_FIRMWARE_VERSION || '1.1.0-phase8';
+            if (currentVersion === latestVersion) {
+                return res.status(304).end(); // Up to date
+            }
+            const fs = require('fs');
+            const path = require('path');
+            const firmwarePath = path.join(process.cwd(), 'firmware', 'firmware.bin');
+            if (!fs.existsSync(firmwarePath)) {
+                return (0, apiResponse_1.sendError)(res, 'Firmware binary not found on server', 404);
+            }
+            // Serve the binary file
+            res.setHeader('Content-Type', 'application/octet-stream');
+            return res.sendFile(firmwarePath);
+        }
+        catch (error) {
+            return (0, apiResponse_1.sendError)(res, error.message, 500);
+        }
+    }
 }
 exports.DeviceController = DeviceController;
