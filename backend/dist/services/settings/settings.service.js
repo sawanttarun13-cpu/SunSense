@@ -29,6 +29,7 @@ exports.SettingsService = void 0;
  * --------------------------------------------------------
  */
 const settings_repo_1 = require("../../repositories/settings/settings.repo");
+const smart_alert_preferences_1 = require("../../utils/smart-alert-preferences");
 const settingsRepo = new settings_repo_1.SettingsRepository();
 class SettingsService {
     /**
@@ -38,15 +39,20 @@ class SettingsService {
      * allowing the frontend to show default/empty states gracefully.
      *
      * @param userId - UUID of the authenticated user.
-     * @returns      { alertThreshold, emailNotifications, pushNotifications }
+     * @returns      { alertThreshold, emailNotifications, pushNotifications, smartAlertsEnabled, smartAlertPreferences }
      *               (each field may be null if not yet configured)
      */
     async getSettings(userId) {
         const data = await settingsRepo.findByUserId(userId);
+        const prefs = (0, smart_alert_preferences_1.normalizeSmartAlertPreferences)(data.preferences?.smartAlertPreferences);
+        // Extract masterEnabled so we can expose it as smartAlertsEnabled to the frontend API
+        const { masterEnabled, ...childPreferences } = prefs;
         return {
             alertThreshold: data.settings?.alertThreshold ?? null,
             emailNotifications: data.preferences?.emailNotifications ?? null,
             pushNotifications: data.preferences?.pushNotifications ?? null,
+            smartAlertsEnabled: masterEnabled,
+            smartAlertPreferences: childPreferences,
         };
     }
     /**
@@ -63,12 +69,31 @@ class SettingsService {
      * @param data.alertThreshold      - UV Index trigger threshold (optional).
      * @param data.emailNotifications  - Email notification toggle (optional).
      * @param data.pushNotifications   - Push notification toggle (optional).
+     * @param data.smartAlertsEnabled  - Master toggle for smart alerts (optional).
+     * @param data.smartAlertPreferences - Specific smart alert toggles (optional).
      * @returns                        Updated settings (same as getSettings return shape).
      */
     async updateSettings(userId, data) {
         // Each upsert only runs if the relevant field is present in the payload
         await settingsRepo.upsertSettings(userId, data.alertThreshold);
-        await settingsRepo.upsertPreferences(userId, data.emailNotifications, data.pushNotifications);
+        let smartAlertPrefs = undefined;
+        // Build the partial update object for smart alert preferences
+        if (data.smartAlertsEnabled !== undefined || data.smartAlertPreferences !== undefined) {
+            smartAlertPrefs = {};
+            if (typeof data.smartAlertsEnabled === 'boolean') {
+                smartAlertPrefs.masterEnabled = data.smartAlertsEnabled;
+            }
+            if (typeof data.smartAlertPreferences === 'object' && data.smartAlertPreferences !== null) {
+                // Explicitly extract and cast to booleans to prevent arbitrary JSON injection
+                const allowedKeys = ['highRisk', 'extremeUv', 'rapidUvIncrease', 'burnWarning', 'reapplySunscreen'];
+                for (const key of allowedKeys) {
+                    if (data.smartAlertPreferences.hasOwnProperty(key)) {
+                        smartAlertPrefs[key] = Boolean(data.smartAlertPreferences[key]);
+                    }
+                }
+            }
+        }
+        await settingsRepo.upsertPreferences(userId, data.emailNotifications, data.pushNotifications, smartAlertPrefs);
         // Return the canonical state from the database (not just the input)
         return this.getSettings(userId);
     }

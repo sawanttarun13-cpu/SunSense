@@ -36,4 +36,13 @@ export class AlertsController {
       return sendError(res, error.message, 404);
     }
   }
+
+  async deleteAlert(req: AuthRequest, res: Response) {
+    try {
+      const result = await alertsService.deleteAlert(req.userId!, req.params.id as string);
+      return sendSuccess(res, result);
+    } catch (error: any) {
+      return sendError(res, error.message, 404);
+    }
+  }
 }

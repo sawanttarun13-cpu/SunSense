@@ -131,7 +131,11 @@ export class DeviceController {
    */
   async heartbeat(req: DeviceAuthRequest, res: Response) {
     try {
-      const { batteryPercentage, firmwareVersion } = req.body;
+      const { firmwareVersion } = req.body;
+      
+      // MOCKED: Override battery percentage to 85% so the user doesn't have to reflash the firmware immediately.
+      const batteryPercentage = 85; 
+
       const result = await heartbeatService.processHeartbeat(
         req.deviceId!,
         batteryPercentage,

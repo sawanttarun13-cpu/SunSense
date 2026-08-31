@@ -67,33 +67,64 @@ export class SettingsRepository {
   /**
    * Creates or updates the user's notification preferences.
    *
-   * If neither emailNotif nor pushNotif is provided, short-circuits
-   * without touching the database.
+   * If no parameters are provided, short-circuits without touching the database.
    *
    * Default values for quietHoursStart/End are set to midnight UTC
    * (1970-01-01T00:00:00Z) on initial creation because PostgreSQL's
    * TIME column requires a non-null value. These will be made configurable
    * in a future phase when the quiet hours UI is implemented.
    *
-   * @param userId      - UUID of the authenticated user.
-   * @param emailNotif  - Toggle email notifications. Optional.
-   * @param pushNotif   - Toggle push notifications. Optional.
-   * @returns           The upserted NotificationPreference record, or null if nothing was provided.
+   * @param userId               - UUID of the authenticated user.
+   * @param emailNotif           - Toggle email notifications. Optional.
+   * @param pushNotif            - Toggle push notifications. Optional.
+   * @param smartAlertPrefs      - Partial updates for smart alert preferences. Optional.
+   * @returns                    The upserted NotificationPreference record, or null if nothing was provided.
    */
-  async upsertPreferences(userId: string, emailNotif?: boolean, pushNotif?: boolean) {
-    if (emailNotif === undefined && pushNotif === undefined) return null;
+  async upsertPreferences(
+    userId: string, 
+    emailNotif?: boolean, 
+    pushNotif?: boolean,
+    smartAlertPrefs?: any
+  ) {
+    if (emailNotif === undefined && pushNotif === undefined && smartAlertPrefs === undefined) {
+      return null;
+    }
 
     // Default placeholder for quietHours — required by the DB schema.
     // Will be replaced with actual user-configurable times in Phase 8.
     const defaultDate = new Date('1970-01-01T00:00:00Z');
 
+    let newSmartAlertPreferences: any = undefined;
+
+    if (smartAlertPrefs !== undefined) {
+      const existingPrefs = await prisma.notificationPreference.findUnique({ where: { userId } });
+      const currentJson = existingPrefs?.smartAlertPreferences || {};
+      
+      // Perform a shallow merge so we only update the keys explicitly provided
+      newSmartAlertPreferences = {
+        ...(typeof currentJson === 'object' && currentJson !== null ? currentJson : {}),
+        ...smartAlertPrefs
+      };
+    }
+
+    const updateData: any = {};
+    if (emailNotif !== undefined) updateData.emailNotifications = emailNotif;
+    if (pushNotif !== undefined) updateData.pushNotifications = pushNotif;
+    if (newSmartAlertPreferences !== undefined) updateData.smartAlertPreferences = newSmartAlertPreferences;
+
+    // For create, we merge defaults with provided prefs
+    const createSmartAlertPrefs = newSmartAlertPreferences !== undefined 
+      ? newSmartAlertPreferences 
+      : (smartAlertPrefs || {});
+
     return prisma.notificationPreference.upsert({
       where: { userId },
-      update: { emailNotifications: emailNotif, pushNotifications: pushNotif },
+      update: updateData,
       create: { 
         userId, 
         emailNotifications: emailNotif ?? true, 
         pushNotifications: pushNotif ?? true,
+        smartAlertPreferences: createSmartAlertPrefs,
         quietHoursStart: defaultDate,
         quietHoursEnd: defaultDate
       }

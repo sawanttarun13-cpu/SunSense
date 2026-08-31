@@ -13,6 +13,8 @@ import { SEVERITY_STYLES, FILTER_TABS } from '../constants/alerts';
 import { alertsService, PaginatedAlerts } from '../services/alerts.service';
 import { LoadingState } from '../components/common/LoadingState';
 import { ErrorState } from '../components/common/ErrorState';
+import { useSocketEvent } from '../hooks/useSocketEvent';
+import { useCallback } from 'react';
 
 const getAlertIcon = (severity: string) => {
   switch (severity) {
@@ -37,7 +39,7 @@ export function Alerts() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
-  const fetchAlerts = (status = 'all') => {
+  const fetchAlerts = useCallback((status = 'all') => {
     setLoading(true);
     alertsService.getAlerts(1, 100, status)
       .then(data => {
@@ -45,11 +47,19 @@ export function Alerts() {
         setLoading(false);
       })
       .catch(() => setError(true));
-  };
+  }, []);
 
   useEffect(() => {
     fetchAlerts(activeFilter);
-  }, [activeFilter]);
+  }, [activeFilter, fetchAlerts]);
+
+  // Handle incoming real-time alerts silently
+  useSocketEvent('alert:new', useCallback(() => {
+    // We refetch silently without setting loading to true, so it doesn't flicker
+    alertsService.getAlerts(1, 100, activeFilter)
+      .then(data => setAlertsData(data))
+      .catch(console.error);
+  }, [activeFilter]));
 
   const handleDismiss = async (id: string) => {
     try {
@@ -64,15 +74,31 @@ export function Alerts() {
     }
   };
 
+  const handleDelete = async (id: string) => {
+    try {
+      await alertsService.deleteAlert(id);
+      // Optimistically remove from UI
+      setAlertsData(prev => prev ? {
+        ...prev,
+        data: prev.data.filter(a => a.id !== id)
+      } : null);
+    } catch (e) {
+      console.error('Failed to delete alert', e);
+    }
+  };
+
   if (loading && !alertsData) return <LoadingState />;
   if (error) return <ErrorState onRetry={() => fetchAlerts(activeFilter)} />;
 
-  const alerts = alertsData?.data || [];
+  const allAlerts = alertsData?.data || [];
+  const alerts = activeFilter === 'all' 
+    ? allAlerts 
+    : allAlerts.filter(a => a.severity === activeFilter);
   
   // Just derive counts from visible if API filtering is applied, or if API doesn't return total breakdown
   // Note: Since we fetch based on filter, we only have counts for the currently fetched alerts.
   // To keep it simple, we just show the total we got from pagination.
-  const activeCount = alerts.filter(a => !a.isRead).length;
+  const activeCount = allAlerts.filter(a => !a.isRead).length;
 
   return (
     <div className="p-5 md:p-6 max-w-4xl mx-auto">
@@ -136,8 +162,12 @@ export function Alerts() {
 
                 {/* Card */}
                 <div
-                  className="flex-1 rounded-2xl p-4 shadow-sm transition-shadow hover:shadow-md"
-                  style={{ background: s.bg, border: `1.5px solid ${s.border}` }}
+                  className="flex-1 rounded-2xl p-4 shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 border"
+                  style={{ 
+                    background: s.bg, 
+                    borderColor: s.border,
+                    boxShadow: alert.isRead ? 'none' : `0 4px 20px -2px ${s.iconBg}`
+                  }}
                 >
                   <div className="flex items-start gap-3">
                     <div className="rounded-xl p-2.5 flex-shrink-0" style={{ background: s.iconBg }}>
@@ -145,47 +175,45 @@ export function Alerts() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center flex-wrap gap-2 mb-1">
-                        <span className="font-semibold text-slate-800" style={{ fontSize: '0.85rem' }}>{alert.title}</span>
+                        <span className="font-semibold text-slate-800" style={{ fontSize: '0.9rem' }}>{alert.title}</span>
                         <span
-                          className="rounded-full px-2 py-0.5 font-semibold"
-                          style={{ fontSize: '0.65rem', background: s.badgeBg, color: s.badgeText }}
+                          className="rounded-full px-2.5 py-0.5 font-bold tracking-wide uppercase"
+                          style={{ fontSize: '0.65rem', background: s.badgeBg, color: s.badgeText, border: `1px solid ${s.border}` }}
                         >
                           {s.label}
                         </span>
                         {!alert.isRead && (
                           <span
-                            className="rounded-full px-2 py-0.5 font-bold animate-pulse"
-                            style={{ fontSize: '0.6rem', background: '#EF4444', color: '#fff' }}
+                            className="rounded-full px-2 py-0.5 font-bold tracking-wide uppercase animate-pulse shadow-sm"
+                            style={{ fontSize: '0.6rem', background: '#EF4444', color: '#fff', boxShadow: '0 0 10px rgba(239,68,68,0.4)' }}
                           >
                             NEW
                           </span>
                         )}
                       </div>
-                      <p className="text-slate-500 leading-relaxed" style={{ fontSize: '0.78rem' }}>{alert.message}</p>
-                      <div className="flex items-center gap-3 mt-2">
-                        <span className="text-slate-400" style={{ fontSize: '0.7rem' }}>{formatTime(alert.createdAt)}</span>
+                      <p className="text-slate-600 leading-relaxed mt-1" style={{ fontSize: '0.85rem' }}>{alert.message}</p>
+                      <div className="flex items-center gap-3 mt-3">
+                        <span className="text-slate-400 font-medium tracking-wide" style={{ fontSize: '0.75rem' }}>{formatTime(alert.triggeredAt)}</span>
                         {alert.uvValue !== undefined && alert.uvValue !== null && (
                           <span
-                            className="rounded-full px-2 py-0.5 font-bold"
-                            style={{ fontSize: '0.68rem', background: s.iconBg, color: s.iconColor }}
+                            className="rounded-full px-2.5 py-0.5 font-bold tracking-wide shadow-sm"
+                            style={{ fontSize: '0.7rem', background: s.iconBg, color: s.iconColor, border: `1px solid ${s.border}` }}
                           >
                             UV {alert.uvValue.toFixed(1)}
                           </span>
                         )}
                       </div>
                     </div>
-                    {!alert.isRead && (
                       <button
-                        onClick={() => handleDismiss(alert.id)}
-                        className="flex-shrink-0 rounded-lg p-1 transition-colors"
+                        onClick={() => handleDelete(alert.id)}
+                        className="flex-shrink-0 rounded-lg p-1 transition-colors hover:text-red-500"
                         style={{ color: '#94A3B8' }}
-                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,0,0,0.06)')}
+                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)')}
                         onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                        title="Mark Read"
+                        title="Delete Alert"
                       >
-                        <X size={14} />
+                        <X size={16} />
                       </button>
-                    )}
                   </div>
                 </div>
               </div>

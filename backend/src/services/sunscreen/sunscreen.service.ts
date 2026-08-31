@@ -101,4 +101,17 @@ export class SunscreenService {
     const diff = (expiresAt.getTime() - now.getTime()) / 60000;
     return Math.max(0, Math.floor(diff));
   }
+
+  /**
+   * Cancels the active sunscreen application.
+   */
+  async cancelApplication(userId: string) {
+    const result = await this.repo.deleteActiveApplication(userId);
+    try {
+      this.realtime.emitDashboardUpdate(userId, { timestamp: new Date().toISOString() });
+    } catch (err) {
+      console.error(`[RealtimeEventService] Failed to emit sunscreen cancel update for user ${userId}:`, err);
+    }
+    return result;
+  }
 }

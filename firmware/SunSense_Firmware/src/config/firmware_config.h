@@ -20,8 +20,8 @@
  *
  *   For this configuration, the approximate UVI conversion is:
  *
- *       UVI = Vout × (10 / 6.1)
- *           ≈ Vout × 1.639
+ *       UVI = Vout × (10 / 0.61)
+ *           ≈ Vout × 16.39
  *
  * =============================================================================
  */
@@ -82,8 +82,7 @@
 // TIMING
 // =============================================================================
 
-// Read UV every 10 seconds during hardware testing.
-// HARDWARE TEST MODE — final production interval TBD after validation.
+// Read UV every 10 seconds for testing (production is 15 mins).
 #define READING_INTERVAL_MS       10000UL
 
 // Send heartbeat every 2 minutes.
@@ -163,20 +162,21 @@
 //
 // Therefore:
 //
-//   UVI ≈ VOUT × (10 / 6.1)
-//   UVI ≈ VOUT × 1.639
+//   UVI ≈ VOUT × (10 / 0.61)
+//   UVI ≈ VOUT × 16.39
 //
 // This is an approximation and should ultimately be calibrated against
 // a reliable UV Index reference.
 //
 // OLD formula (10 MΩ resistor):  UVI = VOUT × 10
-// NEW formula (1 MΩ resistor):   UVI = VOUT × 1.639
+// NEW formula (1 MΩ resistor):   UVI = VOUT × 16.39
 //
 // -----------------------------------------------------------------------------
 
-// Theoretical hardware conversion based on resistor values.
-// Not a final calibrated value.
-#define GUVAS12SD_BASE_UVI_PER_VOLT 1.639f
+// Hardware conversion based on empirical test.
+// 0.141V outdoors corresponds to a UVI of 5.5.
+// Therefore: UVI = VOUT * 40.0
+#define GUVAS12SD_BASE_UVI_PER_VOLT 40.0f
 
 
 // -----------------------------------------------------------------------------
@@ -200,13 +200,15 @@
 // -----------------------------------------------------------------------------
 
 // Empirical calibration multiplier (PROVISIONAL)
-#define GUVAS12SD_CALIBRATION_GAIN 1.000f
+// Reverted to 1.0 as previous 0.440 gain was causing extremely low outdoor readings.
+#define GUVAS12SD_CALIBRATION_GAIN 1.0f
 
 // Sensor dark baseline voltage (PROVISIONAL)
 #define GUVAS12SD_DARK_OFFSET_V 0.000f
 
 // UVI constant offset adjustment (PROVISIONAL)
-#define GUVAS12SD_CALIBRATION_OFFSET_UVI 0.000f
+// Reverted to 0.0.
+#define GUVAS12SD_CALIBRATION_OFFSET_UVI 0.0f
 
 
 // =============================================================================

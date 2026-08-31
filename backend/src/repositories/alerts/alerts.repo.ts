@@ -74,11 +74,56 @@ export class AlertsRepository {
   }
 
   /**
+   * Deletes a specific alert permanently.
+   */
+  async deleteAlert(userId: string, alertId: string) {
+    return prisma.alert.deleteMany({
+      where: { id: alertId, userId }
+    });
+  }
+
+  /**
    * Returns the total count of active (unread and non-dismissed) alerts.
    */
   async countActiveAlerts(userId: string) {
     return prisma.alert.count({
       where: { userId, isDismissed: false, isRead: false }
+    });
+  }
+
+  /**
+   * Creates a new alert for a user.
+   */
+  async createAlert(
+    userId: string,
+    type: any, // AlertType
+    message: string,
+    referenceId?: string,
+    triggeredAt: Date = new Date()
+  ) {
+    return prisma.alert.create({
+      data: {
+        userId,
+        type,
+        message,
+        referenceId,
+        triggeredAt
+      }
+    });
+  }
+
+  /**
+   * Gets the most recent alert of a specific type for a user, optionally filtered by a sinceTime (cooldown).
+   */
+  async getLastAlertOfType(userId: string, type: any, sinceTime?: Date) {
+    const where: any = { userId, type };
+    if (sinceTime) {
+      where.triggeredAt = { gte: sinceTime };
+    }
+
+    return prisma.alert.findFirst({
+      where,
+      orderBy: { triggeredAt: 'desc' }
     });
   }
 }

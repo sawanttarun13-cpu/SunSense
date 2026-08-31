@@ -75,4 +75,16 @@ export class AlertsService {
     await alertsRepo.markAsRead(userId, alertId);
     return { success: true };
   }
+
+  /**
+   * Deletes a specific alert permanently.
+   *
+   * @param userId  - UUID of the authenticated user.
+   * @param alertId - UUID of the alert to delete.
+   * @returns       { success: true }
+   */
+  async deleteAlert(userId: string, alertId: string) {
+    await alertsRepo.deleteAlert(userId, alertId);
+    return { success: true };
+  }
 }

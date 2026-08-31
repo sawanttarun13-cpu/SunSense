@@ -46,6 +46,7 @@ exports.ExposureLogicService = void 0;
 const reading_repo_1 = require("../../repositories/reading/reading.repo");
 const exposure_repo_1 = require("../../repositories/exposure/exposure.repo");
 const calculation_service_1 = require("../calculation/calculation.service");
+const smart_alert_engine_service_1 = require("../alerts/smart-alert-engine.service");
 const client_1 = require("@prisma/client");
 class ExposureLogicService {
     readingRepo = new reading_repo_1.ReadingRepository();
@@ -173,6 +174,16 @@ class ExposureLogicService {
         let latestProcessedAt = null;
         if (sorted.length > 0) {
             latestProcessedAt = sorted[sorted.length - 1].recordedAt;
+        }
+        // Evaluate smart alerts on the final state of the batch
+        if (latestProcessedAt) {
+            const finalSession = await this.exposureRepo.getLastSession(deviceId, new Date(latestProcessedAt));
+            if (finalSession) {
+                // Run asynchronously, catch errors so it never fails ingestion
+                smart_alert_engine_service_1.smartAlertEngine.evaluate(userId, deviceId, finalSession.sessionId).catch(err => {
+                    console.error('[ExposureLogicService] Smart Alert Engine evaluation failed:', err);
+                });
+            }
         }
         return { inserted, duplicates: readings.length - inserted, latestProcessedAt };
     }

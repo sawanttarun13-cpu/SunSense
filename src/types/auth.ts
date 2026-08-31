@@ -15,4 +15,10 @@ export interface User {
   name: string;
   skinType?: number;
   preferredSpf?: number;
+  stats?: {
+    daysTracked: number;
+    avgDailyUv: string;
+    highUvDays: number;
+    totalExposureHours: number;
+  };
 }

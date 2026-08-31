@@ -43,6 +43,7 @@
 import { ReadingRepository } from '../../repositories/reading/reading.repo';
 import { ExposureRepository } from '../../repositories/exposure/exposure.repo';
 import { CalculationService } from '../calculation/calculation.service';
+import { smartAlertEngine } from '../alerts/smart-alert-engine.service';
 import { Prisma } from '@prisma/client';
 
 export class ExposureLogicService {
@@ -185,6 +186,17 @@ export class ExposureLogicService {
     let latestProcessedAt: string | null = null;
     if (sorted.length > 0) {
       latestProcessedAt = sorted[sorted.length - 1].recordedAt;
+    }
+    
+    // Evaluate smart alerts on the final state of the batch
+    if (latestProcessedAt) {
+      const finalSession = await this.exposureRepo.getLastSession(deviceId, new Date(latestProcessedAt));
+      if (finalSession) {
+        // Run asynchronously, catch errors so it never fails ingestion
+        smartAlertEngine.evaluate(userId, deviceId, finalSession.sessionId).catch(err => {
+          console.error('[ExposureLogicService] Smart Alert Engine evaluation failed:', err);
+        });
+      }
     }
     
     return { inserted, duplicates: readings.length - inserted, latestProcessedAt };

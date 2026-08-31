@@ -80,5 +80,33 @@ class AlertsRepository {
             where: { userId, isDismissed: false, isRead: false }
         });
     }
+    /**
+     * Creates a new alert for a user.
+     */
+    async createAlert(userId, type, // AlertType
+    message, referenceId, triggeredAt = new Date()) {
+        return prisma_1.prisma.alert.create({
+            data: {
+                userId,
+                type,
+                message,
+                referenceId,
+                triggeredAt
+            }
+        });
+    }
+    /**
+     * Gets the most recent alert of a specific type for a user, optionally filtered by a sinceTime (cooldown).
+     */
+    async getLastAlertOfType(userId, type, sinceTime) {
+        const where = { userId, type };
+        if (sinceTime) {
+            where.triggeredAt = { gte: sinceTime };
+        }
+        return prisma_1.prisma.alert.findFirst({
+            where,
+            orderBy: { triggeredAt: 'desc' }
+        });
+    }
 }
 exports.AlertsRepository = AlertsRepository;

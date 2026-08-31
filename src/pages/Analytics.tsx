@@ -35,7 +35,9 @@ function BarTip({ active, payload, label }: any) {
         <div key={p.dataKey ?? p.name ?? idx} className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full" style={{ background: p.color }} />
           <span className="text-slate-500">{p.name}:</span>
-          <span className="font-semibold text-slate-700">{p.value}</span>
+          <span className="font-semibold text-slate-700">
+            {typeof p.value === 'number' ? p.value.toFixed(1) : p.value}
+          </span>
         </div>
       ))}
     </div>

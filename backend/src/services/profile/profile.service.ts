@@ -39,7 +39,13 @@ export class ProfileService {
   async getProfile(userId: string) {
     const profile = await profileRepo.findById(userId);
     if (!profile) throw new Error('Profile not found');
-    return profile;
+    
+    const stats = await profileRepo.getStats(userId);
+    
+    return {
+      ...profile,
+      stats
+    };
   }
 
   /**

@@ -1,11 +1,12 @@
-import { HistoryService } from './src/services/history/history.service';
+import axios from 'axios';
+import * as jwt from 'jsonwebtoken';
 
-async function run() {
-  const userId = 'be6fc0f4-6c04-4abe-a55a-bb080e892153';
-  
-  const historySvc = new HistoryService();
-  const hist = await historySvc.getHistory(userId, 1, 5);
-  console.log('HISTORY:');
-  console.log(JSON.stringify(hist, null, 2));
+async function test() {
+  const token = jwt.sign({ userId: '3c82e666-6b21-4d1a-82fa-27352fbb6b8b' }, 'sunsense_jwt_secret_dev_2026_change_in_production', { expiresIn: '1d' });
+  const res = await axios.get('http://localhost:5000/api/v1/alerts?status=all', {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  console.log(JSON.stringify(res.data, null, 2));
 }
-run();
+
+test().catch(console.error);

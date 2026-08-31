@@ -63,4 +63,17 @@ export class SunscreenRepository {
       orderBy: { appliedAt: 'desc' }
     });
   }
+
+  /**
+   * Deletes the most recent sunscreen application for the user.
+   */
+  async deleteActiveApplication(userId: string) {
+    const app = await this.getActiveApplication(userId);
+    if (app) {
+      return prisma.sunscreenApplication.delete({
+        where: { id: app.id }
+      });
+    }
+    return null;
+  }
 }

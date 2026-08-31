@@ -133,14 +133,14 @@ export class DashboardService {
     }
 
     const averageUv = readings.length > 0 ? sumUv / readings.length : 0;
-    const currentUv = readings.length > 0 ? Number(readings[0].uvIndex) : 0;
+    const lastPing = device.lastPing;
+    const isOnline = lastPing ? (new Date().getTime() - lastPing.getTime()) < 150000 : false;
+
+    const currentUv = (isOnline && readings.length > 0) ? Number(readings[0].uvIndex) : 0;
 
     const currentRisk = calcService.calculateRisk(currentUv);
     const skinType = user?.skinType || 3;
     const currentSpfRecommendation = calcService.recommendSpf(currentUv, skinType);
-
-    const lastPing = device.lastPing;
-    const isOnline = lastPing ? (new Date().getTime() - lastPing.getTime()) < 300000 : false;
 
     let activeProtection = false;
     let protectionRemaining = 0;

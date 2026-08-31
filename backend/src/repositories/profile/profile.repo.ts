@@ -64,4 +64,47 @@ export class ProfileRepository {
       select: { id: true, email: true, name: true, skinType: true, preferredSpf: true }
     });
   }
+
+  /**
+   * Retrieves aggregated lifetime stats for the user's profile.
+   */
+  async getStats(userId: string) {
+    const sessions = await prisma.exposureSession.findMany({
+      where: { userId },
+      select: {
+        startTime: true,
+        durationSeconds: true,
+        averageUvIndex: true,
+        calculatedRisk: true,
+      }
+    });
+
+    const uniqueDays = new Set<string>();
+    let totalUv = 0;
+    let highUvDaysCount = 0;
+    const highUvDays = new Set<string>();
+    let totalSeconds = 0;
+
+    for (const session of sessions) {
+      const dayKey = session.startTime.toISOString().split('T')[0];
+      uniqueDays.add(dayKey);
+      
+      totalUv += Number(session.averageUvIndex);
+      totalSeconds += session.durationSeconds;
+
+      if (['HIGH', 'VERY_HIGH', 'EXTREME'].includes(session.calculatedRisk)) {
+        highUvDays.add(dayKey);
+      }
+    }
+
+    const daysTracked = uniqueDays.size;
+    const avgDailyUv = sessions.length > 0 ? (totalUv / sessions.length) : 0;
+    
+    return {
+      daysTracked,
+      avgDailyUv: avgDailyUv.toFixed(1),
+      highUvDays: highUvDays.size,
+      totalExposureHours: Math.floor(totalSeconds / 3600),
+    };
+  }
 }

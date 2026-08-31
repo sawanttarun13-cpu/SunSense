@@ -11,4 +11,7 @@ export interface UVLogEntry {
   deviceId: string;
   recordedAt: string;
   uvIndex: number;
+  minimumUvIndex?: number;
+  maximumUvIndex?: number;
+  sampleCount?: number;
 }

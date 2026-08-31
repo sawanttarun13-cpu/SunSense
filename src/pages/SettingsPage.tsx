@@ -6,19 +6,20 @@
  * ---------------------------------------------------------
  */
 
-import { useState, useEffect } from 'react';
-import { ChevronRight, Check, Sliders, Volume2, Mail, Smartphone as SmartphoneIcon } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { ChevronRight, Check, Sliders, Volume2, Mail, Smartphone as SmartphoneIcon, Bell, ShieldAlert, Zap, TrendingUp, Flame, Droplets } from 'lucide-react';
 import { settingsService } from '../services/settings.service';
 import { LoadingState } from '../components/common/LoadingState';
 import { ErrorState } from '../components/common/ErrorState';
 
 // ─── Toggle switch ────────────────────────────────────────────────────────────
-function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) => void }) {
+function Toggle({ on, onChange, disabled }: { on: boolean; onChange: (v: boolean) => void; disabled?: boolean }) {
   return (
     <button
-      onClick={() => onChange(!on)}
+      onClick={() => { if (!disabled) onChange(!on); }}
       role="switch"
       aria-checked={on}
+      disabled={disabled}
       style={{
         position: 'relative',
         display: 'inline-flex',
@@ -27,11 +28,12 @@ function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) => void 
         height: 26,
         borderRadius: 999,
         border: 'none',
-        cursor: 'pointer',
+        cursor: disabled ? 'not-allowed' : 'pointer',
         padding: 0,
         outline: 'none',
         background: on ? '#2563EB' : '#CBD5E1',
         transition: 'background-color 0.3s ease',
+        opacity: disabled ? 0.5 : 1,
       }}
     >
       <span
@@ -68,31 +70,46 @@ function Section({ title, subtitle, children }: { title: string; subtitle?: stri
 
 // ─── Notification row ─────────────────────────────────────────────────────────
 function NotifRow({
-  icon: Icon, iconBg, iconColor, label, sub, on, onChange,
+  icon: Icon, iconBg, iconColor, label, sub, on, onChange, disabled
 }: {
   icon: React.ElementType; iconBg: string; iconColor: string;
-  label: string; sub: string; on: boolean; onChange: (v: boolean) => void;
+  label: string; sub?: string; on: boolean; onChange: (v: boolean) => void; disabled?: boolean;
 }) {
   return (
-    <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: '1px solid #F8FAFF' }}>
+    <div 
+      className="flex items-center gap-3 px-5 py-4" 
+      style={{ 
+        borderBottom: '1px solid #F8FAFF',
+        opacity: disabled ? 0.6 : 1,
+        transition: 'opacity 0.2s ease'
+      }}
+    >
       <div className="rounded-xl p-2.5 flex-shrink-0" style={{ background: iconBg }}>
         <Icon size={14} style={{ color: iconColor }} />
       </div>
       <div className="flex-1 min-w-0">
         <div className="text-slate-700 font-medium" style={{ fontSize: '0.82rem' }}>{label}</div>
-        <div className="text-slate-400 mt-0.5" style={{ fontSize: '0.7rem' }}>{sub}</div>
+        {sub && <div className="text-slate-400 mt-0.5" style={{ fontSize: '0.7rem' }}>{sub}</div>}
       </div>
-      <Toggle on={on} onChange={onChange} />
+      <Toggle on={on} onChange={onChange} disabled={disabled} />
     </div>
   );
 }
-
-// SPF_OPTS and THEME_OPTS imported from constants/settings
 
 // SettingsPage page shown to the user.
 export function SettingsPage() {
   const [threshold, setThreshold] = useState(6);
   const [saved, setSaved] = useState(false);
+  
+  const [smartAlertsEnabled, setSmartAlertsEnabled] = useState(true);
+  const [smartAlertPreferences, setSmartAlertPreferences] = useState({
+    highRisk: true,
+    extremeUv: true,
+    rapidUvIncrease: true,
+    burnWarning: true,
+    reapplySunscreen: true,
+  });
+
   const [notifs, setNotifs] = useState({
     emailNotifications: true,
     pushNotifications: true,
@@ -112,17 +129,45 @@ export function SettingsPage() {
           emailNotifications: settingsData.emailNotifications ?? true,
           pushNotifications: settingsData.pushNotifications ?? true
         });
+        setSmartAlertsEnabled(settingsData.smartAlertsEnabled ?? true);
+        if (settingsData.smartAlertPreferences) {
+          setSmartAlertPreferences(settingsData.smartAlertPreferences);
+        }
         setAbout(aboutData);
         setLoading(false);
+        setTimeout(() => { initialLoadDone.current = true; }, 100);
       })
       .catch(() => setError(true));
   }, []);
 
-  const toggle = (key: keyof typeof notifs) => setNotifs(n => ({ ...n, [key]: !n[key] }));
+  const initialLoadDone = useRef(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (!initialLoadDone.current) return;
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    
+    timeoutRef.current = setTimeout(() => {
+      settingsService.updateSettings({
+        alertThreshold: threshold,
+        smartAlertsEnabled,
+        smartAlertPreferences,
+        ...notifs
+      }).then(() => {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2500);
+      }).catch(() => setError(true));
+    }, 600);
+  }, [threshold, smartAlertsEnabled, smartAlertPreferences, notifs]);
+
+  const toggleNotif = (key: keyof typeof notifs) => setNotifs(n => ({ ...n, [key]: !n[key] }));
+  const toggleSmartAlertPref = (key: keyof typeof smartAlertPreferences) => setSmartAlertPreferences(p => ({ ...p, [key]: !p[key] }));
 
   const handleSave = () => {
     settingsService.updateSettings({
       alertThreshold: threshold,
+      smartAlertsEnabled,
+      smartAlertPreferences,
       ...notifs
     }).then(() => {
       setSaved(true);
@@ -218,10 +263,59 @@ export function SettingsPage() {
         </div>
       </Section>
 
+      {/* Smart Alerts */}
+      <Section title="Smart Alerts" subtitle="Choose which personalized UV alerts you want to receive.">
+        <NotifRow 
+          icon={Bell} iconBg="#F3F4F6" iconColor="#4B5563" 
+          label="Smart Alerts" 
+          sub="Master toggle for all automatic UV alerts" 
+          on={smartAlertsEnabled} 
+          onChange={setSmartAlertsEnabled} 
+        />
+        
+        <div style={{ paddingLeft: '1rem' }}>
+          <NotifRow 
+            icon={ShieldAlert} iconBg="#FEFCE8" iconColor="#CA8A04" 
+            label="High Risk UV" 
+            on={smartAlertPreferences.highRisk} 
+            onChange={() => toggleSmartAlertPref('highRisk')} 
+            disabled={!smartAlertsEnabled}
+          />
+          <NotifRow 
+            icon={Zap} iconBg="#FAF5FF" iconColor="#9333EA" 
+            label="Extreme UV" 
+            on={smartAlertPreferences.extremeUv} 
+            onChange={() => toggleSmartAlertPref('extremeUv')} 
+            disabled={!smartAlertsEnabled}
+          />
+          <NotifRow 
+            icon={TrendingUp} iconBg="#FEF2F2" iconColor="#DC2626" 
+            label="Rapid UV Increase" 
+            on={smartAlertPreferences.rapidUvIncrease} 
+            onChange={() => toggleSmartAlertPref('rapidUvIncrease')} 
+            disabled={!smartAlertsEnabled}
+          />
+          <NotifRow 
+            icon={Flame} iconBg="#FFF7ED" iconColor="#EA580C" 
+            label="Burn Warning" 
+            on={smartAlertPreferences.burnWarning} 
+            onChange={() => toggleSmartAlertPref('burnWarning')} 
+            disabled={!smartAlertsEnabled}
+          />
+          <NotifRow 
+            icon={Droplets} iconBg="#F0FDF4" iconColor="#16A34A" 
+            label="Sunscreen Reapplication" 
+            on={smartAlertPreferences.reapplySunscreen} 
+            onChange={() => toggleSmartAlertPref('reapplySunscreen')} 
+            disabled={!smartAlertsEnabled}
+          />
+        </div>
+      </Section>
+
       {/* Notifications */}
       <Section title="Notification Delivery" subtitle="Choose how you receive alerts">
-        <NotifRow icon={Mail} iconBg="#EFF6FF" iconColor="#2563EB" label="Email Notifications" sub="Receive critical alerts via email" on={notifs.emailNotifications} onChange={() => toggle('emailNotifications')} />
-        <NotifRow icon={SmartphoneIcon} iconBg="#F0FDF4" iconColor="#16A34A" label="Push Notifications" sub="Receive real-time alerts on your device" on={notifs.pushNotifications} onChange={() => toggle('pushNotifications')} />
+        <NotifRow icon={Mail} iconBg="#EFF6FF" iconColor="#2563EB" label="Email Notifications" sub="Receive critical alerts via email" on={notifs.emailNotifications} onChange={() => toggleNotif('emailNotifications')} />
+        <NotifRow icon={SmartphoneIcon} iconBg="#F0FDF4" iconColor="#16A34A" label="Push Notifications" sub="Receive real-time alerts on your device" on={notifs.pushNotifications} onChange={() => toggleNotif('pushNotifications')} />
       </Section>
 
       {/* About */}

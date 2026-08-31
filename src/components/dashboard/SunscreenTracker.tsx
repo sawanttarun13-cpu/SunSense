@@ -10,12 +10,13 @@ import { Shield, Clock, Plus } from 'lucide-react';
 
 interface Props {
   onApplyClick: () => void;
+  onCancelClick?: () => void;
   activeProtection: boolean;
   protectionRemaining: number;
 }
 
 // Reusable SunscreenTracker component.
-export function SunscreenTracker({ onApplyClick, activeProtection, protectionRemaining }: Props) {
+export function SunscreenTracker({ onApplyClick, onCancelClick, activeProtection, protectionRemaining }: Props) {
   const isProtected = activeProtection;
   const isExpired = !activeProtection;
 
@@ -42,7 +43,14 @@ export function SunscreenTracker({ onApplyClick, activeProtection, protectionRem
     statusBg = '#F0FDF4';
     statusText = 'Protected';
     statusIconColor = '#16A34A';
-    progressColor = '#22C55E';
+    
+    if (progress > 50) {
+      progressColor = '#22C55E'; // Green
+    } else if (progress > 15) {
+      progressColor = '#F59E0B'; // Amber/Orange
+    } else {
+      progressColor = '#EF4444'; // Red
+    }
   } else if (isExpired) {
     statusColor = '#EF4444';
     statusBg = '#FEF2F2';
@@ -94,20 +102,32 @@ export function SunscreenTracker({ onApplyClick, activeProtection, protectionRem
         </div>
       </div>
 
-      {/* Action Button */}
-      <button
-        onClick={onApplyClick}
-        className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold transition-colors shadow-sm"
-        style={{
-          background: isProtected ? '#F8FAFF' : '#2563EB',
-          color: isProtected ? '#2563EB' : '#fff',
-          border: isProtected ? '1px solid #BFDBFE' : 'none',
-          fontSize: '0.85rem'
-        }}
-      >
-        <Plus size={16} />
-        {isProtected ? 'Reapply Sunscreen' : 'Apply Sunscreen'}
-      </button>
+      {/* Action Buttons */}
+      <div className="flex gap-3">
+        {isProtected && onCancelClick && (
+          <button
+            onClick={onCancelClick}
+            className="flex-shrink-0 flex items-center justify-center px-4 py-3 rounded-xl transition-colors shadow-sm"
+            style={{ background: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA' }}
+            title="Cancel Application"
+          >
+            <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Cancel</span>
+          </button>
+        )}
+        <button
+          onClick={onApplyClick}
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold transition-colors shadow-sm"
+          style={{
+            background: isProtected ? '#F8FAFF' : '#2563EB',
+            color: isProtected ? '#2563EB' : '#fff',
+            border: isProtected ? '1px solid #BFDBFE' : 'none',
+            fontSize: '0.85rem'
+          }}
+        >
+          <Plus size={16} />
+          {isProtected ? 'Reapply Sunscreen' : 'Apply Sunscreen'}
+        </button>
+      </div>
     </div>
   );
 }

@@ -19,4 +19,5 @@ const ApplySchema = zod_1.z.object({
     appliedAt: zod_1.z.string().datetime().optional()
 });
 router.post('/', requireAuth_1.requireAuth, (0, validateRequest_1.validateRequest)(ApplySchema), controller.apply.bind(controller));
+router.delete('/', requireAuth_1.requireAuth, controller.cancel.bind(controller));
 exports.default = router;

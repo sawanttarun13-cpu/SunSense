@@ -49,6 +49,8 @@ import { PrivateRoute } from './components/PrivateRoute';
 import { PublicRoute } from './components/PublicRoute';
 
 import { SocketProvider } from './context/SocketContext';
+import { Toaster } from './components/ui/sonner';
+import { GlobalAlertListener } from './components/GlobalAlertListener';
 
 /**
  * Root application component.
@@ -61,6 +63,8 @@ export default function App() {
   return (
     <AuthProvider>
       <SocketProvider>
+        <Toaster position="top-left" />
+        <GlobalAlertListener />
         <BrowserRouter>
           <Routes>
             {/* Public auth pages (no sidebar/header layout) */}

@@ -38,6 +38,7 @@ export function Profile() {
   const [saved, setSaved] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [stats, setStats] = useState<any>(null);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -51,7 +52,8 @@ export function Profile() {
       .then(([prof, skins, achs]) => {
         setName(prof.name);
         if(prof.email) setEmail(prof.email);
-        setSkinType(prof.skinType);
+        setSkinType(prof.skinType || 2);
+        if(prof.stats) setStats(prof.stats);
         setSkinTypes(skins);
         setAchievements(achs);
         setLoading(false);
@@ -135,10 +137,10 @@ export function Profile() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
-        <StatCard icon={Calendar} label="Days Tracked" value="84" color="#2563EB" bg="#EFF6FF" />
-        <StatCard icon={Sun} label="Avg Daily UV" value="5.8" color="#F97316" bg="#FFF7ED" />
-        <StatCard icon={TrendingUp} label="High UV Days" value="38" color="#EF4444" bg="#FEF2F2" />
-        <StatCard icon={Clock} label="Total Exposure" value="218h" color="#9333EA" bg="#FAF5FF" />
+        <StatCard icon={Calendar} label="Days Tracked" value={stats?.daysTracked.toString() || "0"} color="#2563EB" bg="#EFF6FF" />
+        <StatCard icon={Sun} label="Avg Daily UV" value={stats?.avgDailyUv || "0.0"} color="#F97316" bg="#FFF7ED" />
+        <StatCard icon={TrendingUp} label="High UV Days" value={stats?.highUvDays.toString() || "0"} color="#EF4444" bg="#FEF2F2" />
+        <StatCard icon={Clock} label="Total Exposure" value={`${stats?.totalExposureHours || 0}h`} color="#9333EA" bg="#FAF5FF" />
       </div>
 
       {/* Skin type */}
@@ -156,7 +158,12 @@ export function Profile() {
             {skinTypes.map(s => (
               <button
                 key={s.id}
-                onClick={() => setSkinType(s.id)}
+                onClick={() => {
+                  setSkinType(s.id);
+                  profileService.updateProfile({ name, skinType: s.id });
+                  setSaved(true);
+                  setTimeout(() => setSaved(false), 2500);
+                }}
                 className="rounded-xl p-3 text-center transition-all"
                 style={{
                   border: `2px solid ${skinType === s.id ? '#2563EB' : '#E2E8F0'}`,

@@ -46,7 +46,7 @@ void GUVAS12SD::begin() {
 
     Logger::info(
         "SENSOR",
-        "UVI conversion: Vout x 1.639"
+        "UVI conversion: Vout x 16.39"
     );
 
 
@@ -231,8 +231,8 @@ float GUVAS12SD::convertToUVIndex(
     //
     // 1M first-stage resistor + second stage gain ~6.1:
     //
-    // UVI ≈ Vout × (10 / 6.1)
-    //     ≈ Vout × 1.639
+    // UVI ≈ Vout × (100 / 6.1)
+    //     ≈ Vout × 16.39
     //
     // -------------------------------------------------------------------------
 
@@ -253,6 +253,16 @@ float GUVAS12SD::convertToUVIndex(
 
     uvIndex +=
         GUVAS12SD_CALIBRATION_OFFSET_UVI;
+
+    // -------------------------------------------------------------------------
+    // Darkness Clamp
+    // If voltage is extremely low (e.g. night time), suppress ghost UVI
+    // caused by a positive calibration offset.
+    // -------------------------------------------------------------------------
+
+    if (voltage < 0.005f) {
+        uvIndex = 0.0f;
+    }
 
 
     // -------------------------------------------------------------------------

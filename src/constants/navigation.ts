@@ -16,7 +16,7 @@ export const navItems: { id: string; label: string; icon: React.ElementType; bad
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'analytics', label: 'Analytics', icon: TrendingUp },
   { id: 'history',   label: 'History',   icon: Clock },
-  { id: 'alerts',    label: 'Alerts',    icon: Bell, badge: '3' },
+  { id: 'alerts',    label: 'Alerts',    icon: Bell },
   { id: 'device',    label: 'Device',    icon: Cpu },
   { id: 'settings',  label: 'Settings',  icon: Settings },
   { id: 'profile',   label: 'Profile',   icon: User },

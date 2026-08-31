@@ -13,6 +13,14 @@ export interface SettingsData {
   alertThreshold: number;
   emailNotifications: boolean;
   pushNotifications: boolean;
+  smartAlertsEnabled: boolean;
+  smartAlertPreferences: {
+    highRisk: boolean;
+    extremeUv: boolean;
+    rapidUvIncrease: boolean;
+    burnWarning: boolean;
+    reapplySunscreen: boolean;
+  };
 }
 
 export const settingsService = {

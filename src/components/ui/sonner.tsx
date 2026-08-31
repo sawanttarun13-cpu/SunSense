@@ -25,6 +25,11 @@ const Toaster = ({ ...props }: ToasterProps) => {
           "--normal-border": "var(--border)",
         } as React.CSSProperties
       }
+      toastOptions={{
+        classNames: {
+          description: "text-slate-500",
+        }
+      }}
       {...props}
     />
   );

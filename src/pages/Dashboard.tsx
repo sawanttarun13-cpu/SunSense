@@ -27,6 +27,9 @@ import { Battery, Wifi, Clock, Shield, PlusCircle } from 'lucide-react';
 import { getUVZone } from '../constants/uv';
 import { sunscreenService } from '../services/sunscreen.service';
 import { useNavigate } from 'react-router';
+import { useSocketEvent } from '../hooks/useSocketEvent';
+import { toast } from 'sonner';
+import { useRef } from 'react';
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 // Dashboard page shown to the user.
@@ -34,12 +37,41 @@ export function Dashboard() {
   const navigate = useNavigate();
   const { data, loading, error, refetch } = useDashboardData();
   
+  // Real-time alert count invalidation
+  useSocketEvent('alert:new', () => {
+    refetch();
+  });
+  
   // Live clock — ticks every second
   const [now, setNow] = useState(new Date());
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(id);
   }, []);
+
+  // Sunscreen popup alert logic
+  const sunscreenAlerted = useRef(false);
+  useEffect(() => {
+    if (data?.activeProtection && data.protectionRemaining !== undefined) {
+      if (data.protectionRemaining > 15) {
+        // Reset the alert state if they just reapplied and have > 15 mins
+        sunscreenAlerted.current = false;
+      } else if (data.protectionRemaining <= 15 && data.protectionRemaining > 0 && !sunscreenAlerted.current) {
+        // Trigger popup alert
+        toast.warning('Sunscreen Expiring Soon', {
+          description: `You have ${data.protectionRemaining} minutes of protection left. Please prepare to reapply!`,
+          duration: 10000,
+        });
+        sunscreenAlerted.current = true;
+      } else if (data.protectionRemaining <= 0 && !sunscreenAlerted.current) {
+        toast.error('Sunscreen Expired', {
+          description: 'Your sunscreen protection has expired! Reapply immediately.',
+          duration: 15000,
+        });
+        sunscreenAlerted.current = true;
+      }
+    }
+  }, [data?.activeProtection, data?.protectionRemaining]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -50,6 +82,15 @@ export function Dashboard() {
       setIsModalOpen(false);
     } catch (e) {
       console.error('Failed to apply sunscreen', e);
+    }
+  };
+
+  const handleCancelSunscreen = async () => {
+    try {
+      await sunscreenService.cancelSunscreen();
+      await refetch();
+    } catch (e) {
+      console.error('Failed to cancel sunscreen', e);
     }
   };
 
@@ -116,8 +157,8 @@ export function Dashboard() {
       id: 'spf', 
       icon: Shield, 
       label: 'SPF Status', 
-      value: `SPF ${data.currentSpfRecommendation || 30}`, 
-      sub: 'Recommended now', 
+      value: data.deviceStatus === 'ONLINE' ? (data.currentSpfRecommendation ? `SPF ${data.currentSpfRecommendation}` : 'None') : 'N/A', 
+      sub: data.deviceStatus === 'ONLINE' ? 'Recommended now' : 'Device offline', 
       iconColor: '#9333EA', 
       iconBg: '#FAF5FF' 
     }
@@ -200,13 +241,13 @@ export function Dashboard() {
           <div className="mt-8 grid grid-cols-3 gap-4 relative z-10">
             {[
               { label: 'Low', val: data.lowUv !== null && data.lowUv !== undefined ? data.lowUv.toFixed(1) : 'N/A', color: '#22C55E', sub: data.lowTime ? new Date(data.lowTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'No data' },
-              { label: 'Live', val: currentUvValue.toFixed(1), color: zone.color, sub: 'Current', active: true },
+              { label: 'Live', val: data.deviceStatus === 'ONLINE' ? currentUvValue.toFixed(1) : '--', color: data.deviceStatus === 'ONLINE' ? zone.color : '#94A3B8', sub: data.deviceStatus === 'ONLINE' ? 'Current' : 'Offline', active: true },
               { label: 'Peak', val: (data.peakUv || 0).toFixed(1), color: '#EF4444', sub: data.peakTime ? new Date(data.peakTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'No data' },
             ].map(({ label, val, color, sub, active }) => (
               <div
                 key={label}
                 className={`rounded-2xl p-3 text-center border transition-all duration-500 ${active ? 'bg-white shadow-md' : 'bg-slate-50/50'}`}
-                style={{ borderColor: active ? zone.border : '#F1F5F9' }}
+                style={{ borderColor: active ? (data.deviceStatus === 'ONLINE' ? zone.border : '#E2E8F0') : '#F1F5F9' }}
               >
                 <div className="text-slate-400 font-bold tracking-tighter" style={{ fontSize: '0.55rem', textTransform: 'uppercase' }}>{label}</div>
                 <div className="font-bold mt-1 tracking-tight" style={{ fontSize: '1.25rem', color: active ? color : '#1E293B' }}>{val}</div>
@@ -222,22 +263,24 @@ export function Dashboard() {
         {/* Right panel */}
         <div className="lg:col-span-3 flex flex-col gap-4">
           {/* UV recommendation banner */}
-          <div className="rounded-2xl p-4 relative overflow-hidden" style={{ background: zone.bg, border: `1.5px solid ${zone.border}` }}>
-            <div className="absolute -right-4 -top-4 w-24 h-24 rounded-full opacity-20" style={{ background: zone.color }} />
+          <div className="rounded-2xl p-4 relative overflow-hidden" style={{ background: data.deviceStatus === 'ONLINE' ? zone.bg : '#F8FAFC', border: `1.5px solid ${data.deviceStatus === 'ONLINE' ? zone.border : '#E2E8F0'}` }}>
+            <div className="absolute -right-4 -top-4 w-24 h-24 rounded-full opacity-20" style={{ background: data.deviceStatus === 'ONLINE' ? zone.color : '#CBD5E1' }} />
             <div className="flex items-center gap-3 relative z-10">
-              <div className="rounded-xl p-3 flex-shrink-0" style={{ background: zone.border }}>
-                <Sun size={20} style={{ color: zone.text }} />
+              <div className="rounded-xl p-3 flex-shrink-0" style={{ background: data.deviceStatus === 'ONLINE' ? zone.border : '#E2E8F0' }}>
+                <Sun size={20} style={{ color: data.deviceStatus === 'ONLINE' ? zone.text : '#64748B' }} />
               </div>
               <div className="flex-1">
-                <div className="font-semibold" style={{ fontSize: '0.85rem', color: zone.text }}>
-                  {data.activeProtection ? "Protection Active" : "No Active Protection"}
+                <div className="font-semibold" style={{ fontSize: '0.85rem', color: data.deviceStatus === 'ONLINE' ? zone.text : '#475569' }}>
+                  {data.deviceStatus === 'ONLINE' ? (data.activeProtection ? "Protection Active" : "No Active Protection") : "Device Offline"}
                 </div>
                 <div className="text-slate-500 mt-0.5" style={{ fontSize: '0.72rem' }}>
-                  {data.activeProtection ? "Reapply sunscreen when timer runs out." : "Apply SPF before prolonged UV exposure."}
+                  {data.deviceStatus === 'ONLINE' ? (data.activeProtection ? "Reapply sunscreen when timer runs out." : "Apply SPF before prolonged UV exposure.") : "Cannot provide live recommendations."}
                 </div>
               </div>
               <div className="text-right flex-shrink-0">
-                <div className="font-bold" style={{ fontSize: '2rem', color: zone.text, lineHeight: 1 }}>{currentUvValue.toFixed(1)}</div>
+                <div className="font-bold" style={{ fontSize: '2rem', color: data.deviceStatus === 'ONLINE' ? zone.text : '#94A3B8', lineHeight: 1 }}>
+                  {data.deviceStatus === 'ONLINE' ? currentUvValue.toFixed(1) : '--'}
+                </div>
                 <div className="text-slate-400" style={{ fontSize: '0.65rem' }}>UV now</div>
               </div>
             </div>
@@ -245,15 +288,41 @@ export function Dashboard() {
 
           {/* 4-box mini metrics */}
           <div className="grid grid-cols-2 gap-3">
-            <MiniMetric label="Peak UV Today" value={(data.peakUv || 0).toFixed(1)} bar={((data.peakUv || 0) / 12) * 100} barColor="#EF4444" />
-            <MiniMetric label="UV Dose (SED)" value={(data.todayDose || 0).toFixed(1)} bar={Math.min(((data.todayDose || 0) / 30) * 100, 100)} barColor="#F97316" />
-            <MiniMetric label="Burn Time" value={data.burnTimeRemaining !== null && data.burnTimeRemaining !== undefined ? `${data.burnTimeRemaining} min` : 'Safe'} bar={data.burnTimeRemaining ? Math.min((data.burnTimeRemaining / 120) * 100, 100) : 0} barColor="#9333EA" />
-            <MiniMetric label="Active Alerts" value={(data.activeAlertsCount || 0).toString()} bar={Math.min((data.activeAlertsCount || 0) * 20, 100)} barColor="#EF4444" onClick={() => navigate('/alerts')} />
+            <MiniMetric 
+              label="Peak UV Today" 
+              value={(data.peakUv || 0).toFixed(1)} 
+              bar={((data.peakUv || 0) / 12) * 100} 
+              barColor="#EF4444" 
+              description="Highest recorded UV index today."
+            />
+            <MiniMetric 
+              label="UV Dose Today" 
+              value={(data.todayDose || 0).toFixed(1)} 
+              bar={Math.min(((data.todayDose || 0) / 30) * 100, 100)} 
+              barColor="#F97316" 
+              description="Standard Erythemal Dose (SED). Cumulative UV exposure over the day."
+            />
+            <MiniMetric 
+              label="Burn Time Today" 
+              value={data.burnTimeRemaining !== null && data.burnTimeRemaining !== undefined ? `${data.burnTimeRemaining} min` : 'Safe'} 
+              bar={data.burnTimeRemaining ? Math.min((data.burnTimeRemaining / 120) * 100, 100) : 0} 
+              barColor="#9333EA" 
+              description="Estimated time until sunburn based on current UV and your skin type."
+            />
+            <MiniMetric 
+              label="Active Alerts" 
+              value={(data.activeAlertsCount || 0).toString()} 
+              bar={Math.min((data.activeAlertsCount || 0) * 20, 100)} 
+              barColor="#EF4444" 
+              onClick={() => navigate('/alerts')} 
+              description="Current unread alerts requiring your attention."
+            />
           </div>
 
           {/* Sunscreen Tracker */}
           <SunscreenTracker 
-            onApplyClick={() => setIsModalOpen(true)} 
+            onApplyClick={() => setIsModalOpen(true)}
+            onCancelClick={handleCancelSunscreen}
             activeProtection={data.activeProtection}
             protectionRemaining={data.protectionRemaining}
           />

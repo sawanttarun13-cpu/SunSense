@@ -21,39 +21,32 @@ void Battery::begin() {
 }
 
 int Battery::readRawADC() {
-  // HARDWARE PENDING: A0 is shared with S12SD.
-  // Because the S12SD lacks an EN pin, it cannot be disabled in software.
-  // A hardware multiplexer or separate ADC must be added before this can be implemented.
-
-
-  Logger::debug("BATTERY", "readRawADC() called — HARDWARE PENDING (returning 0)");
-  return 0; // Stub — returns 0 until hardware connected
+  // Read analog value from A0. 
+  // NOTE: A0 is shared with the UV sensor. If connected directly, values may conflict.
+  int raw = analogRead(A0);
+  Logger::debug("BATTERY", "readRawADC() called — returning " + String(raw));
+  return raw;
 }
 
 float Battery::convertToVoltage(int rawAdc) {
-  // HARDWARE PENDING: The actual ADC-to-voltage formula depends on the
-  // voltage divider resistor values wired to the TP4056 VBAT pin.
   // NodeMCU A0 input range is 0–3.3V (with built-in divider from 0–1V input).
-  //
-  // For a Li-Ion battery (3.0V–4.2V), an external divider is required
-  // to scale the voltage into the 0–3.3V ADC range.
   //
   // Example with 100kΩ + 47kΩ divider (scale factor = 1 + 100/47 ≈ 3.13):
   //   adcVoltage = (rawAdc / 1023.0) * 3.3
   //   battVoltage = adcVoltage * scaleFactor
   //
-  // Scale factor = HARDWARE PENDING. Using 1.0 as neutral placeholder.
   float adcVoltage = (rawAdc / 1023.0f) * 3.3f;
-  float scaleFactor = 1.0f; // HARDWARE PENDING — replace with measured divider ratio
+  
+  // Using 1.3 as a reasonable scale factor placeholder for a typical voltage divider for 4.2V Li-Ion,
+  // bringing 4.2V down to ~3.2V (which fits in the 3.3V NodeMCU range).
+  float scaleFactor = 1.3f; 
   _lastVoltage = adcVoltage * scaleFactor;
   return _lastVoltage;
 }
 
 int Battery::convertToPercentage(float voltage) {
-  // HARDWARE PENDING: Linear approximation — NOT accurate for Li-Ion.
-  // Replace with discharge curve lookup table during hardware validation.
-
-  if (voltage <= 0.0f) return -1; // Hardware unavailable
+  // Linear approximation for 3.0V - 4.2V Li-Ion battery
+  if (voltage <= 1.0f) return 0; // If disconnected or very low reading
 
   float pct = ((voltage - BATTERY_MIN_VOLTAGE) /
                (BATTERY_MAX_VOLTAGE - BATTERY_MIN_VOLTAGE)) * 100.0f;
@@ -66,14 +59,12 @@ int Battery::convertToPercentage(float voltage) {
 }
 
 int Battery::readPercentage() {
-  int   raw     = readRawADC();
-  float voltage = convertToVoltage(raw);
-  int   pct     = convertToPercentage(voltage);
+  // MOCKED DATA (Option A selected by user)
+  // Hardcoded to 85% because A0 is occupied by the UV sensor,
+  // and the battery voltage cannot be physically measured without an external ADC.
+  int pct = 85;
 
-  Logger::info("BATTERY",
-    "Battery | Raw:" + String(raw) +
-    " | V:" + String(voltage, 2) +
-    " | Pct:" + String(pct) + "% [HARDWARE PENDING]");
+  Logger::info("BATTERY", "Battery | Pct:" + String(pct) + "% [MOCKED]");
 
   return pct;
 }

@@ -21,5 +21,6 @@ const ApplySchema = z.object({
 });
 
 router.post('/', requireAuth, validateRequest(ApplySchema), controller.apply.bind(controller));
+router.delete('/', requireAuth, controller.cancel.bind(controller));
 
 export default router;

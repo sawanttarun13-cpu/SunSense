@@ -10,5 +10,12 @@ export const sunscreenService = {
     } catch (err) {
       throw normalizeError(err);
     }
+  },
+  cancelSunscreen: async (): Promise<void> => {
+    try {
+      await apiClient.delete('/sunscreen');
+    } catch (err) {
+      throw normalizeError(err);
+    }
   }
 };

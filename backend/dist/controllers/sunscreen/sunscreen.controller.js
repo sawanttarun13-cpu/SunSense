@@ -24,5 +24,14 @@ class SunscreenController {
             return (0, apiResponse_1.sendError)(res, error.message, 400);
         }
     }
+    async cancel(req, res) {
+        try {
+            await sunscreenService.cancelApplication(req.userId);
+            return (0, apiResponse_1.sendSuccess)(res, { success: true });
+        }
+        catch (error) {
+            return (0, apiResponse_1.sendError)(res, error.message, 400);
+        }
+    }
 }
 exports.SunscreenController = SunscreenController;

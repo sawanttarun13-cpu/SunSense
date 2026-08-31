@@ -56,26 +56,21 @@ function SidebarContent({
       <div className={`flex items-center border-b border-white/8 ${collapsed ? 'justify-center px-3 py-4' : 'justify-between px-4 py-4'}`}>
         {!collapsed && (
           <div className="flex items-center gap-3">
-            <div
-              className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ background: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)' }}
-            >
-              <Sun size={17} color="#fff" />
+            <div className="flex items-center justify-center flex-shrink-0">
+              <img src="/logo_dark_theme.png" alt="SunSense Logo" className="w-20 object-contain" />
             </div>
             <div>
-              <div className="text-white font-semibold leading-tight" style={{ fontSize: '0.875rem' }}>SunSense</div>
-              <div style={{ color: '#7EB3FF', fontSize: '0.7rem' }}>SunSense-101</div>
+              <div style={{ color: '#7EB3FF', fontSize: '0.75rem', fontWeight: 500 }}>SunSense-101</div>
             </div>
           </div>
         )}
         {collapsed && (
           <div
-            className="w-9 h-9 rounded-xl flex items-center justify-center cursor-pointer"
-            style={{ background: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)' }}
+            className="flex items-center justify-center cursor-pointer"
             onClick={() => setCollapsed(false)}
             title="Expand sidebar"
           >
-            <Sun size={17} color="#fff" />
+            <img src="/logo_dark_theme.png" alt="SunSense Logo" className="w-12 object-contain" />
           </div>
         )}
         {!collapsed && (
@@ -112,7 +107,11 @@ function SidebarContent({
           <div className="flex items-center justify-between">
             <div>
               <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.65rem' }}>Current UV</div>
-              <div style={{ color: zone.color, fontWeight: 700, fontSize: '0.9rem' }}>{uvValue.toFixed(1)} — {zone.label}</div>
+              {dashboardData.deviceStatus === 'ONLINE' ? (
+                <div style={{ color: zone.color, fontWeight: 700, fontSize: '0.9rem' }}>{uvValue.toFixed(1)} — {zone.label}</div>
+              ) : (
+                <div style={{ color: '#94A3B8', fontWeight: 600, fontSize: '0.9rem' }}>--</div>
+              )}
             </div>
             <div className="text-right">
               <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.65rem' }}>Battery</div>
@@ -130,8 +129,14 @@ function SidebarContent({
 
       {/* Nav */}
       <nav className={`flex-1 py-3 space-y-0.5 ${collapsed ? 'px-2' : 'px-3'}`}>
-        {navItems.map(({ id, label, icon: Icon, badge }) => {
+        {navItems.map(({ id, label, icon: Icon, badge: staticBadge }) => {
           const isActive = location.pathname.includes(id) || (id === 'dashboard' && location.pathname === '/');
+          
+          let badge = staticBadge;
+          if (id === 'alerts' && dashboardData?.activeAlertsCount !== undefined) {
+            badge = dashboardData.activeAlertsCount > 0 ? dashboardData.activeAlertsCount.toString() : undefined;
+          }
+          
           return (
             <button
               key={id}
