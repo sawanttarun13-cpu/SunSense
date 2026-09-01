@@ -88,7 +88,7 @@ export class SmartAlertEngineService {
       }
 
       // HIGH_RISK (Crossing user setting threshold)
-      const threshold = activeSettings.alertThreshold ? activeSettings.alertThreshold.toNumber() : 6.0;
+      const threshold = activeSettings!.alertThreshold ? activeSettings!.alertThreshold.toNumber() : 6.0;
       if (prefs.highRisk && currentUv >= threshold) {
         await this.triggerAlertIfCooledDown(
           userId,
