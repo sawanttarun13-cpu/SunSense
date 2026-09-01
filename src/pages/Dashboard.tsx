@@ -23,7 +23,9 @@ import { useDashboardData } from '../hooks/useDashboardData';
 import type { DashboardStat } from '../types/dashboard';
 import { LoadingState } from '../components/common/LoadingState';
 import { ErrorState } from '../components/common/ErrorState';
-import { Battery, Wifi, Clock, Shield, PlusCircle } from 'lucide-react';
+import { Battery, Wifi, Clock, Shield, PlusCircle, Moon } from 'lucide-react';
+import { useTheme } from '../components/theme-provider';
+import { motion } from 'framer-motion';
 import { getUVZone } from '../constants/uv';
 import { sunscreenService } from '../services/sunscreen.service';
 import { useNavigate } from 'react-router';
@@ -36,6 +38,7 @@ import { useRef } from 'react';
 export function Dashboard() {
   const navigate = useNavigate();
   const { data, loading, error, refetch } = useDashboardData();
+  const { theme, setTheme } = useTheme();
   
   // Real-time alert count invalidation
   useSocketEvent('alert:new', () => {
@@ -168,45 +171,74 @@ export function Dashboard() {
   const currentUvValue = data.currentUv || 0;
   const zone = getUVZone(currentUvValue);
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
+  };
+
   return (
-    <div className="p-5 md:p-6 max-w-7xl mx-auto">
+    <motion.div 
+      variants={containerVariants} 
+      initial="hidden" 
+      animate="show" 
+      className="p-5 md:p-6 max-w-7xl mx-auto"
+    >
       {/* Page header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-slate-800 font-semibold" style={{ fontSize: '1.2rem' }}>Dashboard</h1>
-          <p className="text-slate-400 mt-0.5" style={{ fontSize: '0.8rem' }}>
+          <h1 className="text-slate-800 dark:text-slate-100 font-semibold" style={{ fontSize: '1.2rem' }}>Dashboard</h1>
+          <p className="text-slate-400 dark:text-slate-500 mt-0.5" style={{ fontSize: '0.8rem' }}>
             {now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
           </p>
         </div>
-        <div
-          className="flex items-center gap-2 rounded-xl px-3 py-1.5"
-          style={{ background: '#fff', border: '1px solid #E8F0FE', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}
-        >
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
-          </span>
-          <span className="text-slate-600" style={{ fontSize: '0.75rem', fontWeight: 500 }}>
-            Live · {now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-          </span>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            className="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+          >
+            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+          </button>
+          <div
+            className="flex items-center gap-2 rounded-xl px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm"
+          >
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
+            </span>
+            <span className="text-slate-600 dark:text-slate-300" style={{ fontSize: '0.75rem', fontWeight: 500 }}>
+              Live · {now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+            </span>
+          </div>
         </div>
       </div>
 
       {/* Top stat cards */}
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 mb-5">
-        {stats.map(s => (
-          <StatCard key={s.id} {...s} />
+        {stats.map((s, idx) => (
+          <StatCard key={s.id} {...s} delay={idx * 0.1} />
         ))}
       </div>
 
       {/* Main grid */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 mb-5">
         {/* Gauge card */}
-        <div
-          className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm flex flex-col relative overflow-hidden transition-all duration-500"
+        <motion.div
+          variants={itemVariants}
+          className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm flex flex-col relative overflow-hidden transition-all duration-500"
           style={{
-            border: '1px solid #E2E8F0',
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
+            border: theme === 'dark' ? '1px solid #1E293B' : '1px solid #E2E8F0',
+            boxShadow: theme === 'dark' ? '0 4px 20px -2px rgba(0, 0, 0, 0.4)' : '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
             cursor: 'pointer',
           }}
           onClick={() => navigate('/history')}
@@ -220,8 +252,8 @@ export function Dashboard() {
 
           <div className="flex items-center justify-between mb-8 relative z-10">
             <div>
-              <span className="text-slate-800 font-bold tracking-tight" style={{ fontSize: '0.95rem' }}>UV Intensity</span>
-              <p className="text-slate-400 text-[0.65rem] uppercase tracking-widest font-medium mt-0.5">Real-time sensor</p>
+              <span className="text-slate-800 dark:text-slate-100 font-bold tracking-tight" style={{ fontSize: '0.95rem' }}>UV Intensity</span>
+              <p className="text-slate-400 dark:text-slate-500 text-[0.65rem] uppercase tracking-widest font-medium mt-0.5">Real-time sensor</p>
             </div>
             <div className="flex flex-col items-end">
               <span
@@ -258,30 +290,30 @@ export function Dashboard() {
               </div>
             ))}
           </div>
-        </div>
+        </motion.div>
 
         {/* Right panel */}
-        <div className="lg:col-span-3 flex flex-col gap-4">
+        <motion.div variants={itemVariants} className="lg:col-span-3 flex flex-col gap-4">
           {/* UV recommendation banner */}
-          <div className="rounded-2xl p-4 relative overflow-hidden" style={{ background: data.deviceStatus === 'ONLINE' ? zone.bg : '#F8FAFC', border: `1.5px solid ${data.deviceStatus === 'ONLINE' ? zone.border : '#E2E8F0'}` }}>
+          <div className="rounded-2xl p-4 relative overflow-hidden" style={{ background: data.deviceStatus === 'ONLINE' ? zone.bg : (theme === 'dark' ? '#1E293B' : '#F8FAFC'), border: `1.5px solid ${data.deviceStatus === 'ONLINE' ? zone.border : (theme === 'dark' ? '#334155' : '#E2E8F0')}` }}>
             <div className="absolute -right-4 -top-4 w-24 h-24 rounded-full opacity-20" style={{ background: data.deviceStatus === 'ONLINE' ? zone.color : '#CBD5E1' }} />
             <div className="flex items-center gap-3 relative z-10">
-              <div className="rounded-xl p-3 flex-shrink-0" style={{ background: data.deviceStatus === 'ONLINE' ? zone.border : '#E2E8F0' }}>
+              <div className="rounded-xl p-3 flex-shrink-0" style={{ background: data.deviceStatus === 'ONLINE' ? zone.border : (theme === 'dark' ? '#0F172A' : '#E2E8F0') }}>
                 <Sun size={20} style={{ color: data.deviceStatus === 'ONLINE' ? zone.text : '#64748B' }} />
               </div>
               <div className="flex-1">
-                <div className="font-semibold" style={{ fontSize: '0.85rem', color: data.deviceStatus === 'ONLINE' ? zone.text : '#475569' }}>
+                <div className="font-semibold" style={{ fontSize: '0.85rem', color: data.deviceStatus === 'ONLINE' ? zone.text : (theme === 'dark' ? '#CBD5E1' : '#475569') }}>
                   {data.deviceStatus === 'ONLINE' ? (data.activeProtection ? "Protection Active" : "No Active Protection") : "Device Offline"}
                 </div>
-                <div className="text-slate-500 mt-0.5" style={{ fontSize: '0.72rem' }}>
+                <div className="text-slate-500 dark:text-slate-400 mt-0.5" style={{ fontSize: '0.72rem' }}>
                   {data.deviceStatus === 'ONLINE' ? (data.activeProtection ? "Reapply sunscreen when timer runs out." : "Apply SPF before prolonged UV exposure.") : "Cannot provide live recommendations."}
                 </div>
               </div>
               <div className="text-right flex-shrink-0">
-                <div className="font-bold" style={{ fontSize: '2rem', color: data.deviceStatus === 'ONLINE' ? zone.text : '#94A3B8', lineHeight: 1 }}>
+                <div className="font-bold" style={{ fontSize: '2rem', color: data.deviceStatus === 'ONLINE' ? zone.text : (theme === 'dark' ? '#94A3B8' : '#94A3B8'), lineHeight: 1 }}>
                   {data.deviceStatus === 'ONLINE' ? currentUvValue.toFixed(1) : '--'}
                 </div>
-                <div className="text-slate-400" style={{ fontSize: '0.65rem' }}>UV now</div>
+                <div className="text-slate-400 dark:text-slate-500" style={{ fontSize: '0.65rem' }}>UV now</div>
               </div>
             </div>
           </div>
@@ -326,15 +358,15 @@ export function Dashboard() {
             activeProtection={data.activeProtection}
             protectionRemaining={data.protectionRemaining}
           />
-        </div>
+        </motion.div>
       </div>
 
       {/* Real-time line chart */}
-      <div className="bg-white rounded-2xl p-5 shadow-sm" style={{ border: '1px solid #E8F0FE' }}>
+      <motion.div variants={itemVariants} className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-sm transition-colors duration-500" style={{ border: theme === 'dark' ? '1px solid #1E293B' : '1px solid #E8F0FE' }}>
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h3 className="text-slate-700 font-semibold" style={{ fontSize: '0.85rem' }}>Today's UV Timeline</h3>
-            <p className="text-slate-400 mt-0.5" style={{ fontSize: '0.72rem' }}>Hourly readings</p>
+            <h3 className="text-slate-700 dark:text-slate-200 font-semibold" style={{ fontSize: '0.85rem' }}>Today's UV Timeline</h3>
+            <p className="text-slate-400 dark:text-slate-500 mt-0.5" style={{ fontSize: '0.72rem' }}>Hourly readings</p>
           </div>
           <div className="flex items-center gap-3">
             {[
@@ -343,15 +375,15 @@ export function Dashboard() {
             ].map(({ color, label }) => (
               <div key={label} className="flex items-center gap-1.5">
                 <div className="h-px w-5" style={{ borderTop: `2px dashed ${color}` }} />
-                <span className="text-slate-400" style={{ fontSize: '0.65rem' }}>{label}</span>
+                <span className="text-slate-400 dark:text-slate-500" style={{ fontSize: '0.65rem' }}>{label}</span>
               </div>
             ))}
             <div
               className="flex items-center gap-1.5 rounded-lg px-2.5 py-1"
-              style={{ background: '#FEF2F2', border: '1px solid #FECACA' }}
+              style={{ background: theme === 'dark' ? 'rgba(239, 68, 68, 0.1)' : '#FEF2F2', border: theme === 'dark' ? '1px solid rgba(239, 68, 68, 0.2)' : '1px solid #FECACA' }}
             >
               <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse block" />
-              <span className="text-red-600 font-semibold" style={{ fontSize: '0.65rem' }}>LIVE</span>
+              <span className="text-red-600 dark:text-red-400 font-semibold" style={{ fontSize: '0.65rem' }}>LIVE</span>
             </div>
           </div>
         </div>
@@ -360,37 +392,37 @@ export function Dashboard() {
           <AreaChart data={data.hourlyData || []} margin={{ top: 5, right: 8, left: -24, bottom: 0 }}>
             <defs>
               <linearGradient id="uvFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#3B82F6" stopOpacity={0.22} />
+                <stop offset="0%" stopColor="#3B82F6" stopOpacity={0.4} />
                 <stop offset="100%" stopColor="#3B82F6" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#334155' : '#F1F5F9'} vertical={false} />
             <XAxis dataKey="hour" tickLine={false} axisLine={false}
-              tick={{ fill: '#94A3B8', fontSize: 10, fontFamily: 'Poppins' }} interval={3} />
+              tick={{ fill: theme === 'dark' ? '#64748B' : '#94A3B8', fontSize: 10, fontFamily: 'Poppins' }} interval={3} />
             <YAxis domain={[0, 12]} tickLine={false} axisLine={false}
-              tick={{ fill: '#94A3B8', fontSize: 10, fontFamily: 'Poppins' }} />
+              tick={{ fill: theme === 'dark' ? '#64748B' : '#94A3B8', fontSize: 10, fontFamily: 'Poppins' }} />
             <Tooltip content={<ChartTooltip />} />
             <ReferenceLine key="ref-uv-6" y={6} stroke="#F97316" strokeDasharray="5 4" strokeWidth={1.5} opacity={0.7} />
             <ReferenceLine key="ref-uv-8" y={8} stroke="#EF4444" strokeDasharray="5 4" strokeWidth={1.5} opacity={0.7} />
             <Area
-              type="monotone" dataKey="uv" name="UV Index" stroke="#3B82F6" strokeWidth={2.5}
+              type="monotone" dataKey="uv" name="UV Index" stroke="#3B82F6" strokeWidth={3}
               fill="url(#uvFill)" dot={false}
-              activeDot={{ r: 5, fill: '#3B82F6', stroke: '#fff', strokeWidth: 2 }}
+              activeDot={{ r: 5, fill: '#3B82F6', stroke: theme === 'dark' ? '#0F172A' : '#fff', strokeWidth: 2 }}
             />
           </AreaChart>
         </ResponsiveContainer>
 
         {/* Zone color legend */}
-        <div className="flex items-center gap-1 mt-3 pt-3 border-t border-slate-100">
+        <div className="flex items-center gap-1 mt-3 pt-3 border-t border-slate-100 dark:border-slate-800">
           {UV_ZONES.map((z, idx) => (
-            <div key={`legend-${z.label}-${idx}`} className="flex-1 rounded py-1 text-center" style={{ background: z.bg }}>
+            <div key={`legend-${z.label}-${idx}`} className="flex-1 rounded py-1 text-center transition-colors duration-500" style={{ background: theme === 'dark' ? 'transparent' : z.bg }}>
               <div className="w-2 h-2 rounded-full mx-auto mb-0.5" style={{ background: z.color }} />
-              <div style={{ fontSize: '0.6rem', color: z.text, fontWeight: 600 }}>{z.label}</div>
-              <div style={{ fontSize: '0.55rem', color: '#94A3B8' }}>≤{z.max === Infinity ? '12+' : z.max}</div>
+              <div style={{ fontSize: '0.6rem', color: theme === 'dark' ? z.color : z.text, fontWeight: 600 }}>{z.label}</div>
+              <div style={{ fontSize: '0.55rem', color: theme === 'dark' ? '#64748B' : '#94A3B8' }}>≤{z.max === Infinity ? '12+' : z.max}</div>
             </div>
           ))}
         </div>
-      </div>
+      </motion.div>
 
       {isModalOpen && (
         <ApplySunscreenModal
@@ -398,6 +430,6 @@ export function Dashboard() {
           onApply={handleApplySunscreen}
         />
       )}
-    </div>
+    </motion.div>
   );
 }

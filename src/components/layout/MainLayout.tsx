@@ -17,7 +17,7 @@ export function MainLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   return (
-    <div className="flex h-screen overflow-hidden" style={{ ...FONT, background: '#EEF4FF' }}>
+    <div className="flex h-screen overflow-hidden bg-[#EEF4FF] dark:bg-slate-950 transition-colors duration-500" style={FONT}>
       <Sidebar collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
       <main className="flex-1 overflow-y-auto overflow-x-hidden">
         <Outlet />

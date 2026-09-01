@@ -52,6 +52,8 @@ import { SocketProvider } from './context/SocketContext';
 import { Toaster } from './components/ui/sonner';
 import { GlobalAlertListener } from './components/GlobalAlertListener';
 
+import { ThemeProvider } from './components/theme-provider';
+
 /**
  * Root application component.
  *
@@ -61,7 +63,8 @@ import { GlobalAlertListener } from './components/GlobalAlertListener';
  */
 export default function App() {
   return (
-    <AuthProvider>
+    <ThemeProvider defaultTheme="system" storageKey="sunsense-theme">
+      <AuthProvider>
       <SocketProvider>
         <Toaster position="top-left" />
         <GlobalAlertListener />
@@ -91,5 +94,6 @@ export default function App() {
       </BrowserRouter>
       </SocketProvider>
     </AuthProvider>
+    </ThemeProvider>
   );
 }
