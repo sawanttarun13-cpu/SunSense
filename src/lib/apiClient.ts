@@ -128,7 +128,7 @@ export function clearAccessToken(): void {
 const apiClient: AxiosInstance = axios.create({
   baseURL: BASE_URL,
   withCredentials: true,
-  timeout: 10_000,
+  timeout: 60_000,
   headers: {
     'Content-Type': 'application/json',
   },
