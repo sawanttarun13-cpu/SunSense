@@ -1,4 +1,4 @@
-import { PrismaClient, AlertType } from '@prisma/client';
+import { PrismaClient, AlertType, Prisma } from '@prisma/client';
 import { CalculationService } from '../calculation/calculation.service';
 import { AlertsRepository } from '../../repositories/alerts/alerts.repo';
 import { RealtimeEventService } from '../events/realtime.service';
@@ -49,7 +49,7 @@ export class SmartAlertEngineService {
           userId,
           theme: 'system',
           timezone: 'UTC',
-          alertThreshold: new PrismaClient().$extends({}).$parent.Prisma.Decimal(6.0) as any
+          alertThreshold: new Prisma.Decimal(6.0) as any
         } as any;
       }
 
