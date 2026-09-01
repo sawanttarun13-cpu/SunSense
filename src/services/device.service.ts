@@ -28,5 +28,9 @@ export const deviceService = {
       throw err;
     }
   },
+  registerDevice: async (name: string = "SunSense S12SD"): Promise<{ deviceId: string; apiKey: string }> => {
+    const res = await apiClient.post('/device/register', { name });
+    return res.data.data;
+  },
   syncDevice: () => new Promise<void>((resolve) => setTimeout(resolve, 2200))
 };

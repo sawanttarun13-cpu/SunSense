@@ -128,6 +128,8 @@ export function Device() {
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [error, setError] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [pairing, setPairing] = useState(false);
+  const [credentials, setCredentials] = useState<{deviceId: string, apiKey: string} | null>(null);
 
   const isMounted = useRef(true);
   const fetchTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -193,15 +195,76 @@ export function Device() {
       <button onClick={() => window.location.reload()} className="px-4 py-2 bg-blue-500 text-white rounded">Try Again</button>
     </div>
   );
-  if (!deviceData) {
+
+  const handlePairDevice = async () => {
+    setPairing(true);
+    try {
+      const creds = await deviceService.registerDevice();
+      setCredentials(creds);
+      debouncedRefetch(); // fetch the newly created device
+    } catch (err) {
+      alert("Failed to pair device");
+    } finally {
+      setPairing(false);
+    }
+  };
+
+  if (!deviceData && !credentials) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] w-full text-slate-500">
         <Smartphone size={48} className="mb-4 text-slate-300" />
         <h2 className="text-xl font-semibold text-slate-700">No Device Paired</h2>
-        <p className="mt-2 text-sm text-center max-w-sm">
+        <p className="mt-2 text-sm text-center max-w-sm mb-6">
           You haven't paired a SunSense device with your account yet. 
           Please pair a device to view its status.
         </p>
+        <button
+          onClick={handlePairDevice}
+          disabled={pairing}
+          className="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2 shadow-md shadow-blue-500/20"
+        >
+          {pairing ? <RefreshCw size={18} className="animate-spin" /> : <Smartphone size={18} />}
+          {pairing ? 'Pairing...' : 'Pair New Device'}
+        </button>
+      </div>
+    );
+  }
+
+  if (credentials) {
+    return (
+      <div className="p-5 md:p-6 max-w-2xl mx-auto">
+        <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-100 text-center">
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <CheckCircle2 size={32} className="text-green-600" />
+          </div>
+          <h2 className="text-2xl font-bold text-slate-800 mb-2">Device Paired Successfully!</h2>
+          <p className="text-slate-500 mb-8">
+            Please copy these credentials into your ESP8266 `firmware_config.h` file before flashing.
+            You will only see the API Key once!
+          </p>
+          
+          <div className="text-left space-y-4 mb-8">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">DEVICE_ID</label>
+              <code className="block w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 text-sm break-all font-mono">
+                {credentials.deviceId}
+              </code>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">DEVICE_API_KEY</label>
+              <code className="block w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 text-sm break-all font-mono">
+                {credentials.apiKey}
+              </code>
+            </div>
+          </div>
+          
+          <button
+            onClick={() => setCredentials(null)}
+            className="w-full py-3 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors"
+          >
+            I have copied the credentials
+          </button>
+        </div>
       </div>
     );
   }
