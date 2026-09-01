@@ -63,7 +63,7 @@ import { ThemeProvider } from './components/theme-provider';
  */
 export default function App() {
   return (
-    <ThemeProvider defaultTheme="system" storageKey="sunsense-theme">
+    <ThemeProvider defaultTheme="light" storageKey="sunsense-theme">
       <AuthProvider>
       <SocketProvider>
         <Toaster position="top-left" />

@@ -203,12 +203,7 @@ export function Dashboard() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            className="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
-          >
-            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-          </button>
+
           <div
             className="flex items-center gap-2 rounded-xl px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm"
           >
