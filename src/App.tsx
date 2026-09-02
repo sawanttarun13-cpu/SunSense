@@ -47,12 +47,13 @@ import { Profile } from './pages/Profile';
 import { AuthProvider } from './context/AuthContext';
 import { PrivateRoute } from './components/PrivateRoute';
 import { PublicRoute } from './components/PublicRoute';
-
+import { ThemeProvider } from './components/theme-provider';
 import { SocketProvider } from './context/SocketContext';
 import { Toaster } from './components/ui/sonner';
 import { GlobalAlertListener } from './components/GlobalAlertListener';
-
-import { ThemeProvider } from './components/theme-provider';
+import { useState } from 'react';
+import { AnimatePresence } from 'framer-motion';
+import { SplashScreen } from './components/SplashScreen';
 
 /**
  * Root application component.
@@ -62,38 +63,50 @@ import { ThemeProvider } from './components/theme-provider';
  * applied at the Route level in a future performance pass.
  */
 export default function App() {
+  const [isAppLoading, setIsAppLoading] = useState(true);
+
   return (
     <ThemeProvider defaultTheme="light" storageKey="sunsense-theme">
       <AuthProvider>
       <SocketProvider>
         <Toaster position="top-left" />
         <GlobalAlertListener />
-        <BrowserRouter>
-          <Routes>
-            {/* Public auth pages (no sidebar/header layout) */}
-          <Route element={<PublicRoute />}>
-            <Route path="/login" element={<Login />} />
-          </Route>
-          <Route path="/register" element={<Register />} />
-
-          {/* Protected pages — wrapped in the persistent sidebar/header shell */}
-          <Route element={<PrivateRoute />}>
-            <Route element={<MainLayout />}>
-              {/* Root redirects to the dashboard as the default landing page */}
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/analytics" element={<Analytics />} />
-              <Route path="/history" element={<History />} />
-              <Route path="/alerts" element={<Alerts />} />
-              <Route path="/device" element={<Device />} />
-              <Route path="/settings" element={<SettingsPage />} />
-              <Route path="/profile" element={<Profile />} />
-            </Route>
-          </Route>
-        </Routes>
-      </BrowserRouter>
+        
+        <AnimatePresence mode="wait">
+          {isAppLoading ? (
+            <SplashScreen 
+              key="splash" 
+              onComplete={() => setIsAppLoading(false)} 
+            />
+          ) : (
+            <BrowserRouter key="router">
+              <Routes>
+                {/* Public auth pages (no sidebar/header layout) */}
+              <Route element={<PublicRoute />}>
+                <Route path="/login" element={<Login />} />
+              </Route>
+              <Route path="/register" element={<Register />} />
+    
+              {/* Protected pages — wrapped in the persistent sidebar/header shell */}
+              <Route element={<PrivateRoute />}>
+                <Route element={<MainLayout />}>
+                  {/* Root redirects to the dashboard as the default landing page */}
+                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/analytics" element={<Analytics />} />
+                  <Route path="/history" element={<History />} />
+                  <Route path="/alerts" element={<Alerts />} />
+                  <Route path="/device" element={<Device />} />
+                  <Route path="/settings" element={<SettingsPage />} />
+                  <Route path="/profile" element={<Profile />} />
+                </Route>
+              </Route>
+            </Routes>
+          </BrowserRouter>
+          )}
+        </AnimatePresence>
       </SocketProvider>
-    </AuthProvider>
+      </AuthProvider>
     </ThemeProvider>
   );
 }
