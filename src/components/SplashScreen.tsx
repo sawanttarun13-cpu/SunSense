@@ -1,5 +1,4 @@
 import { motion } from 'framer-motion';
-import { Sun } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 export function SplashScreen({ onComplete }: { onComplete: () => void }) {
@@ -69,17 +68,18 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
         className="relative z-10 flex flex-col items-center"
       >
         <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
-          className="mb-8 relative"
+          initial={{ scale: 0.95 }}
+          animate={{ scale: 1 }}
+          transition={{ duration: 2, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
+          className="mb-6 relative"
         >
-          <div className="absolute inset-0 bg-yellow-400 blur-xl opacity-30 rounded-full scale-110"></div>
-          <Sun size={96} strokeWidth={1.5} className="text-yellow-400 relative z-10" />
+          <div className="absolute inset-0 bg-yellow-400 blur-3xl opacity-20 rounded-full scale-110"></div>
+          <img 
+            src="/logo_dark_theme.png" 
+            alt="SunSense Logo" 
+            className="w-64 h-auto relative z-10 drop-shadow-[0_0_15px_rgba(250,204,21,0.3)]" 
+          />
         </motion.div>
-        
-        <h1 className="text-5xl font-bold text-white tracking-tight flex items-center gap-1 mb-3">
-          Sun<span className="text-blue-400">Sense</span>
-        </h1>
         
         <motion.div
           initial={{ opacity: 0, y: 10 }}
