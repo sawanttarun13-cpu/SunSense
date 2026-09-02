@@ -41,7 +41,7 @@
 // BACKEND
 // =============================================================================
 
-#define BACKEND_BASE_URL     "http://10.234.30.104:5000"
+#define BACKEND_BASE_URL     "https://sunsense.onrender.com"
 
 #define API_PREFIX           "/api/v1"
 
@@ -62,8 +62,8 @@
 // Put your actual values here only in the local copy that you flash.
 // =============================================================================
 
-#define DEVICE_ID       "cdea2948-f7c9-42ea-ab14-f050b4907849"
-#define DEVICE_API_KEY "cf917a342b54c44420eeb40181f056607a2b3dec7b2bc3d34c6a92b2e4f5652f"
+#define DEVICE_ID       "b7942c10-c244-4b76-8f4f-62eaa7bf189d"
+#define DEVICE_API_KEY "6d66e17190a8cc6033e2f0eb584ceca157d32b1b37a8397a36ac0ff4b2c2c1ee"
 
 
 // =============================================================================

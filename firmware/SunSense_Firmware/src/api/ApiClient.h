@@ -39,7 +39,7 @@
 
 #include <Arduino.h>
 #include <ESP8266HTTPClient.h>
-#include <WiFiClient.h>
+#include <WiFiClientSecure.h>
 #include "../config/firmware_config.h"
 #include "../models/Reading.h"
 #include "../utils/Logger.h"
@@ -141,7 +141,7 @@ public:
 
 private:
   String    _baseUrl;
-  WiFiClient _wifiClient;
+  WiFiClientSecure _wifiClient;
 
   /**
    * Adds the required device authentication headers to an HTTPClient.

@@ -24,7 +24,9 @@
 #include <ArduinoJson.h>
 #include <ESP8266WiFi.h>   // Required for WiFi.status(), WiFi.localIP() in diagnostics
 
-ApiClient::ApiClient(const String& baseUrl) : _baseUrl(baseUrl) {}
+ApiClient::ApiClient(const String& baseUrl) : _baseUrl(baseUrl) {
+  _wifiClient.setInsecure();
+}
 
 String ApiClient::_buildUrl(const char* endpoint) const {
   return _baseUrl + String(endpoint);
