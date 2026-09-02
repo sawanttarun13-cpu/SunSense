@@ -35,5 +35,14 @@ class AlertsController {
             return (0, apiResponse_1.sendError)(res, error.message, 404);
         }
     }
+    async deleteAlert(req, res) {
+        try {
+            const result = await alertsService.deleteAlert(req.userId, req.params.id);
+            return (0, apiResponse_1.sendSuccess)(res, result);
+        }
+        catch (error) {
+            return (0, apiResponse_1.sendError)(res, error.message, 404);
+        }
+    }
 }
 exports.AlertsController = AlertsController;

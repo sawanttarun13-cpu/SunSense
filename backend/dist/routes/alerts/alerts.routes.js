@@ -15,4 +15,5 @@ const controller = new alerts_controller_1.AlertsController();
 router.use(requireAuth_1.requireAuth);
 router.get('/', controller.get.bind(controller));
 router.patch('/:id/read', controller.markRead.bind(controller));
+router.delete('/:id', controller.deleteAlert.bind(controller));
 exports.default = router;

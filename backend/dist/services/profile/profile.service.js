@@ -40,7 +40,11 @@ class ProfileService {
         const profile = await profileRepo.findById(userId);
         if (!profile)
             throw new Error('Profile not found');
-        return profile;
+        const stats = await profileRepo.getStats(userId);
+        return {
+            ...profile,
+            stats
+        };
     }
     /**
      * Updates the authenticated user's profile fields.

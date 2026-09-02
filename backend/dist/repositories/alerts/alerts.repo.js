@@ -73,6 +73,14 @@ class AlertsRepository {
         });
     }
     /**
+     * Deletes a specific alert permanently.
+     */
+    async deleteAlert(userId, alertId) {
+        return prisma_1.prisma.alert.deleteMany({
+            where: { id: alertId, userId }
+        });
+    }
+    /**
      * Returns the total count of active (unread and non-dismissed) alerts.
      */
     async countActiveAlerts(userId) {
