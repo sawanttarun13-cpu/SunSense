@@ -6,21 +6,45 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
-    // Start fade out after 2 seconds
-    const timer = setTimeout(() => {
-      setIsVisible(false);
+    let hideRequested = false;
+    let minTimeElapsed = false;
+
+    // Minimum display time is 2 seconds
+    const minTimer = setTimeout(() => {
+      minTimeElapsed = true;
+      if (hideRequested) {
+        setIsVisible(false);
+      }
     }, 2000);
 
-    // Tell parent to unmount after fade out completes (2s + 0.5s transition)
-    const unmountTimer = setTimeout(() => {
-      onComplete();
-    }, 2500);
+    const handleHide = () => {
+      hideRequested = true;
+      if (minTimeElapsed) {
+        setIsVisible(false);
+      }
+    };
+    window.addEventListener('hide-splash', handleHide);
+
+    // Failsafe: hide after 15 seconds if nothing else triggers it
+    const failsafe = setTimeout(() => {
+      setIsVisible(false);
+    }, 15000);
 
     return () => {
-      clearTimeout(timer);
-      clearTimeout(unmountTimer);
+      window.removeEventListener('hide-splash', handleHide);
+      clearTimeout(minTimer);
+      clearTimeout(failsafe);
     };
-  }, [onComplete]);
+  }, []);
+
+  useEffect(() => {
+    if (!isVisible) {
+      const timer = setTimeout(() => {
+        onComplete();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isVisible, onComplete]);
 
   return (
     <motion.div
