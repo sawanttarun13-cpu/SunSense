@@ -33,6 +33,7 @@
  * Currently, all routes are accessible for UI development.
  * ─────────────────────────────────────────────────────────────────────────────
  */
+import { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router';
 import { MainLayout } from './components/layout/MainLayout';
 import { Login } from './pages/Login';
@@ -47,12 +48,12 @@ import { Profile } from './pages/Profile';
 import { AuthProvider } from './context/AuthContext';
 import { PrivateRoute } from './components/PrivateRoute';
 import { PublicRoute } from './components/PublicRoute';
-import { ThemeProvider } from './components/theme-provider';
+
 import { SocketProvider } from './context/SocketContext';
 import { Toaster } from './components/ui/sonner';
 import { GlobalAlertListener } from './components/GlobalAlertListener';
-import { useState } from 'react';
-import { AnimatePresence } from 'framer-motion';
+
+import { ThemeProvider } from './components/theme-provider';
 import { SplashScreen } from './components/SplashScreen';
 
 /**
@@ -63,50 +64,41 @@ import { SplashScreen } from './components/SplashScreen';
  * applied at the Route level in a future performance pass.
  */
 export default function App() {
-  const [isAppLoading, setIsAppLoading] = useState(true);
+  const [showSplash, setShowSplash] = useState(true);
 
   return (
     <ThemeProvider defaultTheme="light" storageKey="sunsense-theme">
+      {showSplash && <SplashScreen onComplete={() => setShowSplash(false)} />}
       <AuthProvider>
       <SocketProvider>
         <Toaster position="top-left" />
         <GlobalAlertListener />
-        
-        <AnimatePresence mode="wait">
-          {isAppLoading ? (
-            <SplashScreen 
-              key="splash" 
-              onComplete={() => setIsAppLoading(false)} 
-            />
-          ) : (
-            <BrowserRouter key="router">
-              <Routes>
-                {/* Public auth pages (no sidebar/header layout) */}
-              <Route element={<PublicRoute />}>
-                <Route path="/login" element={<Login />} />
-              </Route>
-              <Route path="/register" element={<Register />} />
-    
-              {/* Protected pages — wrapped in the persistent sidebar/header shell */}
-              <Route element={<PrivateRoute />}>
-                <Route element={<MainLayout />}>
-                  {/* Root redirects to the dashboard as the default landing page */}
-                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/analytics" element={<Analytics />} />
-                  <Route path="/history" element={<History />} />
-                  <Route path="/alerts" element={<Alerts />} />
-                  <Route path="/device" element={<Device />} />
-                  <Route path="/settings" element={<SettingsPage />} />
-                  <Route path="/profile" element={<Profile />} />
-                </Route>
-              </Route>
-            </Routes>
-          </BrowserRouter>
-          )}
-        </AnimatePresence>
+        <BrowserRouter>
+          <Routes>
+            {/* Public auth pages (no sidebar/header layout) */}
+          <Route element={<PublicRoute />}>
+            <Route path="/login" element={<Login />} />
+          </Route>
+          <Route path="/register" element={<Register />} />
+
+          {/* Protected pages — wrapped in the persistent sidebar/header shell */}
+          <Route element={<PrivateRoute />}>
+            <Route element={<MainLayout />}>
+              {/* Root redirects to the dashboard as the default landing page */}
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/analytics" element={<Analytics />} />
+              <Route path="/history" element={<History />} />
+              <Route path="/alerts" element={<Alerts />} />
+              <Route path="/device" element={<Device />} />
+              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/profile" element={<Profile />} />
+            </Route>
+          </Route>
+        </Routes>
+      </BrowserRouter>
       </SocketProvider>
-      </AuthProvider>
+    </AuthProvider>
     </ThemeProvider>
   );
 }

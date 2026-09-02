@@ -1,82 +1,73 @@
 import { motion } from 'framer-motion';
 import { Sun } from 'lucide-react';
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
-interface SplashScreenProps {
-  onComplete?: () => void;
-  videoSrc?: string;
-}
+export function SplashScreen({ onComplete }: { onComplete: () => void }) {
+  const [isVisible, setIsVisible] = useState(true);
 
-export function SplashScreen({ onComplete, videoSrc }: SplashScreenProps) {
-  // Automatically trigger onComplete after 3 seconds so the app continues loading
   useEffect(() => {
-    if (onComplete) {
-      const timer = setTimeout(() => {
-        onComplete();
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
+    // Start fade out after 2 seconds
+    const timer = setTimeout(() => {
+      setIsVisible(false);
+    }, 2000);
+
+    // Tell parent to unmount after fade out completes (2s + 0.5s transition)
+    const unmountTimer = setTimeout(() => {
+      onComplete();
+    }, 2500);
+
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(unmountTimer);
+    };
   }, [onComplete]);
 
   return (
     <motion.div
-      key="splash-screen"
       initial={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.8, ease: "easeInOut" }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900 overflow-hidden"
+      animate={{ opacity: isVisible ? 1 : 0 }}
+      transition={{ duration: 0.5, ease: "easeInOut" }}
+      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center overflow-hidden"
+      style={{ background: 'linear-gradient(135deg, #0F172A 0%, #1E3A8A 100%)' }}
     >
-      {videoSrc ? (
-        <video 
-          autoPlay 
-          muted 
-          loop 
-          playsInline 
-          className="absolute inset-0 w-full h-full object-cover opacity-60"
-        >
-          <source src={videoSrc} type="video/mp4" />
-        </video>
-      ) : (
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 via-slate-900 to-blue-950 opacity-90" />
-      )}
-
-      <div className="relative z-10 flex flex-col items-center">
+      {/* Dynamic background glow */}
+      <motion.div 
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1.2, opacity: 0.15 }}
+        transition={{ duration: 2, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
+        className="absolute w-[50vw] h-[50vw] max-w-[500px] max-h-[500px] bg-yellow-400 rounded-full blur-[80px]"
+      />
+      
+      <motion.div
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.2, duration: 0.8, ease: "easeOut" }}
+        className="relative z-10 flex flex-col items-center"
+      >
         <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 1.2, ease: "easeOut" }}
-          className="mb-6 relative"
+          animate={{ rotate: 360 }}
+          transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
+          className="mb-8 relative"
         >
-          {/* Subtle glow effect behind the sun */}
-          <motion.div 
-            animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0.6, 0.3] }}
-            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute inset-0 rounded-full bg-yellow-400 blur-2xl"
-          />
-          <Sun size={80} className="text-yellow-400 relative z-10" />
+          <div className="absolute inset-0 bg-yellow-400 blur-xl opacity-30 rounded-full scale-110"></div>
+          <Sun size={96} strokeWidth={1.5} className="text-yellow-400 relative z-10" />
         </motion.div>
         
+        <h1 className="text-5xl font-bold text-white tracking-tight flex items-center gap-1 mb-3">
+          Sun<span className="text-blue-400">Sense</span>
+        </h1>
+        
         <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.8, delay: 0.4 }}
-          className="text-center"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6, duration: 0.6 }}
+          className="flex items-center gap-2 text-blue-200/70 font-medium tracking-[0.2em] text-sm"
         >
-          <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tight mb-2">
-            SunSense
-          </h1>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: 1 }}
-            className="flex items-center justify-center gap-2 mt-8"
-          >
-            <div className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-            <div className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-            <div className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-          </motion.div>
+          <div className="w-8 h-[1px] bg-blue-400/30"></div>
+          SMART UV TRACKING
+          <div className="w-8 h-[1px] bg-blue-400/30"></div>
         </motion.div>
-      </div>
+      </motion.div>
     </motion.div>
   );
 }
