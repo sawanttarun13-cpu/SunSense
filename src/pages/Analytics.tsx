@@ -321,15 +321,17 @@ export function Analytics() {
             <span className="text-slate-400" style={{ fontSize: '0.65rem' }}>More</span>
           </div>
         </div>
-        <div className="grid grid-cols-7 sm:grid-cols-13 gap-1.5 overflow-x-auto pb-2">
-          {heatmap.map((d, i) => (
-            <div
-              key={i}
-              className="w-5 h-5 rounded-md cursor-default transition-transform hover:scale-110"
-              style={{ background: heatFillColor(d.uv), opacity: 0.8 + d.uv / 60 }}
-              title={`${d.label}: ${d.uv.toFixed(1)} UV`}
-            />
-          ))}
+        <div className="overflow-x-auto pb-2 -mx-1">
+          <div className="flex flex-wrap gap-1.5 min-w-0">
+            {heatmap.map((d, i) => (
+              <div
+                key={i}
+                className="w-5 h-5 rounded-md cursor-default transition-transform hover:scale-110 flex-shrink-0"
+                style={{ background: heatFillColor(d.uv), opacity: 0.8 + d.uv / 60 }}
+                title={`${d.label}: ${d.uv.toFixed(1)} UV`}
+              />
+            ))}
+          </div>
         </div>
         <div className="mt-4 pt-4 border-t border-slate-100 flex flex-wrap gap-5">
           {[

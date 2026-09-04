@@ -19,7 +19,7 @@ export function MainLayout() {
   return (
     <div className="flex h-screen overflow-hidden bg-[#EEF4FF] dark:bg-slate-950 transition-colors duration-500" style={FONT}>
       <Sidebar collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
-      <main className="flex-1 overflow-y-auto overflow-x-hidden">
+      <main className="flex-1 overflow-y-auto overflow-x-hidden pt-14 md:pt-0">
         <Outlet />
       </main>
     </div>

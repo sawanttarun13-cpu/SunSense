@@ -110,4 +110,4 @@ If you are working on the physical UV sensor device:
 - **Database Changes:** If you modify `backend/prisma/schema.prisma`, you MUST run `npx prisma generate` and `npx prisma db push` (or `migrate dev`) to sync the changes.
 - **Deployments:** The frontend is configured for deployment on Vercel, and the backend is configured for deployment on Render. Ensure environment variables are mirrored in those deployment environments.
 
-Good luck, and enjoy working on SunSense! ☀️
+Good luck, and enjoy working on SunSense by sameer sir ! ☀️

@@ -130,12 +130,26 @@ export function History() {
   return (
     <div className="p-5 md:p-6 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-slate-800 font-semibold" style={{ fontSize: '1.2rem' }}>History</h1>
-          <p className="text-slate-400 mt-0.5" style={{ fontSize: '0.8rem' }}>{totalEntries} minute records</p>
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h1 className="text-slate-800 font-semibold" style={{ fontSize: '1.2rem' }}>History</h1>
+            <p className="text-slate-400 mt-0.5" style={{ fontSize: '0.8rem' }}>{totalEntries} minute records</p>
+          </div>
+          <button
+            onClick={() => exportCSV(filteredLogs)}
+            className="flex items-center gap-2 rounded-xl px-3 py-2 text-white shadow-sm transition-colors flex-shrink-0"
+            style={{ background: '#2563EB', fontSize: '0.8rem', fontWeight: 500 }}
+            onMouseEnter={e => (e.currentTarget.style.background = '#1D4ED8')}
+            onMouseLeave={e => (e.currentTarget.style.background = '#2563EB')}
+          >
+            <Download size={14} />
+            <span className="hidden sm:inline">Export CSV</span>
+            <span className="sm:hidden">CSV</span>
+          </button>
         </div>
-        <div className="flex items-center gap-3">
+        {/* Filters row — stacks on mobile, inline on md+ */}
+        <div className="flex flex-col sm:flex-row gap-2">
           <select
             value={filterLevel}
             onChange={e => setFilterLevel(e.target.value)}
@@ -149,27 +163,17 @@ export function History() {
             <option value="very high">Very High</option>
             <option value="extreme">Extreme</option>
           </select>
-          <div className="relative">
+          <div className="relative flex-1">
             <input
               type="text"
               placeholder="Search date, UV, level..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              className="pl-9 pr-4 py-2 rounded-xl text-sm border focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-              style={{ width: '220px', borderColor: '#E2E8F0', color: '#1E293B' }}
+              className="w-full pl-9 pr-4 py-2 rounded-xl text-sm border focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              style={{ borderColor: '#E2E8F0', color: '#1E293B' }}
             />
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
           </div>
-          <button
-            onClick={() => exportCSV(filteredLogs)}
-            className="flex items-center gap-2 rounded-xl px-4 py-2 text-white shadow-sm transition-colors"
-            style={{ background: '#2563EB', fontSize: '0.8rem', fontWeight: 500 }}
-            onMouseEnter={e => (e.currentTarget.style.background = '#1D4ED8')}
-            onMouseLeave={e => (e.currentTarget.style.background = '#2563EB')}
-          >
-            <Download size={14} />
-            Export CSV
-          </button>
         </div>
       </div>
 

@@ -274,14 +274,14 @@ export function Device() {
   return (
     <div className="p-5 md:p-6 max-w-5xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-wrap items-start justify-between gap-3 mb-6">
         <div>
           <h1 className="text-slate-800 font-semibold" style={{ fontSize: '1.2rem' }}>Device</h1>
           <p className="text-slate-400 mt-0.5" style={{ fontSize: '0.8rem' }}>SunSense S12SD</p>
         </div>
         <button
           onClick={handleSync}
-          className="flex items-center gap-2 rounded-xl px-4 py-2 shadow-sm transition-all"
+          className="flex items-center gap-2 rounded-xl px-4 py-2 shadow-sm transition-all flex-shrink-0"
           style={{ background: '#fff', border: '1px solid #E2E8F0', fontSize: '0.8rem', fontWeight: 500, color: '#374151' }}
           onMouseEnter={e => (e.currentTarget.style.background = '#F8FAFF')}
           onMouseLeave={e => (e.currentTarget.style.background = '#fff')}

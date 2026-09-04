@@ -195,14 +195,14 @@ export function Dashboard() {
       className="p-5 md:p-6 max-w-7xl mx-auto"
     >
       {/* Page header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-slate-800 dark:text-slate-100 font-semibold" style={{ fontSize: '1.2rem' }}>Dashboard</h1>
-          <p className="text-slate-400 dark:text-slate-500 mt-0.5" style={{ fontSize: '0.8rem' }}>
+      <div className="flex items-start justify-between mb-6 gap-3">
+        <div className="min-w-0">
+          <h1 className="text-slate-800 dark:text-slate-100 font-semibold truncate" style={{ fontSize: '1.2rem' }}>Dashboard</h1>
+          <p className="text-slate-400 dark:text-slate-500 mt-0.5 text-xs sm:text-sm" style={{ fontSize: '0.8rem' }}>
             {now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-shrink-0">
 
           <div
             className="flex items-center gap-2 rounded-xl px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm"
@@ -211,8 +211,11 @@ export function Dashboard() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
             </span>
-            <span className="text-slate-600 dark:text-slate-300" style={{ fontSize: '0.75rem', fontWeight: 500 }}>
+            <span className="text-slate-600 dark:text-slate-300 hidden sm:inline" style={{ fontSize: '0.75rem', fontWeight: 500 }}>
               Live · {now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+            </span>
+            <span className="text-slate-600 dark:text-slate-300 sm:hidden" style={{ fontSize: '0.7rem', fontWeight: 500 }}>
+              Live
             </span>
           </div>
         </div>
@@ -358,12 +361,12 @@ export function Dashboard() {
 
       {/* Real-time line chart */}
       <motion.div variants={itemVariants} className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-sm transition-colors duration-500" style={{ border: theme === 'dark' ? '1px solid #1E293B' : '1px solid #E8F0FE' }}>
-        <div className="flex items-center justify-between mb-5">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-5">
           <div>
             <h3 className="text-slate-700 dark:text-slate-200 font-semibold" style={{ fontSize: '0.85rem' }}>Today's UV Timeline</h3>
             <p className="text-slate-400 dark:text-slate-500 mt-0.5" style={{ fontSize: '0.72rem' }}>Hourly readings</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2">
             {[
               { color: '#F97316', label: 'High (6+)' },
               { color: '#EF4444', label: 'Very High (8+)' },

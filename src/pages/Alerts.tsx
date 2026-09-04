@@ -103,12 +103,12 @@ export function Alerts() {
   return (
     <div className="p-5 md:p-6 max-w-4xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-wrap items-start justify-between gap-3 mb-6">
         <div>
           <h1 className="text-slate-800 font-semibold" style={{ fontSize: '1.2rem' }}>Alerts</h1>
           <p className="text-slate-400 mt-0.5" style={{ fontSize: '0.8rem' }}>UV event notifications and timeline</p>
         </div>
-        <div className="flex items-center gap-2 rounded-xl px-3 py-2" style={{ background: '#FEF2F2', border: '1px solid #FECACA' }}>
+        <div className="flex items-center gap-2 rounded-xl px-3 py-2 flex-shrink-0" style={{ background: '#FEF2F2', border: '1px solid #FECACA' }}>
           <Bell size={14} style={{ color: '#EF4444' }} />
           <span className="font-semibold" style={{ fontSize: '0.78rem', color: '#DC2626' }}>{activeCount} unread alerts</span>
         </div>

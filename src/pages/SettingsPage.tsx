@@ -187,14 +187,14 @@ export function SettingsPage() {
   return (
     <div className="p-5 md:p-6 max-w-3xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-wrap items-start justify-between gap-3 mb-6">
         <div>
           <h1 className="text-slate-800 font-semibold" style={{ fontSize: '1.2rem' }}>Settings</h1>
           <p className="text-slate-400 mt-0.5" style={{ fontSize: '0.8rem' }}>Configure your UV monitoring preferences</p>
         </div>
         <button
           onClick={handleSave}
-          className="flex items-center gap-2 rounded-xl px-4 py-2 shadow-sm transition-all"
+          className="flex items-center gap-2 rounded-xl px-4 py-2 shadow-sm transition-all flex-shrink-0"
           style={{
             background: saved ? '#22C55E' : '#2563EB',
             color: '#fff', fontSize: '0.8rem', fontWeight: 600,
@@ -325,7 +325,7 @@ export function SettingsPage() {
       >
         <div className="text-slate-400 space-y-1" style={{ fontSize: '0.72rem' }}>
           <div>SunSense {about?.appVersion} · Build {about?.build} · Firmware {about?.firmware}</div>
-          <div className="flex justify-center gap-5 mt-2">
+          <div className="flex flex-wrap justify-center gap-3 mt-2">
             {['Privacy Policy', 'Terms of Use', 'Support', 'Licenses'].map(l => (
               <button key={l} className="text-blue-500 hover:underline">{l}</button>
             ))}
